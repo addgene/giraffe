@@ -1,0 +1,5 @@
+List of all sequence API that needs to move from g2/seqa to Javascript
+
+Rough layout of all components for a new sequence analysis widget, and
+an inlined widget
+
