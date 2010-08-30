@@ -55,3 +55,14 @@ For algorithm, consult: http://bioinformatics.org/sms2/
  * Show %GC
  * Run against NCBI to detect specificity
 
+*QC Analysis*
+
+ * Auto BLAST against NCBI
+ * Show best match, check if it's the same as author's gene
+ * Report mutations, silent versus non-silent
+ * Based on primer, figure out portion of the vector sequenced
+ * Check against database to see "QC" coverage
+ * If we have a way to specify mutation or special features in our
+   system, we can check for coverage against these features
+   ** Either annotation of sequence, or while entering data
+
