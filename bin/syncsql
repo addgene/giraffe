@@ -1,0 +1,219 @@
+#!/usr/bin/env perl
+#
+# README: syncsql
+#
+# syncsql helps developers migrate database changes between machines
+# and databases. After making an update to database content or schema,
+# a developer can add one or more entries to a "db_log" file that
+# syncsql processes, and a second developer can run syncsql on the
+# same "db_log" file to pull the change.
+#
+# syncsql is database and directory based; when syncsql runs in a
+# directory and processes the db_log file in that directory, syncsql
+# creates/maintains a row in a "schema_info" table in the database for
+# this directory. This row records where in the db_log file syncsql
+# last finished. syncsql uses the last sub-directory name.
+#
+# Intended use: you can use multiple release directories in a source
+# tree to keep track of db changes for each release. Running syncsql
+# in each release directory processes the db_log file in that
+# directory.
+#
+# db_log file format
+#
+# Each entry in the db_log file should start with a @, then followed
+# by an incrementing integer (i.e. higher than the previous entry).
+# Optionally, followed by a * to indicate this step is optionally --
+# meaning it can fail.  The next line should include the SQL statement
+# to run. Each entry can only contain one SQL statement.  Instead of a
+# SQL statement, you can run a shell command, if you enclose it with
+# ``.
+#
+# For example:
+#
+# @100
+# ALTER TABLE Test ADD COLUMN test_column_2 varchar(32);
+#
+# @101*
+# ALTER TABLE Test DROP COLUMN test_column_2;
+#
+# @102
+# `perl some_db_updates.pl`
+#
+# Requirements:
+#
+#   db_log file: syncsql looks for a db_log file in the current
+#   directory.
+#
+#   db parameters: set database name, user, and password in the
+#   following environment variables: syncsql_dbname, syncsql_dbuser,
+#   syncsql_dbpassword.
+#
+#   to let syncsql keep track of its progress, run syncsql init first.
+
+my $db_name = "hippo";
+my $db_user = "root";
+my $db_password = "password";
+
+if ($db_name eq "") {
+  print "*****************************************************\n";
+  print "Please set syncsql_dbname env variable\n";
+  print "*****************************************************\n";
+  die;
+}
+
+if ($db_user eq "") {
+  print "*****************************************************\n";
+  print "Please set syncsql_dbuser env variable\n";
+  print "*****************************************************\n";
+  die;
+}
+
+#########
+
+$db_dsn = "DBI:mysql:database=$db_name;host=localhost";
+
+my $syncsql_sqltable = "syncsql_schema_info";
+
+use DBI;
+use Cwd;
+
+my $path = getcwd;
+my @vpath = split("/", $path);
+my $dir = pop(@vpath);
+
+if ($#ARGV >=0 && $ARGV[0] eq "init") {
+  my $dbh_stat = DBI->connect
+    ($db_dsn, $db_user, $db_password);
+  $dbh_stat->prepare
+    ("CREATE TABLE $syncsql_sqltable
+        (directory varchar(32) not null primary key,
+         position int(32) not null default 0,
+         INDEX directory_position(directory, position));")
+    ->execute();
+  exit 0;
+}
+
+$default_file = "db_log";
+
+if (!-f $default_file) {
+  print "*****************************************************\n";
+  print "Cannot find $default_file, so nothing to do\n"; 
+  print "*****************************************************\n";
+  die;
+}
+
+open F, $default_file;
+
+my $cur;
+my $cur_n;
+my $cur_optional = 0;
+my %steps;
+my %optional;
+
+while (<F>) {
+  if ($_ =~ /^\s*\#/) { next; }
+  if ($_ =~ /^\s*\@(\d+)(\*?)/) {
+    if (defined $cur) { 
+      $steps{$cur_n} = $cur;
+      $optional{$cur_n} = $cur_optional;
+    }
+    $cur_n = $1;
+    $cur = "";
+    $cur_optional = 0;
+    if ($2 eq "*") { $cur_optional = 1; }
+  }
+  elsif (defined $cur) { $cur .= $_; }
+}
+if (defined $cur) {
+  $steps{$cur_n} = $cur; 
+  $optional{$cur_n} = $cur_optional;
+}
+close F;
+
+# try to get the last step from the database
+my $last = -1;
+my $dbh_stat = DBI->connect
+  ($db_dsn, $db_user, $db_password);
+if (!defined($dbh_stat)) { die "can't connect to database\n"; }
+my $res_stat = $dbh_stat->prepare
+  ("SELECT position from $syncsql_sqltable WHERE directory=\"$dir\";");
+$res_stat->execute();
+my $stat_does_not_exists = $dbh_stat->err;
+my $stat_row_exists = 0;
+if ($stat_does_not_exists) {
+  print "******************************************************\n";
+  print "Opps, $syncsql_sqltable table does not exist!\n";
+  print "Run syncsql init first.\n";
+  print "******************************************************\n";
+  die;
+}
+else {
+  if (@row_stat = $res_stat->fetchrow_array()) {
+    my $position = $row_stat[0];
+    $stat_row_exists = 1;
+    if ($position > $last) {
+      $last = $position;
+    }
+  }
+}
+
+print "Last time you were at $last\n";
+
+foreach my $n (sort { $a <=> $b } keys %steps) {
+  if ($n > $last) {
+    $last = run_step ($n, $steps{$n}, $optional{$n});
+    if ($last != $n) { die "Step $n failed"; }
+  }
+}
+
+sub run_step {
+  my ($n, $step, $optional) = @_;
+  print "Running $n (optional: $optional) ";
+
+  # Perform the step
+  $step =~ s/^\s*//g;
+  if ($step =~ /^\s*`/) {
+    $step =~ s/`//g;
+    $step =~ s/\s*$//g;
+    print "script: $step\n";
+    my $res = system ($step);
+    if ($res) {
+      print "ERROR: step $n script failed\n";
+      if (!$optional) { return -1; }
+    }
+  }
+  else {
+    print "mysql\n";
+    my $dbh = DBI->connect($db_dsn, $db_user, $db_password);
+    if (!defined($dbh)) { die "can't connect to database\n"; }
+    $dbh->prepare("SET autocommit = 0;")->execute();
+    $dbh->prepare("START TRANSACTION;")->execute();
+    my $res = $dbh->prepare($step);
+    $res->execute();
+    if ($dbh->err) { 
+      my $e = $dbh->errstr;
+      print "ERROR: step $n SQL failed: $e\n";
+      $dbh->prepare("ROLLBACK")->execute();
+      if (!$optional) { return -1; }
+    }
+    else { $dbh->prepare("COMMIT")->execute(); }
+  }
+
+  # Update the database
+  if ($stat_row_exists) {
+    $res_stat = $dbh_stat->prepare
+      ("UPDATE $syncsql_sqltable set position=$n WHERE directory=\"$dir\";");
+    $res_stat->execute();
+  }
+  else {
+    if (!$stat_does_not_exists) {
+      $res_stat = $dbh_stat->prepare
+        ("INSERT INTO $syncsql_sqltable(directory, position) VALUES(\"$dir\", $n);");
+      $res_stat->execute();
+      $stat_row_exists = 1;
+    }
+  }
+  return $n;
+}
+

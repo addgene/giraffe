@@ -1,0 +1,48 @@
+<!DOCTYPE
+  html
+  PUBLIC
+  "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html
+  xmlns="http://www.w3.org/1999/xhtml"
+  xml:lang="en">
+    <head>
+        <meta
+          http-equiv="Content-Type"
+          content="text/html;charset=utf-8"/>
+        <title>Giraffe</title>
+        <link rel="stylesheet"
+            href="/headers/blueprint/screen.css"
+            type="text/css" media="screen,projection" />
+        <link rel="stylesheet"
+            href="/headers/blueprint/print.css"
+            type="text/css" media="print" />
+        <link rel="stylesheet"
+            href="/headers/css/jquery-ui/jquery-ui-1.8.6.custom.css"
+            type="text/css" />
+        <!--[if lt IE 8]>
+        <link rel="stylesheet"
+            href="/headers/blueprint/ie.css"
+            type="text/css" media="screen,projection" />
+        <![endif]-->
+        <link rel="stylesheet" href="/headers/css/giraffe.css"
+            type="text/css" />
+        {% block pagecss %}{% endblock %}
+    </head>
+    <body>
+    {% block body %}{% endblock %}
+    <!--[if lt IE 7.]>
+    <script defer type="text/javascript" src="/headers/js/pngfix.js">
+    </script>
+    <![endif]-->
+    <script type="text/javascript" src="/headers/js/jquery-1.4.2.min.js">
+    </script>
+    <script type="text/javascript"
+     src="/headers/js/jquery-ui-1.8.6.custom.min.js">
+    </script>
+    <script type="text/javascript" src="/headers/js/jquery.history.js">
+    </script>
+    <script>jQuery.noConflict()</script>
+    {% block pagejs %}{% endblock %}
+    </body>
+</html>
