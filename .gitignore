@@ -1,0 +1,5 @@
+*.pyc
+.*.sw?
+build
+dist
+hippo.egg-info
