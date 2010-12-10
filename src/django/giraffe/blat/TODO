@@ -1,0 +1,29 @@
+
+1. import features data into model, create a db of features
+
+2. create script that generates C program from feature data, compiles
+C program into a python runnable module. no data load, all read into
+program memory
+
+3. load and call this module with new sequence
+
+4. gets back a list of fragments, compile them into features
+
+5. save features into db for sequence
+
+6. output raphaeljs from features list
+
+7. figure out how to test 4-5, give sequence, do we have expected
+features
+
+8. figure out how to test 1-3, change db of features, do we have the
+right module? may need to include 4-5.
+
+9. figure out how to test 6
+
+issues to address later:
+
+  - if new module is available, re generate features list
+  - keep access time
+  - create different modules with different sets of features
+

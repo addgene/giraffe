@@ -2,3 +2,51 @@
 
 SELECT 1
 
+@100
+
+`python import_features.py default < features/generic.features`
+
+@101
+
+`python import_features.py default < features/generic.primers`
+
+@102
+
+`python import_features.py default < features/tb.enzymes`
+
+@103
+
+`python import_features.py afire < features/af.unc`
+
+@104
+
+`python import_features.py afire < features/af.custom`
+
+@105
+
+`python import_features.py afire < features/af.features`
+
+@106
+
+`python import_features.py afire < features/af.enzymes`
+
+@107
+
+`python import_features.py zfc < features/zfc.enzymes`
+
+@108
+
+`python import_features.py zfc < features/generic.features`
+
+@109
+
+`python import_features.py zfc < features/generic.primers`
+
+@110
+
+`python import_features.py none < features/all.features`
+
+@111
+
+`python import_features.py none < features/all.enzymes`
+

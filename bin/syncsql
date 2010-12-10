@@ -51,7 +51,7 @@
 #
 #   to let syncsql keep track of its progress, run syncsql init first.
 
-my $db_name = "hippo";
+my $db_name = "giraffe";
 my $db_user = "root";
 my $db_password = "password";
 
