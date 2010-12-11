@@ -39,9 +39,12 @@ class Feature_Database(models.Model):
 
 class Feature_DB_Index(models.Model):
     db = models.ForeignKey(Feature_Database)
-    feature_index = models.PositiveIntegerField(db_index=True,unique=True)
+    feature_index = models.PositiveIntegerField(db_index=True)
     feature = models.CharField(max_length=32)
     antisense = models.BooleanField()
+
+    class Meta:
+        unique_together = (("db","feature_index"),)
 
 
 class Sequence(models.Model):
