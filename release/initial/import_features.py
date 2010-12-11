@@ -38,7 +38,7 @@ for line in sys.stdin.readlines():
         try:
             f.save()
         except:
-            f = Feature.objects.get(name=name)
+            f = Feature.objects.get(name=name,hash=f.hash)
 
         if db != 'none':
             fdb.features.add(f)
@@ -83,7 +83,7 @@ for line in sys.stdin.readlines():
             try:
                 f.save()
             except:
-                f = Feature.objects.get(name=name)
+                f = Feature.objects.get(name=name,hash=f.hash)
         
             if db != 'none':
                 fdb.features.add(f)
