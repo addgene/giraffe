@@ -12,7 +12,7 @@ from django.core.urlresolvers import reverse
 
 def post(request,db_name):
     db = models.Feature_Database.objects.get(name=db_name)
-    sequence = request.GET['sequence']
+    sequence = request.REQUEST['sequence']
     s = frags.features.blat(db,sequence)
     return redirect(reverse(get,args=[db_name,s.hash]))
 

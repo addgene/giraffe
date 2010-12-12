@@ -1,9 +1,9 @@
 
 DONE 1. import features data into model, create a db of features
 
-2. create script that generates C program from feature data, compiles
-C program into a python runnable module. no data load, all read into
-program memory
+DONE 2. create script that generates C program from feature data,
+compiles C program into a python runnable module. no data load, all
+read into program memory
 
 3. load and call this module with new sequence
 
