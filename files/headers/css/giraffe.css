@@ -1,0 +1,46 @@
+/*
+ CSS styles that apply to every page -- don't put page specific styles
+ in here, put them in a separate file
+ */
+body {
+    font-family:"helvetica neue",helvetica,arial,sans-serif;
+    font-size:14px;
+    text-align:center;
+    padding:10px 20px;
+}
+
+.container {
+    width:1000px;
+    text-align:left;
+    border:1px solid #d0d0d0;
+    padding:20px;
+}
+
+.padded { padding:10px; }
+.p { margin:15px 0px; }
+.left { float:left }
+.right { float:right }
+.indent { margin-left:15px; }
+.right-float { float:right; margin-left:10px; }
+
+/* Anything that needs a border */
+.border-box {
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    border-radius: 4px;
+    border:1px solid #e0e0e0;
+    padding:10px;
+    margin-right:10px;
+}
+
+/* Form stuff */
+
+form label { float:left; margin-right:15px; }
+
+
+/*
+ * Overriding Blueprint
+ */
+.giraffe table { width:inherit; }
+
+

@@ -1,7 +1,3 @@
-
-# Set this to False for standalone server
-ADDGENE_INTEGRATED_MODE = True
-
 ################################################################
 # Django settings for giraffe project.
 
@@ -104,9 +100,9 @@ INSTALLED_APPS = (
 
 # for debugging server, we serve these from django
 
-STATIC_HEADERS_ROOT = '../../files/headers'
-STATIC_IMAGES_ROOT = '../../files/images'
-STATIC_ROOT = '../../files/static'
+STATIC_HEADERS_ROOT = '../../../files/headers'
+STATIC_IMAGES_ROOT = '../../../files/images'
+STATIC_ROOT = '../../../files/static'
 
 SESSION_COOKIE_NAME = 'giraffe'
 

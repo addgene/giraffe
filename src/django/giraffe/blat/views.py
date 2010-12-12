@@ -8,16 +8,24 @@ import frags.features
 
 from django.shortcuts import redirect
 from django.core.urlresolvers import reverse
+from django.shortcuts import render_to_response
+from django.template import RequestContext
+
+def post(request):
+    if request.method == 'GET':
+        return render_to_response(
+            'blat/post.html', {}, 
+            context_instance=RequestContext(request)
+        )
+    else:
+        db_name = request.POST['db']
+        db = models.Feature_Database.objects.get(name=db_name)
+        sequence = request.POST['sequence']
+        s = frags.features.blat(db,sequence)
+        return redirect(reverse(get,args=[s.hash,db_name]))
 
 
-def post(request,db_name):
-    db = models.Feature_Database.objects.get(name=db_name)
-    sequence = request.REQUEST['sequence']
-    s = frags.features.blat(db,sequence)
-    return redirect(reverse(get,args=[db_name,s.hash]))
-
-
-def get(request,db_name,hash):
+def get(request,hash,db_name):
     """
     Get features of a sequence, using the sequence's sha-1 hash as the
     identifier.
