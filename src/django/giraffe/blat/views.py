@@ -44,3 +44,18 @@ def get(request,hash,db_name):
     )
     return http_res
 
+
+def draw(request,hash,db_name):
+    """
+    Get features of a sequence, using the sequence's sha-1 hash as the
+    identifier.
+    """
+    db = models.Feature_Database.objects.get(name=db_name)
+    sequence = models.Sequence.objects.get(db=db,hash=hash)
+
+    return render_to_response(
+        'blat/draw.html',
+        { "sequence" : sequence }, 
+        context_instance=RequestContext(request)
+    )
+

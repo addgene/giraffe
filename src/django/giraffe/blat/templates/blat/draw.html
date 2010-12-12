@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %} Visualize Sequence {% endblock %}
+
+{% block body %}
+
+<table class="table-list">
+<tr><th>Feature</th><th>Start</th><th>End</th><th>Clockwise</th></tr>
+{% for f in sequence.sequence_feature_set.all %}
+    <tr>
+        <td>{{ f.feature }}</td>
+        <td>{{ f.start }}</td>
+        <td>{{ f.end }}</td>
+        <td>{{ f.clockwise }}</td>
+    </tr>
+{% endfor %}
+</table>
+
+{% endblock %}
+
+{% block pagejs %}
+<script type="text/javascript" src="/headers/js/raphael-min.js">
+</script>
+<script type="text/javascript" src="/headers/js/blat/draw.js">
+</script>
+{% endblock %}
+

@@ -33,8 +33,27 @@ body {
     margin-right:10px;
 }
 
-/* Form stuff */
 
+/*
+ * Different way of displaying ul>li lists, w/o bullet and more like a
+ * row in a table
+ */
+ul.table-list {
+    list-style-type:none; padding-left:0px; border-bottom:1px solid #e0e0e0;
+}
+ul.table-list li { border-top:1px solid #e0e0e0; padding:4px 0px; }
+.table-list .warn { color:#c01c2e; font-weight:bold; }
+.table-list .warn a { color:inherit; text-decoration:inherit }
+
+table.alter-row tr:nth-child(odd) { background:#fff }
+table.alter-row tr:nth-child(even) { background:#f0f0f0 }
+
+table.table-list tr:hover, 
+table.alter-row tr:hover, 
+ul.table-list li:hover { background: #ffe0a0; }
+
+
+/* Form stuff */
 form label { float:left; margin-right:15px; }
 
 

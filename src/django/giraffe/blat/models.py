@@ -30,6 +30,9 @@ class Sequence_Feature(models.Model):
     end = models.PositiveIntegerField()
     clockwise = models.BooleanField()
 
+    class Meta:
+        ordering = ['start','end']
+
     def to_dict(self):
         return {
             "feature_id" : self.feature_id,
