@@ -6,10 +6,15 @@ compiles C program into a python runnable module. no data load, all
 read into program memory
 
 3. load and call this module with new sequence
+  - XXX how to call executable w/o hard-coded path
 
 4. gets back a list of fragments, compile them into features
+  - XXX make sure we got back something, test with real post
 
 5. save features into db for sequence
+  - XXX how do we serialize this and return to user? do we want to
+	return sequence? NO. do we want to return feature sequence?
+	probably yes.
 
 6. output raphaeljs from features list
 
