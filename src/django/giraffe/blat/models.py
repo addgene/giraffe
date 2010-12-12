@@ -1,4 +1,5 @@
 from django.db import models
+import hashlib
 
 
 class Feature_Type(models.Model):
@@ -10,7 +11,6 @@ class Feature_Type(models.Model):
     class Meta:
         verbose_name = "Feature Type"
 
-import hashlib
 
 class Feature(models.Model):
     type = models.ForeignKey(Feature_Type)
@@ -30,6 +30,7 @@ class Feature(models.Model):
 
     class Meta:
         unique_together = (("name","hash"),)
+
 
 class Feature_Database(models.Model):
     name = models.CharField(max_length=64,unique=True)
@@ -51,7 +52,15 @@ class Sequence(models.Model):
     sequence = models.TextField()
     hash = models.CharField(max_length=64,db_index=True)
     modified = models.DateTimeField(auto_now=True)
-    feature_database = models.ForeignKey(Feature_Database)
+    db = models.ForeignKey(Feature_Database)
+
+    class Meta:
+        unique_together = (("db","hash"),)
+
+    def save(self):
+        self.sequence = self.sequence.strip()
+        self.hash = hashlib.sha1(self.sequence).hexdigest()
+        return super(Sequence,self).save()
 
 
 class Sequence_Feature(models.Model):
@@ -60,6 +69,5 @@ class Sequence_Feature(models.Model):
     start = models.PositiveIntegerField()
     end = models.PositiveIntegerField()
     clockwise = models.BooleanField()
-
 
 

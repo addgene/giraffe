@@ -8,6 +8,7 @@ django.contrib.admin.autodiscover()
 
 urlpatterns = patterns('',
     (r'^admin/', include(django.contrib.admin.site.urls)),
+    (r'^blat/', include('giraffe.blat.urls')),
 )
 
 if settings.DEBUG:
