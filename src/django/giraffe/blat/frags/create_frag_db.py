@@ -105,7 +105,9 @@ for f in fdb.features.all():
 def split_len(seq, length):
     return [seq[i:i+length] for i in range(0, len(seq), length)]
 
-output = []
+no_mask_list = []
+mask_list = []
+
 for f in features:
     if f.antisense:
         fragments = split_len(reverse_complement(f.feature.sequence), KTUP)
@@ -122,7 +124,19 @@ for f in features:
         m = sequence_mask(fn)
         if len(fn) == KTUP:
             m = 0
-        output.append('%s,%s,%s,%s,%s,' % (f.feature_index,idx,m,n,shift))
+        output = '%s,%s,%s,%s,%s,' % (f.feature_index,idx,m,n,shift)
+        if m == 0:
+            no_mask_list.append((n,output))
+        else:
+            mask_list.append(output)
+
+no_mask_list.sort(lambda a, b:cmp(a[0],b[0]))
+
+output = []
+for f in no_mask_list:
+    output.append(f[1])
+for f in mask_list:
+    output.append(f)
 
 print len(output)
 print '\n'.join(output)
