@@ -33,7 +33,8 @@ struct feature_desc {
 struct site_ext { unsigned short on; };
 
 struct feature_desc *F;
-unsigned int M_zero = 0;  
+int M_zero = -1;
+unsigned F_index[MASK+1];
 
 int NFEATURES = 0;
 #define MAX_NFEATURES 1024*1024
@@ -54,6 +55,7 @@ load_features (char *blastdata)
   assert (NFEATURES < MAX_NFEATURES);
   F = (struct feature_desc*)
     malloc (sizeof (struct feature_desc)*(NFEATURES));
+  bzero(F_index,sizeof(F_index));
 
   n = 0;
   while (fgets (buf, 1024, fp) && n < NFEATURES) {
@@ -81,8 +83,10 @@ load_features (char *blastdata)
 	    j=0;
       }
     }
-	if (F[n].mask != 0)
+	if (F[n].mask != 0 && M_zero < 0)
 	  M_zero = n;
+	else if (F_index[F[n].seq] == 0)
+	  F_index[F[n].seq]=n+1;
 	n++;
   }
 
@@ -146,12 +150,35 @@ iterate (const char *s, unsigned size, unsigned idx,
       sval = (sval << 2) + 2;
     else if (s [idx] == 'T' || s [idx] == 't')
       sval = (sval << 2) + 3;
-    sval = sval & MASK;
     if (idx < KTUP-1) {
       idx++;
       continue;
     }
-    // can we directly look into zero mask index?
+    sval = sval & MASK;
+
+#if 1
+    if (F_index[sval]>0) {
+      for (i=F_index[sval]-1;
+	       i<NFEATURES && F[i].seq == sval && F[i].mask == 0; i++) {
+        if (x [i].on == 0) {
+          x [i].on = 1;
+		  on_list[on_list_cur] = i;
+		  on_list_cur++;
+        }
+      }
+	}
+	if (M_zero >= 0) {
+	  for (i=M_zero; i<NFEATURES; i++) {
+        if (x [i].on == 0) {
+          if ((sval & F[i].mask) == F[i].seq) {
+            x [i].on = 1;
+		    on_list[on_list_cur] = i;
+		    on_list_cur++;
+          }
+        }
+	  }
+	}
+#else
     for (i=0; i<NFEATURES; i++) {
       if (x [i].on == 0) {
         if ((F[i].mask == 0 && sval == F[i].seq) ||
@@ -162,6 +189,7 @@ iterate (const char *s, unsigned size, unsigned idx,
         }
       }
     }
+#endif
     idx++;
     bidx++;
   }
