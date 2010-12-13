@@ -34,6 +34,7 @@ struct site_ext { unsigned short on; };
 
 struct feature_desc *F;
 int NFEATURES = 0;
+#define MAX_NFEATURES 1024*1024
 
 void
 load_features (char *blastdata)
@@ -47,6 +48,7 @@ load_features (char *blastdata)
     return;
   }
   NFEATURES = atoi (buf);
+  assert (NFEATURES < MAX_NFEATURES);
   F = (struct feature_desc*)
     malloc (sizeof (struct feature_desc)*(NFEATURES));
   n = 0;
@@ -98,29 +100,37 @@ void* get_iterator_data ()
 }
 
 void free_iterator_data (void *v) { free (v); }
+  
+static int on_list[MAX_NFEATURES];
+unsigned int on_list_cur = 0;
 
 int
 iterate (const char *s, unsigned size, unsigned idx,
          void *v, struct feature *f)
 {
-  unsigned i;
+  unsigned i,oi;
   unsigned *p = (unsigned *)v;
   register unsigned sval = (unsigned) (*p);
   register unsigned bidx = 0;
   struct site_ext *x = (struct site_ext *) (v+sizeof(unsigned));
   if (idx >= KTUP-1) bidx = idx-(KTUP-1);
   while (idx < size) {
-    for (i=0; i<NFEATURES; i++) {
+    for (oi=0; oi<on_list_cur; oi++) {
+      if (on_list[oi] == -1) continue;
+      i = on_list[oi];
+	  on_list[oi] = -1;
       if (x [i].on) {
         f->feature_index = F[i].feature_index;
         f->fragment_index = F[i].fragment_index;
         f->position = bidx-1;
-	    f->shift = F[i].shift;
+        f->shift = F[i].shift;
         x [i].on = 0;
-	    *p = sval;
+        *p = sval;
         return idx;
       }
     }
+    on_list_cur = 0;
+
     if (s [idx] == 'A' || s [idx] == 'a')
       sval = (sval << 2) + 0;
     else if (s [idx] == 'G' || s [idx] == 'g')
@@ -139,13 +149,18 @@ iterate (const char *s, unsigned size, unsigned idx,
         if ((F[i].mask == 0 && sval == F[i].seq) ||
 	        (F[i].mask && (sval & F[i].mask) == F[i].seq)) {
           x [i].on = 1;
+		  on_list[on_list_cur] = i;
+		  on_list_cur++;
         }
       }
     }
     idx++;
     bidx++;
   }
-  for (i=0; i<NFEATURES; i++) {
+  for (oi=0; oi<on_list_cur; oi++) {
+    if (on_list[oi] == -1) continue;
+    i = on_list[oi];
+	on_list[oi] = -1;
     if (x [i].on) {
       f->feature_index = F[i].feature_index;
       f->fragment_index = F[i].fragment_index;
@@ -156,6 +171,8 @@ iterate (const char *s, unsigned size, unsigned idx,
       return idx;
     }
   }
+  on_list_cur = 0;
+
   return -1;
 }
 
