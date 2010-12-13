@@ -33,6 +33,8 @@ struct feature_desc {
 struct site_ext { unsigned short on; };
 
 struct feature_desc *F;
+unsigned int M_zero = 0;  
+
 int NFEATURES = 0;
 #define MAX_NFEATURES 1024*1024
 
@@ -42,6 +44,7 @@ load_features (char *blastdata)
   char buf[1024];
   FILE *fp;
   unsigned n;
+
   fp = fopen (blastdata, "r");
   if (fgets (buf, 1024, fp) == NULL) {
     assert ("bad index");
@@ -51,6 +54,7 @@ load_features (char *blastdata)
   assert (NFEATURES < MAX_NFEATURES);
   F = (struct feature_desc*)
     malloc (sizeof (struct feature_desc)*(NFEATURES));
+
   n = 0;
   while (fgets (buf, 1024, fp) && n < NFEATURES) {
     char word[1024];
@@ -77,8 +81,11 @@ load_features (char *blastdata)
 	    j=0;
       }
     }
-    n++;
+	if (F[n].mask != 0)
+	  M_zero = n;
+	n++;
   }
+
   fclose (fp);
 }
 
@@ -144,6 +151,7 @@ iterate (const char *s, unsigned size, unsigned idx,
       idx++;
       continue;
     }
+    // can we directly look into zero mask index?
     for (i=0; i<NFEATURES; i++) {
       if (x [i].on == 0) {
         if ((F[i].mask == 0 && sval == F[i].seq) ||
