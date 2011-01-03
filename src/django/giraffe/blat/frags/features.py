@@ -4,6 +4,7 @@ import tempfile
 from giraffe.blat.models import Sequence
 from giraffe.blat.models import Sequence_Feature
 from giraffe.blat.models import Feature
+from giraffe.blat.frags.frag_to_features import get_features_from_frags
 
 
 def get_frags(db_name,sequence):
@@ -43,7 +44,6 @@ def get_frags(db_name,sequence):
 
     return res
 
-
 def blat(db,sequence):
     sequence = Sequence.strip(sequence)
 
@@ -68,9 +68,21 @@ def blat(db,sequence):
     """
 
     # XXX translate frags to features
-    
-    # XXX store features into database
+    features = get_features_from_frags(frags)
 
+    """
+    # XXX store features into database
+    for ix, fx in enumerate(features):
+        f = Sequence_Feature()
+        f.sequence = s
+        f.feature = Feature.objects.all()[0:1][0]
+        f.start = 0
+        f.end = len(f.feature.sequence)
+        f.clockwise = False
+        f.save()
+    """
+
+    # XXX store features into database
     f = Sequence_Feature()
     f.sequence = s
     f.feature = Feature.objects.all()[0:1][0]
@@ -78,6 +90,6 @@ def blat(db,sequence):
     f.end = len(f.feature.sequence)
     f.clockwise = False
     f.save()
-   
+  
     return s
 
