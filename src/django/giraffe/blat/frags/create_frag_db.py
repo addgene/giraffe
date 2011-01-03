@@ -12,23 +12,27 @@ KTUP = 12
 MASK = 16777215 # should be (4^KTUP)-1
 MINFRAG = 6
 
+SUM_VALUE_0_char = 'a'
+SUM_VALUE_1_char = 'g'
+SUM_VALUE_2_char = 'c'
+SUM_VALUE_3_char = 't'
 
 def sequence_sum(s):
     """
     Calculates a checksum for the sequence.
     """
     # we only work with sequence of KTUP length
-    s = s.ljust(KTUP,'a').lower()
+    s = s.ljust(KTUP,SUM_VALUE_0_char).lower()
     sum = 0
     for char in s:
         sum = sum << 2
-        if char == 'a':
+        if char == SUM_VALUE_0_char:
             sum = sum+0
-        elif char == 'g':
+        elif char == SUM_VALUE_1_char:
             sum = sum+1
-        elif char == 'c':
+        elif char == SUM_VALUE_2_char:
             sum = sum+2
-        elif char == 't':
+        elif char == SUM_VALUE_3_char:
             sum = sum+3
         elif char == 'n':
             sum = sum+0
@@ -41,7 +45,7 @@ def sequence_mask(s):
     """
     Returns sequence mask
     """
-    m = ''.ljust(len(s),'t')
+    m = ''.ljust(len(s),SUM_VALUE_3_char)
     return sequence_sum(m)
 
 

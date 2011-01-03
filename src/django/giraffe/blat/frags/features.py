@@ -47,17 +47,20 @@ def get_frags(db_name,sequence):
 def blat(db,sequence):
     sequence = Sequence.strip(sequence)
 
-    frags = get_frags(db.name,sequence)
-
-    print str(frags)
-    # XXX translate frags to features
-
     # create sequence record
     s = Sequence()
     s.sequence = sequence
     s.db = db
     s.save()
     s.clear_features()
+
+    frags = get_frags(db.name,sequence)
+
+    print str(frags)
+
+    # XXX translate frags to features
+    
+    # XXX store features into database
 
     f = Sequence_Feature()
     f.sequence = s
