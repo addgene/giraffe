@@ -58,6 +58,15 @@ def blat(db,sequence):
 
     print str(frags)
 
+    """
+    x = Feature_DB_Index.objects.get(
+        feature_index=int(frags[0].split(' ')[0]),
+        db=db
+    )
+    x.feature is of type Feature
+      x.feature.type -- Feature type, enzyme, gene, or Exact Feature
+    """
+
     # XXX translate frags to features
     
     # XXX store features into database

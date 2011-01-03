@@ -91,7 +91,7 @@ class Feature_Database(models.Model):
 class Feature_DB_Index(models.Model):
     db = models.ForeignKey(Feature_Database)
     feature_index = models.PositiveIntegerField(db_index=True)
-    feature = models.CharField(max_length=32)
+    feature = models.ForeignKey(Feature)
     antisense = models.BooleanField()
 
     class Meta:
