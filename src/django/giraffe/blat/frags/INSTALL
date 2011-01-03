@@ -2,6 +2,8 @@
 
 gcc -O6 -o frags frags.c
 
+install ./frags /usr/local/bin/giraffe-frags
+
 # *** IMPORTANT, don't forget -O6, at least you should use -O2 ***
 
 # You can generate afire.data, default.data, zfc.data, using
@@ -10,6 +12,12 @@ gcc -O6 -o frags frags.c
 python create_frag_db.py default > default.data
 python create_frag_db.py afire > afire.data
 python create_frag_db.py zfc > zfc.data
+
+mkdir -p /usr/local/share/giraffe
+install -m 0444 default.data /usr/local/share/giraffe
+install -m 0444 afire.data /usr/local/share/giraffe
+install -m 0444 zfc.data /usr/local/share/giraffe
+
 
 # Then run
 # ./frags afire.data sequence_file

@@ -1,6 +1,5 @@
 import os
 import tempfile
-import hashlib
 
 from giraffe.blat.models import Sequence
 from giraffe.blat.models import Sequence_Feature
@@ -8,17 +7,27 @@ from giraffe.blat.models import Feature
 
 
 def get_frags(db_name,sequence):
+    """
+    Returns list of feature fragments for the sequence, after
+    detecting features using the specified feature database. Each
+    member of the list is a string with 4 numbers:
 
-    # XXX how to find the binary?
-    PATH = '/Users/benjie/git/giraffe/src/django/giraffe/blat/frags/'
+    feature index
+    fragment index
+    start position
+    shift
+    """
+
+    BIN_PATH = '/usr/local/bin/'
+    DATA_PATH = '/usr/local/share/giraffe/'
 
     tmp_file = tempfile.NamedTemporaryFile(delete=False)
     # XXX should we write sequence twice to handle boundary?
     tmp_file.write(sequence)
     tmp_file.close()
 
-    cmd = '%s/frags %s/%s.data %s' % (
-        PATH, PATH, db_name, tmp_file.name
+    cmd = '%s/giraffe-frags %s/%s.data %s' % (
+        BIN_PATH, DATA_PATH, db_name, tmp_file.name
     )
     f = os.popen(cmd)
     res = f.readlines()
@@ -40,16 +49,15 @@ def blat(db,sequence):
 
     frags = get_frags(db.name,sequence)
 
+    print str(frags)
     # XXX translate frags to features
 
-    hash = hashlib.sha1(sequence).hexdigest()
-
     # create sequence record
-    s = Sequence.objects.filter(hash=hash,db=db).delete()
     s = Sequence()
     s.sequence = sequence
     s.db = db
     s.save()
+    s.clear_features()
 
     f = Sequence_Feature()
     f.sequence = s

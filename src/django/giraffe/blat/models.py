@@ -1,30 +1,11 @@
 from django.db import models
+from django.db import utils
 import hashlib
 import re
 
 
-class Sequence(models.Model):
-    sequence = models.TextField()
-    hash = models.CharField(max_length=64,db_index=True)
-    modified = models.DateTimeField(auto_now=True)
-    db = models.ForeignKey('Feature_Database')
-
-    class Meta:
-        unique_together = (("db","hash"),)
-
-    def save(self):
-        self.sequence = Sequence.strip(self.sequence)
-        self.hash = hashlib.sha1(self.sequence.lower()).hexdigest()
-        return super(Sequence,self).save()
-
-    @staticmethod
-    def strip(sequence):
-        sequence = re.sub(r'\s', '', sequence)
-        return sequence
-
-
 class Sequence_Feature(models.Model):
-    sequence = models.ForeignKey(Sequence)
+    sequence = models.ForeignKey('Sequence')
     feature = models.ForeignKey('Feature')
     start = models.PositiveIntegerField()
     end = models.PositiveIntegerField()
@@ -40,6 +21,35 @@ class Sequence_Feature(models.Model):
             "end" : self.end,
             "clockwise" : self.clockwise
         }
+
+
+class Sequence(models.Model):
+    sequence = models.TextField()
+    hash = models.CharField(max_length=64,db_index=True)
+    modified = models.DateTimeField(auto_now=True)
+    db = models.ForeignKey('Feature_Database')
+
+    class Meta:
+        unique_together = (("db","hash"),)
+
+    def save(self):
+        self.sequence = Sequence.strip(self.sequence)
+        self.hash = hashlib.sha1(self.sequence.lower()).hexdigest()
+        try:
+            super(Sequence,self).save()
+        except utils.IntegrityError as e:
+            s = Sequence.objects.get(hash=self.hash,db=self.db)
+            self.id = s.id
+    save.alters_data = True
+
+    def clear_features(self):
+        Sequence_Feature.objects.filter(sequence=self).delete()
+    clear_features.alters_data = True 
+
+    @staticmethod
+    def strip(sequence):
+        sequence = re.sub(r'\s', '', sequence)
+        return sequence
 
 
 class Feature_Type(models.Model):
