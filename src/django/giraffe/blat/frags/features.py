@@ -26,7 +26,6 @@ def get_frags(db_name,sequence):
     DATA_PATH = '/usr/local/share/giraffe/'
 
     tmp_file = tempfile.NamedTemporaryFile(delete=False)
-    # XXX should we write sequence twice to handle boundary?
     tmp_file.write(sequence)
     tmp_file.close()
 
