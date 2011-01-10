@@ -3,8 +3,11 @@ import tempfile
 
 from giraffe.blat.models import Sequence
 from giraffe.blat.models import Sequence_Feature
+from giraffe.blat.models import Feature_DB_Index
 from giraffe.blat.models import Feature
-from giraffe.blat.frags.frag_to_features import get_features_from_frags
+from giraffe.blat.frags.frags_to_features import frags_to_features
+
+import time
 
 
 def get_frags(db_name,sequence):
@@ -55,41 +58,28 @@ def blat(db,sequence):
     s.clear_features()
 
     frags = get_frags(db.name,sequence)
+    frag_names = set()
 
-    print str(frags)
+    for frag in frags:
+        fdb = Feature_DB_Index.objects.get(
+                       feature_index=int(frag.split()[0]),
+                       db=db)
+        frag_names.add("%s %s" % (fdb.feature.name, "antisense" if fdb.antisense else
+            ''))
+    for fname in frag_names:
+        print fname
 
-    """
-    x = Feature_DB_Index.objects.get(
-        feature_index=int(frags[0].split(' ')[0]),
-        db=db
-    )
-    x.feature is of type Feature
-      x.feature.type -- Feature type, enzyme, gene, or Exact Feature
-    """
+    # Translate frags to features and store them into the database
+    features = frags_to_features(frags, db)
+    print "exited frags_to_features with %d" % len(features)
 
-    # XXX translate frags to features
-    features = get_features_from_frags(frags)
+    # Store features into database
+    t0 = time.time()
+    for fx, feature in enumerate(features):
+        feature.sequence = s
+        feature.save()
+    t0 = time.time() - t0
+    print "database add took %f seconds" % t0
 
-    """
-    # XXX store features into database
-    for ix, fx in enumerate(features):
-        f = Sequence_Feature()
-        f.sequence = s
-        f.feature = Feature.objects.all()[0:1][0]
-        f.start = 0
-        f.end = len(f.feature.sequence)
-        f.clockwise = False
-        f.save()
-    """
-
-    # XXX store features into database
-    f = Sequence_Feature()
-    f.sequence = s
-    f.feature = Feature.objects.all()[0:1][0]
-    f.start = 0
-    f.end = len(f.feature.sequence)
-    f.clockwise = False
-    f.save()
-  
     return s
 
