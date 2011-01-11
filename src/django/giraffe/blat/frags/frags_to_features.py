@@ -218,13 +218,14 @@ class FragTrain(AutoCalc):
                (other_train.stop_position >= self.tail().seq_start_position + \
                        Frag.SIZE - 1)
 
-    def to_feature(self):
-        feat = Sequence_Feature()
-        feat.feature = self.feature
-        feat.start = self.start_position
-        feat.end = self.stop_position
-        feat.clockwise = self.clockwise
-        return feat
+    def to_seq_feature(self):
+        seq_feat = Sequence_Feature()
+        seq_feat.feature = self.feature
+        seq_feat.start = self.start_position
+        seq_feat.end = self.stop_position
+        seq_feat.clockwise = self.clockwise
+        seq_feat.score = _percent_identity_error(self)
+        return seq_feat
 
 class FragTrainLink(AutoCalc):
     """ Links a Frag to a FragTrain, temporarily or permanently. """
@@ -348,14 +349,14 @@ def _group_frags_by_feature_index(frags_strings):
 
     return frags_by_feature
 
-# This callback function should be the only explicitly feature type-dependent
-# code
-# TODO: Make this threshold function part of the FeatureType class
-def _percent_identity_threshold(train):
+# These callback functions should be the only explicitly feature type-dependent
+# code in this module
+# TODO: Make this error/threshold function part of the FeatureType class
+def _percent_identity_error(train):
 
     # Exact features must be exact: no scoring system
     if (train.feature.type.type == "ExactFeature") or \
-       (train.feature.type.type == "Cutter"):
+       (train.feature.type.type == "Enzyme"):
         if train.hits == train.feature_length and \
            train.inserts == 0 and train.deletes == 0 and train.mutations == 0:
             return True
@@ -407,8 +408,10 @@ def _percent_identity_threshold(train):
 
         # Normalization
         pct_identity_error = 1 - net_matches / train.feature_length
+        return pct_identity_error
 
-        return pct_identity_error < PCT_IDENTITY_ERROR_THRESHOLD
+def _percent_identity_threshold(train):
+    return _percent_identity_error(train) < PCT_IDENTITY_ERROR_THRESHOLD
 
 def _frags_to_trains(frags, feature_db, 
                      train_matches = _percent_identity_threshold):
@@ -503,9 +506,9 @@ def _frags_to_trains(frags, feature_db,
 
     return trains
 
-def _trains_to_features(trains,
-                        train_matches = _percent_identity_threshold):
-    features = []
+def _trains_to_seq_features(trains,
+                            train_matches = _percent_identity_threshold):
+    seq_features = []
 
     last_train = None
 
@@ -518,23 +521,10 @@ def _trains_to_features(trains,
         # TODO rewrite them in a logical way consistent with the new
         #      object-oriented model
         if train_matches(train) or train.is_high_fidelity:
-            features.append(train.to_feature())
+            seq_features.append(train.to_seq_feature())
             last_train = train
 
-    return features
-
-def _pick_good_features(features):
-    # TODO: make this function a method of Seq_Feat objects
-    def left_pos(feat):
-        return feat.start if feat.clockwise else 2 * feat.start - feat.end
-
-    # The returns left-most position of sequence. if it's
-    # clockwise, it's just the start. if not, it's the startpos - length =
-    # 2*start - end
-    features.sort(key = left_pos)
-
-    for feature in features:
-        left_pos_outer = left_pos(feature)
+    return seq_features
 
 ### MAIN ENTRY POINT
 def frags_to_features(frags_strings, db):
@@ -544,7 +534,7 @@ def frags_to_features(frags_strings, db):
 
     if __debug: print "Turning frags into features"
 
-    all_features = [] 
+    all_seq_features = [] 
 
     # Sort the fragments into groups of the same feature
     frags_by_feature_index = _group_frags_by_feature_index(frags_strings)
@@ -555,9 +545,7 @@ def frags_to_features(frags_strings, db):
                                                   db=db)
         single_index_trains   = _frags_to_trains(single_index_frags,
                                                  feature_db)
-        single_index_features = _trains_to_features(single_index_trains)
-        all_features.extend(single_index_features)
+        single_index_seq_features = _trains_to_seq_features(single_index_trains)
+        all_seq_features.extend(single_index_seq_features)
 
-    _pick_good_features(all_features)
-
-    return all_features
+    return all_seq_features
