@@ -5,16 +5,19 @@
 {% block body %}
 
 <table class="table-list">
-<tr><th>Feature</th><th>Start</th><th>End</th><th>Clockwise</th></tr>
+<tr><th>Feature</th><th>Start</th><th>End</th><th>Type</th><th>Clockwise</th></tr>
 {% for f in sequence.sequence_feature_set.all %}
     <tr>
         <td>{{ f.feature }}</td>
         <td>{{ f.start }}</td>
         <td>{{ f.end }}</td>
+        <td>{{ f.feature.type }}</td>
         <td>{{ f.clockwise }}</td>
     </tr>
 {% endfor %}
 </table>
+
+<div id="plasmid-map"></div>
 
 {% endblock %}
 

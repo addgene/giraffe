@@ -62,4 +62,9 @@ form label { float:left; margin-right:15px; }
  */
 .giraffe table { width:inherit; }
 
+/*
+ * Plasmid Map
+ */
+#plasmid-map { width: 640px; height: 640px }
+
 
