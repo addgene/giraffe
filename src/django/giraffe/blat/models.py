@@ -55,6 +55,11 @@ class Sequence(models.Model):
 class Feature_Type(models.Model):
     type = models.CharField(max_length=64)
 
+    # Feature type ID constants
+    (FEATURE,    PROMOTER,   PRIMER,
+     ENZYME,     GENE,       ORIGIN,
+     REGULATORY, TERMINATOR, EXACT_FEATURE) = range(0, 9)
+
     def __unicode__(self):
         return self.type
 
