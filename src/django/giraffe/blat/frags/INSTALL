@@ -1,5 +1,6 @@
-# Compile frags.c:
+#!/bin/sh -x
 
+# Compile frags.c:
 gcc -O6 -o frags frags.c
 
 install ./frags /usr/local/bin/giraffe-frags
