@@ -519,7 +519,7 @@ def _percent_identity_threshold(train):
 
     # Store the most recently calculated error score in the train
     train.score = pct_identity_error
-    return _percent_identity_error < PCT_IDENTITY_ERROR_THRESHOLD
+    return pct_identity_error < PCT_IDENTITY_ERROR_THRESHOLD
 #  XXX End FeatureType-Dependent Code
 
 
