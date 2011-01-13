@@ -89,8 +89,9 @@ def blat(db,sequence):
         for feature in features:
             feature.sequence = s
             feature.save()
-    except:
+    except Exception, e:
         transaction.rollback()
+        raise e
     else:
         transaction.commit()
 
