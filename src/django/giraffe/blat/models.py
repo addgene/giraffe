@@ -58,7 +58,7 @@ class Feature_Type(models.Model):
     # Feature type ID constants
     (FEATURE,    PROMOTER,   PRIMER,
      ENZYME,     GENE,       ORIGIN,
-     REGULATORY, TERMINATOR, EXACT_FEATURE) = range(0, 9)
+     REGULATORY, TERMINATOR, EXACT_FEATURE) = range(1, 10)
 
     def __unicode__(self):
         return self.type
