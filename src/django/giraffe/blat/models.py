@@ -24,6 +24,21 @@ class Sequence_Feature(models.Model):
 
 
 class Sequence(models.Model):
+    @staticmethod
+    def strip(sequence):
+        sequence = re.sub(r'\s', '', sequence)
+        return sequence
+
+    @staticmethod
+    def clean_and_hash(sequence):
+        """
+        Takes a sequence, returns a tuple, the cleaned sequence and
+        the sequence hash.
+        """
+        sequence = Sequence.strip(sequence)
+        hash = hashlib.sha1(sequence.lower()).hexdigest()
+        return (sequence,hash)
+
     sequence = models.TextField()
     hash = models.CharField(max_length=64,db_index=True)
     modified = models.DateTimeField(auto_now=True)
@@ -33,8 +48,7 @@ class Sequence(models.Model):
         unique_together = (("db","hash"),)
 
     def save(self):
-        self.sequence = Sequence.strip(self.sequence)
-        self.hash = hashlib.sha1(self.sequence.lower()).hexdigest()
+        (self.sequence,self.hash) = Sequence.clean_and_hash(self.sequence)
         try:
             super(Sequence,self).save()
         except utils.IntegrityError as e:
@@ -45,11 +59,6 @@ class Sequence(models.Model):
     def clear_features(self):
         Sequence_Feature.objects.filter(sequence=self).delete()
     clear_features.alters_data = True 
-
-    @staticmethod
-    def strip(sequence):
-        sequence = re.sub(r'\s', '', sequence)
-        return sequence
 
 
 class Feature_Type(models.Model):
