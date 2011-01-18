@@ -38,11 +38,32 @@ def get(request,hash,db_name):
     for f in sequence.sequence_feature_set.order_by("start"):
         res.append(f.to_dict())
 
-    j = json.JSONEncoder().encode (res)
-    http_res = HttpResponse(
-        j,mimetype="application/json",status=httplib.OK
-    )
+    j = json.JSONEncoder().encode(res)
+
+    if 'jsonp' in request.GET:
+        j = request.GET['jsonp']+'('+j+')'
+        http_res = HttpResponse(
+            j,mimetype="text/javascript",status=httplib.OK
+        )
+    else:
+        http_res = HttpResponse(
+            j,mimetype="application/json",status=httplib.OK
+        )
+
     return http_res
+
+
+def post_check(request):
+    assert(request.method == 'POST')
+    db_name = request.POST['db']
+    sequence = request.POST['sequence']
+    (sequence,hash) = models.Sequence.clean_and_hash(sequence)
+    db = models.Feature_Database.objects.get(name=db_name)
+    obj = models.Sequence.objects.filter(db=db,hash=hash)
+    if len(obj) > 0:
+        return get(request, hash, db_name)
+    else:
+        return post(request)
 
 
 def draw(request,hash,db_name):
