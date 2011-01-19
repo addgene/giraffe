@@ -2,19 +2,31 @@
 
 {% block title %} Visualize Sequence {% endblock %}
 
+{% block pagecss %}<link rel="stylesheet" href="/headers/css/blat/draw.css"
+            type="text/css" />{% endblock %}
+
 {% block body %}
 
+<div id="sequence-data">
+	<strong>Sequence Length</strong>
+	<div id="sequence-data-length">{{sequence.sequence|length}}</div>
+</div>
+
 <table class="table-list">
-<tr><th>Feature</th><th>Start</th><th>End</th><th>Type</th><th>Clockwise</th></tr>
-{% for f in sequence.sequence_feature_set.all %}
-    <tr>
-        <td>{{ f.feature }}</td>
-        <td>{{ f.start }}</td>
-        <td>{{ f.end }}</td>
-        <td>{{ f.feature.type }}</td>
-        <td>{{ f.clockwise }}</td>
-    </tr>
-{% endfor %}
+	<thead><tr><th>Feature</th><th>Start</th><th>End</th><th>Type</th></tr></thead>
+	<tbody>{% for f in sequence.sequence_feature_set.all %}
+		<tr>
+			<td>{{ f.feature }}</td>
+			{% if f.clockwise %}
+			<td>{{ f.start }}</td>
+			<td>{{ f.end }}</td>
+			{% else %}
+			<td>{{ f.end }}</td>
+			<td>{{ f.start }}</td>
+			{% endif %}
+			<td>{{ f.feature.type }}</td>
+		</tr>{% endfor %}
+	</tbody>
 </table>
 
 <div id="plasmid-map"></div>

@@ -56,7 +56,6 @@ ul.table-list li:hover { background: #ffe0a0; }
 /* Form stuff */
 form label { float:left; margin-right:15px; }
 
-
 /*
  * Overriding Blueprint
  */
@@ -65,6 +64,5 @@ form label { float:left; margin-right:15px; }
 /*
  * Plasmid Map
  */
-#plasmid-map { width: 640px; height: 640px }
-
+#plasmid-map { border: 1px solid #e0e0e0; width: 480px; height: 480px; margin:auto }
 
