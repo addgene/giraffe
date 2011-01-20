@@ -1,4 +1,5 @@
 jQuery(document).ready(function ($) {
+	var _debug = false;
 	///////////////////////////////////////////////////////////////////
 	// Global parameters
 	// Paper setup
@@ -428,7 +429,7 @@ jQuery(document).ready(function ($) {
 		plasmid_label.attr({"fill":      color_plasmid,
 							"font-size": "12pt"});
 
-		for (ang = 0; ang < 360; ang += 30) {
+		for (var ang = 0; ang < 360; ang += 30) {
 			draw_tic_mark(ang);
 		}
 	}
@@ -444,7 +445,7 @@ jQuery(document).ready(function ($) {
 				foo = $(this).html();
 				row.push($(this).html());
 			})
-			var feat = new Feature(row.slice(2));
+			var feat = new Feature(row.slice(2)); // row[0:2] are the checkboxes
 			features.push(feat);
 		})
 
@@ -457,15 +458,49 @@ jQuery(document).ready(function ($) {
 		var rad = plasmid_radius; // current radius
 		var rx = 1;               // radius counter
 		var max_rad = plasmid_radius;
+
+		function push(winner, loser) {
+			// Record that the push happened
+			winner.pushed_features.push(loser); 
+			conflicts++;
+
+			// Do it
+			loser.radius = new_rad; 
+
+			if (_debug) console.warn(loser.name() + " pushed by " + winner.name());
+			
+			// Since loser was pushed, un-push all the 
+			// features it caused to be pushed, as long as
+			// those features were not in conflict with others.
+			for (var pfx in loser.pushed_features) {
+				var pf = loser.pushed_features[pfx];
+				// Check for conflict with other the winner feature itself.
+				// If there's no conflict, we can pushh it back safely.
+				if (pf.start_degrees() - winner.end_degrees() <= min_overlap_cutoff ||
+					winner.start_degrees() - pf.end_degrees() <= min_overlap_cutoff) {
+					if (_debug)
+						console.warn(pf.name() + "unpushed, because " 
+							+ loser.name() + " pushed by " + winner.name());
+					pf.radius = rad;
+				}
+			}
+		}
+
 		do {
 			// Keep alternating between inside and outside the plasmid.
 			var new_rad = rad + Math.pow(-1, rx) * rx * radius_spacing;
 
 			conflicts = 0; // Assume you have no conflicts until you find some
+
+			// Clear the record of who pushed whom
+			for (var fx in features) {
+				features[fx].pushed_features = [];
+			}
+
 			var biggest_size = 0;
 			var biggest_feature;
 			var furthest_point = 90; // Start at the top of the circle
-			for (fx in features) {
+			for (var fx in features) {
 				var f = features[fx];
 				if (f.radius == rad && f.type() != ft_enzyme) { 
 					var new_size = f.size_degrees();
@@ -485,16 +520,17 @@ jQuery(document).ready(function ($) {
 						if (new_size > biggest_size) { // This feature is top dog,
 						                               // move the original to the
 						                               // new radius
-							biggest_feature.radius = new_rad;
+							push(f, biggest_feature);
+
+							// Update the new top dog
 							biggest_size = new_size;
 							biggest_feature = f;
 							furthest_point = f.end_degrees();
-							conflicts++;
 
 						} else { // The original feature is top dog. move the new
 						         // feature to the new radius
-							f.radius = new_rad;
-							conflicts++;
+
+							push(biggest_feature, f);
 						}
 
 					}
@@ -516,7 +552,7 @@ jQuery(document).ready(function ($) {
 	}
 
 	function draw_features(features) {
-		for (fx in features) {
+		for (var fx in features) {
 			features[fx].draw();
 		}
 	}
@@ -532,7 +568,7 @@ jQuery(document).ready(function ($) {
 	}
 
 	function register_handlers(features) {
-		for (fx in features) {
+		for (var fx in features) {
 			features[fx].register_handlers();
 		}
 	}
