@@ -1,8 +1,9 @@
 jQuery(document).ready(function ($) {
+	///////////////////////////////////////////////////////////////////
 	// Global parameters
 	// Paper setup
 	var map_width = 640;
-	var map_height = 480;
+	var map_height = 640;
 	var cx = map_width/2;
 	var cy = map_height/2;
 
@@ -14,17 +15,25 @@ jQuery(document).ready(function ($) {
 	var plasmid_radius = 200;
 	var inner_radius = plasmid_radius - radius_spacing; 
 	var outer_radius = plasmid_radius + radius_spacing;
+	var label_radius_offset = 0;
 
 	// Feature visual properties
 	var feature_width = 15;
-	var enzyme_width = 20;
+	var enzyme_width = 25;
+	var enzyme_weight = 1; // Restriction enzymes are drawn differently
+	                       // This controls their "thickness" on the map
 	var feature_opacity = 1.0/3.0;
+	var enzyme_opacity = 1.0;
 	var head_width = 25;
 	var head_length = 7;
 
+	// Animation properties
+	var fade_time = 300;
+
 	// Overlaps
-	var min_overlap_pct = 0.05;
-	var min_overlap_feature_size = 10;
+	var min_overlap_cutoff = -0.1;// in degrees
+	var min_overlap_pct = 0.01;
+	var min_overlap_feature_size = 0.5; // in degrees
 	
 	// Tic marks
 	var tic_mark_length = 15;
@@ -37,7 +46,7 @@ jQuery(document).ready(function ($) {
 	var color_feature = "#f00";
 	var color_primer  = "#090";
 	var color_origin  = "#333";
-	var color_enzyme  = "#009";
+	var color_enzyme  = "#00c";
 
 	// Feature Types
 	var ft_gene = "Gene";
@@ -50,6 +59,13 @@ jQuery(document).ready(function ($) {
 	var ft_feature = "Feature";
 	var ft_exact_feature = "Exact Feature";
 
+	///////////////////////////////////////////////////////////////////
+	// Internals start here
+	
+	// Global label height list: keeps track of the current heights of each of
+	// the 8 label lists, so that we know at what height to add the next label.
+	var label_heights = [0, 0, 0, 0, 0, 0, 0, 0];
+	
 	// SVG Object
 	// For dealing with the SVG syntax
 	var svg = {
@@ -77,9 +93,13 @@ jQuery(document).ready(function ($) {
 			//     start at the top of the circle
 			return 90 - (p/seq_length) * 360;
 		},
+		seq_length_to_angle: function (l) {
+			//     just like pos_to_angle, but without caring about the start
+			return (l/seq_length) * 360;
+		},
 		angle_to_pos: function (a) {
 			//     start at the top of the circle
-			return Math.round((seq_length/360) * ((360 + 90 - a) % 360));
+			return Math.round(1 + ((seq_length - 1)/360) * ((360 + 90 - a) % 360));
 		},
 		/* Angle a is in degrees from the horizontal, counterclockwise, and
 		 * r is relative to the center of the paper */
@@ -93,83 +113,148 @@ jQuery(document).ready(function ($) {
 	};
 
 
+	///////////////////////////////////////////////////////////////////
 	// Feature class
 	function Feature(feature_list) {
-		var name = feature_list[0];
-		var start = parseInt(feature_list[1]);
-		var end = parseInt(feature_list[2]);
-		var type = feature_list[3];
-		var clockwise = (start <= end);
 
-		// Ensure that start and end go clockwise, regardless
-		// of what the feature does
-		if (!clockwise) {
-			var tmp = start;
-			start = end;
-			end = tmp;
+		// Private data members, from the argument list
+		var _name = feature_list[0];
+		var _start = parseInt(feature_list[1]);
+		var _end = parseInt(feature_list[2]);
+		var _type = feature_list[3];
+		var _clockwise = (_start <= _end);
+
+		// Because we store the clockwise information in a separate variable,
+		// ensure that start and end go clockwise (end > start), regardless
+		// of what the original feature data was
+		if (!_clockwise) {
+			var _tmp = _start;
+			_start = _end;
+			_end = _tmp;
 		}
+
+		// Type-based property selection
+		var _color = color_feature;
+		var _width = feature_width;
+		var _draw_head = false;
+		var _opacity = feature_opacity;
+		var _opaque = false; // holds opacity for clicks
+		switch(_type) {
+			case ft_promoter:
+			case ft_primer:
+				_draw_head = true; // Promotors and primers are the only primer-colored
+			case ft_terminator:   // features with heads
+				_color = color_primer;
+				break;
+			case ft_regulatory:
+			case ft_origin:
+				_color = color_origin;
+				break;
+			case ft_enzyme:
+				_color = color_enzyme;
+				_width = enzyme_width;
+				_opacity = enzyme_opacity;
+				break;
+			case ft_gene:
+				_draw_head = true;
+				break;
+		}
+
+		var _this = this; // another copy of the this pointer, to 
+		              // work around a JavaScript bug that reassigns (this)
+		              // improperly
 
 		// Radius is public, unlike other properties, which are permanent
 		this.radius = plasmid_radius; // Default to plasmid radius, can be changed
 		                              // later on by other methods
 
 		// Accessors for private properties set at creation
-		this.name = function() { return name; };
-		this.start = function() { return start; };
-		this.end = function() { return end; };
-		this.type = function() { return type; };
-		this.clockwise = function() { return clockwise; };
+		this.name = function() { return _name; };
+		this.start = function() { return _start; };
+		this.end = function() { return _end; };
+		this.type = function() { return _type; };
+		this.clockwise = function() { return _clockwise; };
 
-		// Feature drawing
-		var f = this; // JavaScript bug workaround
-		this.draw = function () {
+		// Calculated properties
+		
+		// Degree conversion, for overlap calculation:
+		// for these functions, the sequence starts at 90 degrees and goes down.
+		this.start_degrees = function() {
+			var sd;
+			// Take the minimum head size into account. Only need to do this 
+			// when the head is drawn and pointing clockwise, to
+			// "push the start back."
+			if (_draw_head && _clockwise) { 
+				sd = convert.pos_to_angle(_end) + _this.size_degrees();
+			} else { // Headless feature, or head is pointing the wrong way.
+				     // Just give its typical start position
+				sd = convert.pos_to_angle(_start);
+			}
+			return sd;
+		}
+		this.end_degrees = function() {
+			var ed;
+			// Take the minimum head size into account. Only need to do this 
+			// when the head is drawn and pointing counterclockwise, to 
+			// "push the end forward."
+			if (_draw_head && !_clockwise) { // Take the minimum head size into account
+				ed = convert.pos_to_angle(_start) - _this.size_degrees();
+			} else { // Headless feature, or head is pointing the wrong way.
+				     // Just give its typical end position
+				ed = convert.pos_to_angle(_end);
+			}
+			return ed;
+		}
+		this.size_degrees = function() {
+			var szd; // size in degrees
+			// Normal definition of size
+			szd = convert.seq_length_to_angle(_this.end() - _this.start() + 1);
 
-			// Property selection
-			var color = color_feature;
-			var width = feature_width;
-			var draw_head = false;
-			switch(type) {
-				case ft_promoter:
-					draw_head = true; // Promotors are the only primer-colored
-				case ft_primer:       // features with heads
-				case ft_terminator:
-					color = color_primer;
-					break;
-				case ft_regulatory:
-				case ft_origin:
-					color = color_origin;
-					break;
-				case ft_enzyme:
-					color = color_enzyme;
-					width = enzyme_width;
-					break;
-				case ft_gene:
-					draw_head = true;
-					break;
+			// Head size: return this if it's bigger
+			if (_draw_head) {
+				// Convert the head length into degrees, just as you do
+				// in the draw() method. Must recalcualte every time, as
+				// radius may have changed
+				var r_p = Math.sqrt(_this.radius*_this.radius + 
+						head_length*head_length);
+				var hszd = Raphael.deg(Math.asin(head_length/r_p));
+				if (hszd > szd)
+					szd = hszd;
 			}
 
+			return szd;
+		}
+
+
+		// The visual object to modify when accessing the feature.
+		var draw_feature = paper.set();
+
+		// Feature drawing
+		this.draw = function () {
+
+
 			// Convert from sequence positions to angles
-			var a0 = convert.pos_to_angle(start);
-			var a1 = convert.pos_to_angle(end);
+			var a0 = convert.pos_to_angle(_start);
+			var a1 = convert.pos_to_angle(_end);
 
 			// Create the draw feature, a set which will have the head 
 			// and arc pushed onto it as necessary.
-			var draw_feature = paper.set();
 			
 			// Arrowhead drawing, if needed
-			if (draw_head) {
+			if (_draw_head) {
 
-				// Arrow tip point lines up with a0 or a1,
+				// Arrow tip point lines up with a0 or a1 and it points
+				// tangent to the circle.
 				// We need to figure out how many radians the arrow takes up
 				// in order to adjust a0 or a1 by that amount, and to set the 
 				// base of the triangle even with that angle
-				var r_p = Math.sqrt(f.radius*f.radius + 
+				var r_p = Math.sqrt(_this.radius*_this.radius + 
 						head_length*head_length);
 				// "height" of the arrowhead, in degrees
 				var a_b;
 				var a_p = Raphael.deg(Math.asin(head_length/r_p));
 				// Adjust the appropriate edge to compensate for the arrowhead
-				if (clockwise) {
+				if (_clockwise) {
 					a_b = (a1 + a_p) % 360 ; // base angle
 					a_p = a1;       // point angle
 					a1  = a_b;      // adjust arc edge
@@ -178,11 +263,11 @@ jQuery(document).ready(function ($) {
 					a_p = a0;       // point angle
 					a0  = a_b;      // adjust arc edge
 				}
-				var xy_p = convert.polar_to_rect(f.radius, a_p);
+				var xy_p = convert.polar_to_rect(_this.radius, a_p);
 				
 				// bottom and top points, rectangular
-				var xy_b = convert.polar_to_rect(f.radius - head_width/2.0, a_b);
-				var xy_t = convert.polar_to_rect(f.radius + head_width/2.0, a_b);
+				var xy_b = convert.polar_to_rect(_this.radius - head_width/2.0, a_b);
+				var xy_t = convert.polar_to_rect(_this.radius + head_width/2.0, a_b);
 
 				// Unlike the arc, the head is traced with a line, and
 				// then created entirely with the fill color
@@ -191,47 +276,130 @@ jQuery(document).ready(function ($) {
 									  svg.line(xy_t.x, xy_t.y) + 
 									  svg.close());
 				head.attr({"stroke-width": 0,
-						   "fill":         color});
+						   "fill":         _color});
 				draw_feature.push(head);
 			}
 
 			// Arc drawing
-			if (a1 < a0) { // Compensating for the head may have "taken up" all
-				           // the room on the plasmid, in which case no arc needs
-						   // to be drawn
+			if (a1 < a0 && _type != ft_enzyme) { 
+				// Compensating for the head may have "taken up" all
+				// the room on the plasmid, in which case no arc needs
+				// to be drawn
 
 				// Rectangular coordinates of the edges of the arc: 
 				// arcs are drawn counterclockwise, even though the plasmid
 				// sequence increases clockwise, so we flip the
 				// indices
-				var xy0 = convert.polar_to_rect(f.radius, a1);
-				var xy1 = convert.polar_to_rect(f.radius, a0);
+				var xy0 = convert.polar_to_rect(_this.radius, a1);
+				var xy1 = convert.polar_to_rect(_this.radius, a0);
 
 				// The arc has no fill-color: it's just a thick line
 				var arc = paper.path(svg.move(xy0.x, xy0.y) +
-									 svg.arc(f.radius, xy1.x, xy1.y));
-				arc.attr({"stroke-width": width});
+									 svg.arc(_this.radius, xy1.x, xy1.y));
+				arc.attr({"stroke-width": _width});
 
 				draw_feature.push(arc);
+			} else if (_type == ft_enzyme) { 
+				// Restriction enzymes get drawn on their own
+				var xy0 = convert.polar_to_rect(_this.radius - enzyme_width/2.0, 
+						(a0+a1)/2.0);
+				var xy1 = convert.polar_to_rect(_this.radius + enzyme_width/2.0, 
+						(a0+a1)/2.0);
+				// Not really an arc, just a line, but left this way
+				// for consistency
+				var arc = paper.path(svg.move(xy0.x, xy0.y) +
+									 svg.line(xy1.x, xy1.y));
+				arc.attr({"stroke-width": enzyme_weight});
+				arc.toBack();
+
+				draw_feature.push(arc);
+				_opaque = true;
 			}
 
 			// Apply the feature-wise properties to the whole feature
-			draw_feature.attr({"stroke":         color,
+			draw_feature.attr({"stroke":         _color,
 			                   "stroke-linecap": "butt",
-			                   "opacity":        feature_opacity,
-			                   "title":          name});
+			                   "opacity":        _opacity,
+			                   "title":          _name});
 
+
+		} // END Feature::draw()
+
+		// Draw the label associated with that feature
+		this.draw_label = function (r_l) {
+			// Figure out the center of the feature
+			a_c = (_this.start_degrees() + _this.end_degrees()) / 2.0;
+			xy0 = convert.polar_to_rect(_this.radius, a_c);
+			
+			// Figure out the label position: divide the grid up into eight
+			// sections
+			section = Math.floor((90 - a_c) / 45);
+			section_angle = 90 - 45/2.0 - section*45;
+			feature_section_extent = (a_c - (section_angle + 45/2.0))/45;
+
+			xy1 = convert.polar_to_rect(r_l, section_angle);
+
+			y_shift = label_heights[section];
+			// TODO: FIX THIS TO ACCOUNT FOR OTHER LABELS!
+			if (xy1.y > cy) { // Lower half: add below
+				xy1.y += y_shift;
+			} else { // Upper half: add above
+				xy1.y -= y_shift;
+			}
+
+			// Draw the line to the label position
+			var label_line = paper.path(svg.move(xy0.x, xy0.y) +
+										svg.line(xy1.x, xy1.y));
+			label_line.attr({"stroke": color_bg_text,
+			                 "opacity": feature_opacity});
+
+
+			var label = paper.text(xy1.x, xy1.y, _name);
+			if (a_c < -90 && a_c > -270) { // Left half of wheel: align right
+				label.attr({"text-anchor": "end"});
+			} else if (a_c < 90 && a_c > -90) { // Right half of wheel: align left
+				label.attr({"text-anchor": "start"});
+			} // Top and bottom default to middle, which is correct
+
+			// Update the label heights
+			label_heights[section] += label.getBBox().height;
+
+			label.attr({"fill": _color,
+			            "opacity": feature_opacity});
+
+			draw_feature.push(label);
+			draw_feature.push(label_line);
+
+		} // END Feature::draw_label(r_l)
+
+		// Register click and hover handlers to make the feature "active"
+		this.register_handlers = function () {
 			// Toggle solid/light upon click
 			draw_feature.click(function (event) {
-				if (this.attr("opacity") < 1.0) {
-					draw_feature.animate({"opacity": 1}, 300);
+				if (_opaque) {
+					draw_feature.animate({"opacity": feature_opacity}, fade_time);
+					_opaque = false;
 				} else {
-					draw_feature.animate({"opacity": feature_opacity}, 300);
+					draw_feature.animate({"opacity": 1}, fade_time);
+					_opaque = true;
 				}
 			});
+			draw_feature.hover(
+				function (event) {
+					if (!_opaque)
+						draw_feature.animate({"opacity": 1}, fade_time);
+				}, 
+				function (event) {
+					if (!_opaque)
+						draw_feature.animate({"opacity": feature_opacity}, fade_time);
+				} 
+			);
+		} // END Feature::register_handlers()
+	} // END Feature Class
 
-		}
-	}
+	
+	///////////////////////////////////////////////////////////////////
+	// Global functions
 
 	// Circle setup
 	function draw_plasmid() {
@@ -276,7 +444,7 @@ jQuery(document).ready(function ($) {
 				foo = $(this).html();
 				row.push($(this).html());
 			})
-			var feat = new Feature(row);
+			var feat = new Feature(row.slice(2));
 			features.push(feat);
 		})
 
@@ -288,28 +456,31 @@ jQuery(document).ready(function ($) {
 		var conflicts;
 		var rad = plasmid_radius; // current radius
 		var rx = 1;               // radius counter
+		var max_rad = plasmid_radius;
 		do {
+			// Keep alternating between inside and outside the plasmid.
 			var new_rad = rad + Math.pow(-1, rx) * rx * radius_spacing;
 
 			conflicts = 0; // Assume you have no conflicts until you find some
 			var biggest_size = 0;
 			var biggest_feature;
-			var furthest_point = 0;
+			var furthest_point = 90; // Start at the top of the circle
 			for (fx in features) {
 				var f = features[fx];
-				if (f.radius == rad && f.type != ft_enzyme) { 
-					var new_size = f.end() - f.start() + 1;
-					var overlap = furthest_point - f.start();
-					if (overlap <= 0) { 
+				if (f.radius == rad && f.type() != ft_enzyme) { 
+					var new_size = f.size_degrees();
+					var overlap = -(furthest_point - f.start_degrees());
+					if (overlap <= min_overlap_cutoff) { 
 						// We've cleared all potential conflicts: reset
 						// the indicators
 						biggest_size = new_size;
 						biggest_feature = f;
-						furthest_point = f.end();
+						furthest_point = f.end_degrees();
 					} else if (biggest_size > min_overlap_feature_size &&
-					           new_size > min_overlap_feature_size &&
-							   overlap/biggest_size > min_overlap_pct &&
-							   overlap/new_size > min_overlap_pct) {
+						       new_size > min_overlap_feature_size &&
+						      (overlap <= 0 || 
+						      (overlap/biggest_size > min_overlap_pct &&
+						       overlap/new_size > min_overlap_pct))) {
 						// Overlap: conflict!
 						if (new_size > biggest_size) { // This feature is top dog,
 						                               // move the original to the
@@ -317,7 +488,7 @@ jQuery(document).ready(function ($) {
 							biggest_feature.radius = new_rad;
 							biggest_size = new_size;
 							biggest_feature = f;
-							furthest_point = f.end();
+							furthest_point = f.end_degrees();
 							conflicts++;
 
 						} else { // The original feature is top dog. move the new
@@ -330,23 +501,52 @@ jQuery(document).ready(function ($) {
 				}
 			}
 
-			// Keep alternating between inside and outside the plasmid.
+			// Keep track of the biggest radius reached
+			if (rad > max_rad)
+				max_rad = rad;
+
+			// Move on to the next radius
 			rad = new_rad;
 			rx++;
+
+			
 		} while (conflicts > 0); // Keep adding levels of resolution
 
+		return max_rad;
 	}
+
+	function draw_features(features) {
+		for (fx in features) {
+			features[fx].draw();
+		}
+	}
+
+	function label_features(features, max_radius) {
+		var label_radius = max_radius + label_radius_offset; 
+
+		// Iterate counterclockwise
+		for (var fx = features.length - 1; fx >= 0; fx--) {
+			if (features[fx].type() != ft_enzyme) 
+				features[fx].draw_label(label_radius);
+		}
+	}
+
+	function register_handlers(features) {
+		for (fx in features) {
+			features[fx].register_handlers();
+		}
+	}
+
 
 	///////////////////////////////////////////////////////////////////
 	// MAIN ENTRY POINT
 	var paper = Raphael("plasmid-map", map_width, map_height);
+
 	draw_plasmid();
-
-	features = parse_features();
-	resolve_conflicts(features);
+	var features = parse_features();
+	var max_radius = resolve_conflicts(features);
+	draw_features(features);
+	label_features(features, max_radius);
+	register_handlers(features);
 	
-	for (fx in features) {
-		features[fx].draw();
-	}
-
 })
