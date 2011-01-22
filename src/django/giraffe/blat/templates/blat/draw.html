@@ -2,22 +2,121 @@
 
 {% block title %} Visualize Sequence {% endblock %}
 
+{% block pagecss %}<link rel="stylesheet" href="/headers/css/blat/draw.css"
+            type="text/css" />{% endblock %}
+
 {% block body %}
 
-<table class="table-list">
-<tr><th>Feature</th><th>Start</th><th>End</th><th>Type</th><th>Clockwise</th></tr>
-{% for f in sequence.sequence_feature_set.all %}
-    <tr>
-        <td>{{ f.feature }}</td>
-        <td>{{ f.start }}</td>
-        <td>{{ f.end }}</td>
-        <td>{{ f.feature.type }}</td>
-        <td>{{ f.clockwise }}</td>
-    </tr>
-{% endfor %}
+<div id="plasmid-map"></div>
+
+<form action="" id="cutter-selection">
+	<fieldset><legend> Restriction Enzyme Options </legend>
+		<label for="n-cutter">Show <em>n</em>-cutters:</label>
+		<select id="n-cutter"> 
+			<option selected="selected">1</option>
+			<option>2</option>
+			<option>3</option>
+			<option>4</option>
+		</select>
+	</fieldset>
+</form>
+
+
+<div id="sequence-data">
+	<strong>Sequence Length</strong>
+	<div id="sequence-data-length">{{sequence.sequence|length}}</div>
+</div>
+
+<table id="feature-list" class="table-list alter-row feature-list">
+	<thead>
+		<tr>
+			<th>
+				<form action="">
+				<input id="show-all-features" type="checkbox"
+				       checked="checked" value="show-all" />
+				<label for="show-all-features">Show</label>
+				</form> 
+			</th>
+			<th>
+				<form action="">
+				<input id="label-all-features" type="checkbox"
+				       checked="checked" value="label-all" />
+				<label for="label-all-features">Label</label>
+				</form> 
+			</th>
+			<th>Feature</th><th>Start</th><th>End</th><th>Type</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for f in sequence.sequence_feature_set.all %}{% ifnotequal f.feature.type|lower "enzyme" %}
+			{% spaceless %}
+				<tr>
+					<td>
+						<form action="">
+						<input type="checkbox" checked="checked" value="show" />
+						</form>
+					</td>
+					<td>
+						<form action="">
+						<input type="checkbox" checked="checked" value="label" />
+						</form>
+					</td>
+					<td>{{ f.feature }}</td>
+					{% if f.clockwise %}
+						<td>{{ f.start }}</td>
+						<td>{{ f.end }}</td>
+					{% else %}
+						<td>{{ f.end }}</td>
+						<td>{{ f.start }}</td> 
+					{% endif %}
+					<td>{{ f.feature.type }}</td>
+				</tr>
+			{% endspaceless %}{% endifnotequal %}{% endfor %}
+	</tbody>
 </table>
 
-<div id="plasmid-map"></div>
+<table id="enzyme-list" class="table-list alter-row feature-list">
+	<thead>
+		<tr>
+			<th>
+				<form action="">
+				<input id="show-all-enzymes" type="checkbox"
+				       checked="checked" value="show-all" />
+				<label for="show-all-enzymes">Show</label>
+				</form> 
+			</th>
+			<th>
+				<form action="">
+				<input id="label-all-enzymes" type="checkbox"
+				       checked="checked" value="label-all" />
+				<label for="label-all-enzymes">Label</label>
+				</form> 
+			</th>
+			<th>Feature</th><th>Start</th><th>End</th><th>Type</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for f in sequence.sequence_feature_set.all %}{% ifequal f.feature.type|lower "enzyme" %}
+			{% spaceless %}
+				<tr>
+					<td>
+						<form action="">
+						<input type="checkbox" checked="checked" value="show" />
+						</form>
+					</td>
+					<td>
+						<form action="">
+						<input type="checkbox" checked="checked" value="label" />
+						</form>
+					</td>
+					<td>{{ f.feature }}</td>
+					<td>{{ f.start }}</td>
+					<td>{{ f.end }}</td>
+					<td>{{ f.feature.type }}</td>
+				</tr>
+			{% endspaceless %}{% endifequal %}{% endfor %}
+	</tbody>
+</table>
 
 {% endblock %}
 

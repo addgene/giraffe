@@ -709,7 +709,9 @@ def _pick_good_trains(trains,
         # XXX Feature type-dependent name/variant modifications done in 
         #     check_features in old code would go here. Can be moved off
         #     to the JavaScript code
-        if train_matches(train) or train.is_high_fidelity:
+        # XXX FeatureType-Dependent Code
+        if train_matches(train) or (train.feature.type == Feature_Type.GENE and
+                train.is_high_fidelity):
             good_trains.append(train)
             last_train = train
 

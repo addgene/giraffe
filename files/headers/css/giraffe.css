@@ -56,15 +56,8 @@ ul.table-list li:hover { background: #ffe0a0; }
 /* Form stuff */
 form label { float:left; margin-right:15px; }
 
-
 /*
  * Overriding Blueprint
  */
 .giraffe table { width:inherit; }
-
-/*
- * Plasmid Map
- */
-#plasmid-map { width: 640px; height: 640px }
-
 
