@@ -6,22 +6,8 @@
           content="text/html;charset=utf-8"/>
         <title>{% block title %}Giraffe{% endblock %}</title>
         <link rel="stylesheet"
-            href="/headers/blueprint/screen.css"
-            type="text/css" media="screen,projection" />
-        <link rel="stylesheet"
-            href="/headers/blueprint/print.css"
-            type="text/css" media="print" />
-        <link rel="stylesheet"
             href="/headers/css/jquery-ui/jquery-ui-1.8.6.custom.css"
             type="text/css" />
-        <!--[if lt IE 8]>
-        <link rel="stylesheet"
-            href="/headers/blueprint/ie.css"
-            type="text/css" media="screen,projection" />
-        <![endif]-->
-        <link rel="stylesheet" href="/headers/css/giraffe.css"
-            type="text/css" />
-        {% block pagecss %}{% endblock %}
     </head>
     <body class="giraffe">
     <div class="container">
@@ -42,3 +28,4 @@
     {% block pagejs %}{% endblock %}
     </body>
 </html>
+
