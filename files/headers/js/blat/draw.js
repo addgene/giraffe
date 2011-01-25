@@ -9,6 +9,7 @@ jQuery(document).ready(function ($) {
 	var cy = map_height/2;
 
 	// Global plasmid info
+	var plasmid_start = 90; // degrees
 	var seq_length = parseInt($("#sequence-data-length").html());
 
 	// Loop radii
@@ -23,10 +24,15 @@ jQuery(document).ready(function ($) {
 	var enzyme_width = 25;
 	var enzyme_weight = 1; // Restriction enzymes are drawn differently
 	                       // This controls their "thickness" on the map
+	var enzyme_bold_weight = 1.5*enzyme_weight; 
 	var feature_opacity = 1.0/3.0;
-	var enzyme_opacity = 1.0;
+	var enzyme_opacity = 0.4;
+	var bold_opacity = 1.0;
 	var head_width = 25;
 	var head_length = 7;
+
+	// Cutters to show
+	var cutters_to_show = [1];
 
 	// Animation properties
 	var fade_time = 300;
@@ -41,6 +47,9 @@ jQuery(document).ready(function ($) {
 	var tic_mark_radius = inner_radius - tic_mark_length/2;
 	var tic_label_radius = tic_mark_radius - 1.5*tic_mark_length;
 
+	// Table display
+	var hide_enzyme_rows = true; // Hide rows for cutter types not shown
+
 	// Colors
 	var color_bg_text = "#aaa";
 	var color_plasmid = "#000";
@@ -50,22 +59,20 @@ jQuery(document).ready(function ($) {
 	var color_enzyme  = "#00c";
 
 	// Feature Types
-	var ft_gene = "Gene";
-	var ft_regulatory = "Regulatory";
-	var ft_enzyme = "Enzyme";
-	var ft_primer = "Primer";
-	var ft_promoter = "Promoter";
-	var ft_terminator = "Terminator";
-	var ft_origin = "Origin";
-	var ft_feature = "Feature";
-	var ft_exact_feature = "Exact Feature";
+	var ft = { 
+		gene: "Gene",
+		regulatory: "Regulatory",
+		enzyme: "Enzyme",
+		primer: "Primer",
+		promoter: "Promoter",
+		terminator: "Terminator",
+		origin: "Origin",
+		feature: "Feature",
+		exact_feature: "Exact Feature"
+	};
 
 	///////////////////////////////////////////////////////////////////
 	// Internals start here
-	
-	// Global label height list: keeps track of the current heights of each of
-	// the 8 label lists, so that we know at what height to add the next label.
-	var label_heights = [0, 0, 0, 0, 0, 0, 0, 0];
 	
 	// SVG Object
 	// For dealing with the SVG syntax
@@ -92,7 +99,7 @@ jQuery(document).ready(function ($) {
 	var convert = {
 		pos_to_angle: function (p) {
 			//     start at the top of the circle
-			return 90 - (p/seq_length) * 360;
+			return plasmid_start - (p/seq_length) * 360;
 		},
 		seq_length_to_angle: function (l) {
 			//     just like pos_to_angle, but without caring about the start
@@ -100,7 +107,7 @@ jQuery(document).ready(function ($) {
 		},
 		angle_to_pos: function (a) {
 			//     start at the top of the circle
-			return Math.round(1 + ((seq_length - 1)/360) * ((360 + 90 - a) % 360));
+			return Math.round(1 + ((seq_length - 1)/360) * ((360 + plasmid_start - a) % 360));
 		},
 		/* Angle a is in degrees from the horizontal, counterclockwise, and
 		 * r is relative to the center of the paper */
@@ -124,6 +131,7 @@ jQuery(document).ready(function ($) {
 		var _end = parseInt(feature_list[2]);
 		var _type = feature_list[3];
 		var _clockwise = (_start <= _end);
+		var _other_cutters = []; // only for enzymes;
 
 		// Because we store the clockwise information in a separate variable,
 		// ensure that start and end go clockwise (end > start), regardless
@@ -134,6 +142,10 @@ jQuery(document).ready(function ($) {
 			_end = _tmp;
 		}
 
+		// Visual properties
+		var _visible = true;
+		var _labeled = true;
+
 		// Type-based property selection
 		var _color = color_feature;
 		var _width = feature_width;
@@ -141,22 +153,22 @@ jQuery(document).ready(function ($) {
 		var _opacity = feature_opacity;
 		var _opaque = false; // holds opacity for clicks
 		switch(_type) {
-			case ft_promoter:
-			case ft_primer:
+			case ft.promoter:
+			case ft.primer:
 				_draw_head = true; // Promotors and primers are the only primer-colored
-			case ft_terminator:   // features with heads
+			case ft.terminator:   // features with heads
 				_color = color_primer;
 				break;
-			case ft_regulatory:
-			case ft_origin:
+			case ft.regulatory:
+			case ft.origin:
 				_color = color_origin;
 				break;
-			case ft_enzyme:
+			case ft.enzyme:
 				_color = color_enzyme;
 				_width = enzyme_width;
 				_opacity = enzyme_opacity;
 				break;
-			case ft_gene:
+			case ft.gene:
 				_draw_head = true;
 				break;
 		}
@@ -175,6 +187,19 @@ jQuery(document).ready(function ($) {
 		this.end = function() { return _end; };
 		this.type = function() { return _type; };
 		this.clockwise = function() { return _clockwise; };
+		this.visible = function() { return _visible; };
+		this.labeled = function() { return _labeled; };
+		// Check to see if label has been drawn yet
+		this.label_drawn = function() { return _label_drawn; };
+		this.cut_count = function() { return _other_cutters.length; };// gives 0 if not enzyme
+
+		this.feature_set = function() { return _feature_set };
+
+		// Mutator for other_cutters: only for enzymes
+		this.set_other_cutters = function(c) {
+			if (_type == ft.enzyme)
+				_other_cutters = c;
+		}
 
 		// Calculated properties
 		
@@ -192,7 +217,8 @@ jQuery(document).ready(function ($) {
 				sd = convert.pos_to_angle(_start);
 			}
 			return sd;
-		}
+		};
+
 		this.end_degrees = function() {
 			var ed;
 			// Take the minimum head size into account. Only need to do this 
@@ -205,7 +231,8 @@ jQuery(document).ready(function ($) {
 				ed = convert.pos_to_angle(_end);
 			}
 			return ed;
-		}
+		};
+
 		this.size_degrees = function() {
 			var szd; // size in degrees
 			// Normal definition of size
@@ -224,11 +251,77 @@ jQuery(document).ready(function ($) {
 			}
 
 			return szd;
+		};
+
+
+		// Actions for interactivity
+		var _bolder = function () {
+			var sets = paper.set();
+			sets.push(_feature_set);
+			var props = {"opacity": bold_opacity};
+
+			// Cutters: make them thicker and highlight
+			//          related examples
+			if (_type == ft.enzyme) {
+				props["stroke-width"] = enzyme_bold_weight;
+				props["font-weight"] = "bold";
+
+				// Highlight other examples of this enzyme
+				// if it's a multi-cutter
+				for (var fx in _other_cutters) {
+					sets.push(_other_cutters[fx].feature_set());
+				}
+			}
+
+			sets.animate(props, fade_time);
 		}
 
+		var _lighter = function () {
+			var sets = paper.set();
+			sets.push(_feature_set);
+
+			// Cutters: restore them and related examples to normal
+			var props = {"opacity": _opacity};
+			if (_type == ft.enzyme) {
+				props["stroke-width"] = enzyme_weight;
+				props["font-weight"] = "normal";
+
+				// Highlight other examples of this enzyme
+				// if it's a multi-cutter
+				for (var fx in _other_cutters) {
+					sets.push(_other_cutters[fx].feature_set());
+				}
+			}
+			sets.animate(props, fade_time);
+		}
+
+		// Toggle solid/light upon click
+		var _click = function (event) {
+			if (_opaque) {
+				_lighter();
+				_opaque = false;
+			} else {
+				_bolder();
+				_opaque = true;
+			}
+		};
+
+		// Hovering: solid/light upon mouseover
+		var _mouse_over = function (event) {
+			if (!_opaque)
+				_bolder();
+		};
+		var _mouse_up = function (event) {
+			if (!_opaque)
+				_lighter();
+		};
 
 		// The visual object to modify when accessing the feature.
-		var draw_feature = paper.set();
+		var _feature_set = paper.set();
+		var _arrow_set = paper.set();
+
+		var _label_set = paper.set();
+		var _label_drawn = false;
 
 		// Feature drawing
 		this.draw = function () {
@@ -278,11 +371,11 @@ jQuery(document).ready(function ($) {
 									  svg.close());
 				head.attr({"stroke-width": 0,
 						   "fill":         _color});
-				draw_feature.push(head);
+				_arrow_set.push(head);
 			}
 
 			// Arc drawing
-			if (a1 < a0 && _type != ft_enzyme) { 
+			if (a1 < a0 && _type != ft.enzyme) { 
 				// Compensating for the head may have "taken up" all
 				// the room on the plasmid, in which case no arc needs
 				// to be drawn
@@ -299,8 +392,8 @@ jQuery(document).ready(function ($) {
 									 svg.arc(_this.radius, xy1.x, xy1.y));
 				arc.attr({"stroke-width": _width});
 
-				draw_feature.push(arc);
-			} else if (_type == ft_enzyme) { 
+				_arrow_set.push(arc);
+			} else if (_type == ft.enzyme) { 
 				// Restriction enzymes get drawn on their own
 				var xy0 = convert.polar_to_rect(_this.radius - enzyme_width/2.0, 
 						(a0+a1)/2.0);
@@ -313,35 +406,46 @@ jQuery(document).ready(function ($) {
 				arc.attr({"stroke-width": enzyme_weight});
 				arc.toBack();
 
-				draw_feature.push(arc);
-				_opaque = true;
+				_arrow_set.push(arc);
 			}
 
-			// Apply the feature-wise properties to the whole feature
-			draw_feature.attr({"stroke":         _color,
+			_arrow_set.click(_click);
+			_arrow_set.hover(_mouse_over, _mouse_up);
+
+			_feature_set.push(_arrow_set);
+
+			// Apply the feature-wide properties to the whole feature
+			_feature_set.attr({"stroke":         _color,
 			                   "stroke-linecap": "butt",
 			                   "opacity":        _opacity,
 			                   "title":          _name});
-
 
 		} // END Feature::draw()
 
 		// Draw the label associated with that feature
 		this.draw_label = function (r_l) {
+			// Don't bother unless we need to
+			if (!_visible || !_labeled) 
+				return;
+
+			if (_label_drawn)
+				_this.clear_label();
+
+			
 			// Figure out the center of the feature
-			a_c = (_this.start_degrees() + _this.end_degrees()) / 2.0;
-			xy0 = convert.polar_to_rect(_this.radius, a_c);
+			var a_c = (_this.start_degrees() + _this.end_degrees()) / 2.0;
+			var xy0 = convert.polar_to_rect(_this.radius, a_c);
 			
 			// Figure out the label position: divide the grid up into eight
 			// sections
-			section = Math.floor((90 - a_c) / 45);
-			section_angle = 90 - 45/2.0 - section*45;
-			feature_section_extent = (a_c - (section_angle + 45/2.0))/45;
-
-			xy1 = convert.polar_to_rect(r_l, section_angle);
+			var section_size = 45; // degrees
+			var section = Math.floor((plasmid_start - a_c) / section_size);
+			var section_angle = plasmid_start - section_size/2.0 - section*section_size;
 
 			y_shift = label_heights[section];
-			// TODO: FIX THIS TO ACCOUNT FOR OTHER LABELS!
+			
+			
+			var xy1 = convert.polar_to_rect(r_l, section_angle);
 			if (xy1.y > cy) { // Lower half: add below
 				xy1.y += y_shift;
 			} else { // Upper half: add above
@@ -354,11 +458,12 @@ jQuery(document).ready(function ($) {
 			label_line.attr({"stroke": color_bg_text,
 			                 "opacity": feature_opacity});
 
-
 			var label = paper.text(xy1.x, xy1.y, _name);
-			if (a_c < -90 && a_c > -270) { // Left half of wheel: align right
+			if (a_c < plasmid_start - 180 && a_c > plasmid_start - 360) { 
+				// Left half of wheel: align right
 				label.attr({"text-anchor": "end"});
-			} else if (a_c < 90 && a_c > -90) { // Right half of wheel: align left
+			} else if (a_c < plasmid_start && a_c > plasmid_start - 180) { 
+				// Right half of wheel: align left
 				label.attr({"text-anchor": "start"});
 			} // Top and bottom default to middle, which is correct
 
@@ -366,41 +471,87 @@ jQuery(document).ready(function ($) {
 			label_heights[section] += label.getBBox().height;
 
 			label.attr({"fill": _color,
-			            "opacity": feature_opacity});
+			            "opacity": _opacity});
 
-			draw_feature.push(label);
-			draw_feature.push(label_line);
+			_label_set.push(label_line);
+			_label_set.push(label);
 
+			// Handlers
+			_label_set.click(_click);
+			_label_set.hover(_mouse_over, _mouse_up);
+
+			_feature_set.push(_label_set);
+
+			_labeled = true;
+			_label_drawn = true;
 		} // END Feature::draw_label(r_l)
 
-		// Register click and hover handlers to make the feature "active"
-		this.register_handlers = function () {
-			// Toggle solid/light upon click
-			draw_feature.click(function (event) {
-				if (_opaque) {
-					draw_feature.animate({"opacity": feature_opacity}, fade_time);
-					_opaque = false;
-				} else {
-					draw_feature.animate({"opacity": 1}, fade_time);
-					_opaque = true;
-				}
-			});
-			draw_feature.hover(
-				function (event) {
-					if (!_opaque)
-						draw_feature.animate({"opacity": 1}, fade_time);
-				}, 
-				function (event) {
-					if (!_opaque)
-						draw_feature.animate({"opacity": feature_opacity}, fade_time);
-				} 
-			);
-		} // END Feature::register_handlers()
-	} // END Feature Class
+		this.hide = function () {
+			if (_visible) {
+				_feature_set.hide();
+				_visible = false;
+				_labeled = false;
+			}
+		}; // END Feature::hide()
+
+		this.show = function () {
+			if (!_visible) {
+				_feature_set.show();
+				if (!_labeled)
+					_label_set.hide();
+				_visible = true;
+			}
+		}; // END Feature::show()
+
+		this.hide_label = function () {
+			if (_labeled) {
+				_label_set.hide();
+				_labeled = false;
+			}
+		}; // END Feature::hide()
+
+		this.show_label = function () {
+			if (!_labeled) {
+				_label_set.show();
+				_labeled = true;
+			}
+		}; // END Feature::show_label()
+
+		this.clear_label = function () {
+			if (_label_drawn) {
+				_label_set.unclick(_click);
+				_label_set.unhover(_mouse_over, _mouse_up);
+				_label_set.remove();
+				_label_set = paper.set();
+				_labeled = false;
+				_label_drawn = false;
+			}
+		}; // END Feature::clear_label()
+
+	}; // END Feature Class
 
 	
 	///////////////////////////////////////////////////////////////////
 	// Global functions
+	
+	// Control setup: should be done by the html, but firefox seems to
+	// ignore this in favor of "memory"
+	function set_control_defaults() {
+		$('#the-enzyme-list>tbody input[value="show"]').each(function (ix) {
+			var label_checkbox = $(this).parent().parent().next()
+			                            .children().children().first();
+			$(this).removeAttr("checked");
+			label_checkbox.attr("checked", "checked");
+			label_checkbox.attr("disabled", "disabled");
+		});
+		$('#the-feature-list>tbody input[value="show"]').each(function (ix) {
+			var label_checkbox = $(this).parent().parent().next()
+			                            .children().children().first();
+			$(this).attr("checked", "checked");
+			label_checkbox.attr("checked", "checked");
+			label_checkbox.removeAttr("disabled");
+		});
+	}
 
 	// Circle setup
 	function draw_plasmid() {
@@ -416,9 +567,9 @@ jQuery(document).ready(function ($) {
 			var xyl = convert.polar_to_rect(tic_label_radius, a);
 			var label = paper.text(xyl.x, xyl.y, String(convert.angle_to_pos(a)));
 			label.attr({"fill": color_bg_text});
-			if (a < 90 || a > 270) { // Right half of wheel: align right
+			if (a < plasmid_start || a > 360 - plasmid_start) { // Right half of wheel: align right
 				label.attr({"text-anchor": "end"});
-			} else if (a > 90 && a < 270) { // Left half of wheel: align left
+			} else if (a > plasmid_start && a < 360 - plasmid_start) { // Left half of wheel: align left
 				label.attr({"text-anchor": "start"});
 			} // Top and bottom default to middle, which is correct
 		}
@@ -435,25 +586,53 @@ jQuery(document).ready(function ($) {
 	}
 
 	// Load info for features
+	// Parsing is to be done only once. All features are read, regardless of whether
+	// or not they're shown. Showing and hiding is controlled by internal variables
+	// later
 	function parse_features() {
-		features = [];
+		var features = [];
 
 		// Parse through the plasmid table and draw the features
-		$("table.table-list>tbody>tr").each(function (rx) {
-			row = [];
-			$(this).find("td").each(function (fx) {
-				foo = $(this).html();
+		$("table.feature-list>tbody>tr").each(function (rx) {
+			// Parse out the index of the appropriate feature
+			// from the name attribute of the "label" checkbox.
+			var idx = 
+				parseInt($(this).find('input[value="label"]').attr("name").match(/\d+/));
+			var row = []
+			$(this).find("td").each( function () {
 				row.push($(this).html());
-			})
+			});
 			var feat = new Feature(row.slice(2)); // row[0:2] are the checkboxes
-			features.push(feat);
+			features[idx] = feat;
 		})
+
 
 		return features;
 	}
-	
+
+	// Calculate cut counts of all Restriction enzyme
+	function cut_counts() {
+		var cut_counts = {}; 
+		// Calculate the counts
+		for (fx in features) {
+			f = features[fx];
+			if (f.type() == ft.enzyme) {
+				if (cut_counts[f.name()] === undefined)
+					cut_counts[f.name()] = [f];
+				else
+					cut_counts[f.name()].push(f);
+			}
+		}
+		// Store them for each enzyme feature
+		for (fx in features) {
+			f = features[fx];
+			if (f.type() == ft.enzyme)
+				f.set_other_cutters(cut_counts[f.name()]);
+		}
+	}
+
 	// Move features that overlap to other radii.
-	function resolve_conflicts(features) {
+	function resolve_conflicts() {
 		var conflicts;
 		var rad = plasmid_radius; // current radius
 		var rx = 1;               // radius counter
@@ -471,7 +650,7 @@ jQuery(document).ready(function ($) {
 			
 			// Since loser was pushed, un-push all the 
 			// features it caused to be pushed, as long as
-			// those features were not in conflict with others.
+			// those features were not in conflict with the winner
 			for (var pfx in loser.pushed_features) {
 				var pf = loser.pushed_features[pfx];
 				// Check for conflict with other the winner feature itself.
@@ -499,10 +678,10 @@ jQuery(document).ready(function ($) {
 
 			var biggest_size = 0;
 			var biggest_feature;
-			var furthest_point = 90; // Start at the top of the circle
+			var furthest_point = plasmid_start; // Start at the top of the circle
 			for (var fx in features) {
 				var f = features[fx];
-				if (f.radius == rad && f.type() != ft_enzyme) { 
+				if (f.radius == rad && f.type() != ft.enzyme) { 
 					var new_size = f.size_degrees();
 					var overlap = -(furthest_point - f.start_degrees());
 					if (overlap <= min_overlap_cutoff) { 
@@ -551,38 +730,245 @@ jQuery(document).ready(function ($) {
 		return max_rad;
 	}
 
-	function draw_features(features) {
+	function draw_features() {
 		for (var fx in features) {
 			features[fx].draw();
 		}
 	}
 
-	function label_features(features, max_radius) {
-		var label_radius = max_radius + label_radius_offset; 
+	// Make sure that the appropriate cutters are shown
+	function show_hide_cutters() {
+		for (var fx in features) {
+			var f = features[fx];
+			// Only draw enzymes if they are in the list of cutters to show
+			if (f.type() == ft.enzyme) {
+				if (cutters_to_show.indexOf(f.cut_count()) < 0) {
+					f.hide();
+					f.clear_label();
+				} else {
+					f.show();
+					f.show_label();
+				}
+			}
+		}
+	}
 
+	// Global label height list: keeps track of the current heights of each of
+	// the 8 label lists, so that we know at what height to add the next label.
+	var label_heights = new Array(16);
+	function draw_labels(label_radius) {
+
+		// Global label height list: keeps track of the current heights of each of
+		// the 16 label lists, so that we know at what height to add the next label.
+		// Reset the list
+		label_heights = [0, 0, 0, 0, 0, 0, 0, 0];
+	
 		// Iterate counterclockwise
 		for (var fx = features.length - 1; fx >= 0; fx--) {
-			if (features[fx].type() != ft_enzyme) 
-				features[fx].draw_label(label_radius);
+			features[fx].draw_label(label_radius);
 		}
 	}
 
-	function register_handlers(features) {
-		for (var fx in features) {
-			features[fx].register_handlers();
+	function register_control_handlers() {
+
+		// Clicks to individual features' Show checkboxes
+		$('.feature-list>tbody input[value="show"]').click(function (event) {
+			var value = $(this).attr("checked");
+			var idx = parseInt($(this).attr("name").match(/\d+/));
+			var label_checkbox = $(this).parent().parent().next()
+			                            .children().children().first();
+			if (value) {
+				features[idx].show();
+				label_checkbox.removeAttr("disabled");
+				if (label_checkbox.attr("checked")) {
+					features[idx].show_label();
+					if (!features[idx].label_drawn())
+						features[idx].draw_label(label_radius);
+				} else
+					features[idx].hide_label();
+			} else {
+				features[idx].hide();
+				label_checkbox.attr("disabled", "disabled");
+				$(this).closest("table").find('thead input[value="show"]')
+				       .removeAttr("checked");
+			}
+
+			return;
+		});
+
+		// Clicks to individual features' Label checkboxes
+		$('.feature-list>tbody input[value="label"]').click(function (event) {
+			var value = $(this).attr("checked");
+			var idx = parseInt($(this).attr("name").match(/\d+/));
+			if (value) {
+				features[idx].show_label();
+				if (!features[idx].label_drawn())
+					features[idx].draw_label(label_radius);
+			} else {
+				$(this).closest("table").find('thead input[value="label"]')
+				       .removeAttr("checked");
+				features[idx].hide_label();
+			}
+
+			return;
+		});
+
+		// Changes to the Restriction Enzyme selection
+		$('#feature-options select[name="all-enzyme"]').change(function (event) {
+			var opts = [];
+
+			// Parse out selected options
+			$(this).find("option:selected").each(function () {
+				opts.push(parseInt($(this).text().match(/\d+/)));
+			});
+
+			// Change which cutters to show, and redraw the labels, as this affects
+			// many features at once
+			cutters_to_show = opts;
+			show_hide_cutters();
+			draw_labels(label_radius);
+
+			set_checkboxes();
+
+		}).change(); // Run it as soon as you register it
+
+
+		// Make enzyme row hiding checkbox work
+		$('#feature-options input[name="hide-enzyme-rows"]').click(function (event) {
+			hide_enzyme_rows = $(this).attr("checked");
+			// Show the rows if we need to
+			if (hide_enzyme_rows) {
+				set_checkboxes();
+
+				// Only a reasonable number of rows are being shown: disable
+				// the "show-all-enzymes" checkbox
+				$('#the-enzyme-list>thead input[value="show"]').
+					removeAttr("disabled");
+			} else {
+				// Show all rows
+				$('#the-enzyme-list>tbody tr').removeClass("hidden-row");
+
+				// All rows are being shown: disable the "show-all-enzymes"
+				// checkbox
+				$('#the-enzyme-list>thead input[value="show"]').
+					attr("disabled", "disabled");
+			}
+		});
+
+		// Make feature-type checkboxes work
+		$('#feature-options input[name^="all"]').click(function (event) {
+			// Figure out the filetype
+			var type_str = $(this).attr("name").match(/all-(\w+)/)[1];
+			var type = ft[type_str];
+
+			// Is it the label or the whole feature?
+			var label_only = $(this).attr("value") == "label";
+			// Do we show or hide?
+			var value = $(this).attr("checked");
+
+			for (var fx in features) {
+				if (features[fx].type() == type) {
+					if (label_only) {
+						if (value)
+							features[fx].show_label();
+						else
+							features[fx].hide_label();
+					} else { // Whole thing
+						// Find the label checkbox
+						var label_checkbox = $(this).parent().siblings()
+													.children().first();
+						if (value) {
+							features[fx].show();
+							label_checkbox.removeAttr("disabled");
+							if (label_checkbox.attr("checked"))
+								features[fx].show_label();
+						} else {
+							features[fx].hide();
+							label_checkbox.attr("disabled", "disabled");
+						}
+					}
+				}
+			}
+
+			draw_labels(label_radius);
+			set_checkboxes();
+		});
+
+		// Make show-all and label-all checkboxes work
+		$('.feature-list>thead input').click(function (ix) {
+			// Is it the label or the whole feature?
+			var value = $(this).attr("value");
+			// Do we show or hide?
+			var checked = $(this).attr("checked");
+
+			// Go down the table and click on every non-hidden-row
+			// check box with the same value whose checked status
+			// is not the same as this box's
+			$(this).closest("table").find("tbody tr").not(".hidden-row")
+			       .find('input[value="' + value + '"]').not("[disabled]")
+			       .not('[checked = "' + checked + '"]').each(function (ix) {
+				// XXX NOT SURE WHY THIS WORKS
+				if (checked)
+					$(this).attr("checked", checked);
+				else
+					$(this).removeAttr("checked", checked);
+				$(this).click();
+				if (checked)
+					$(this).attr("checked", checked);
+				else
+					$(this).removeAttr("checked", checked);
+			});
+		});
+
+
+		// Update checkboxes to reflect current status
+		function set_checkboxes() { 
+			$('.feature-list>tbody input[value="show"]').each(function (ix) {
+				var idx = parseInt($(this).attr("name").match(/\d+/));
+				var is_enzyme = $(this).attr("name").search(/enzyme/) >= 0;
+				var label_checkbox = $(this).parent().parent().next()
+											.children().children().first();
+
+				var row = $(this).closest("tr");
+				var f = features[idx];
+				if (f.visible()) {
+					if (hide_enzyme_rows && is_enzyme)
+						row.removeClass("hidden-row");
+					$(this).attr("checked", "checked")
+					label_checkbox.removeAttr("disabled");
+					if (f.labeled()) 
+						label_checkbox.attr("checked", "checked");
+					else
+						label_checkbox.removeAttr("checked");
+				} else {
+					$(this).removeAttr("checked");
+					label_checkbox.attr("disabled", "disabled");
+					if (hide_enzyme_rows && is_enzyme)
+						row.addClass("hidden-row");
+				}
+			});
 		}
-	}
+
+	};
 
 
 	///////////////////////////////////////////////////////////////////
 	// MAIN ENTRY POINT
 	var paper = Raphael("plasmid-map", map_width, map_height);
 
+	// These things are only done once
+	set_control_defaults();
 	draw_plasmid();
-	var features = parse_features();
-	var max_radius = resolve_conflicts(features);
-	draw_features(features);
-	label_features(features, max_radius);
-	register_handlers(features);
+	var features = parse_features(); // features list is global
+	cut_counts(); 
+
+	// These things may need to be redone
+	var max_radius = resolve_conflicts();
+	var label_radius = max_radius + label_radius_offset; 
+	draw_features(); // Draw all the features initially
+	show_hide_cutters(); // Hide the right cutters
+	draw_labels(label_radius); // Draw only the necessary labels
+
+	register_control_handlers();
 	
 })

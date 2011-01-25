@@ -9,15 +9,93 @@
 
 <div id="plasmid-map"></div>
 
-<form action="" id="cutter-selection">
-	<fieldset><legend> Restriction Enzyme Options </legend>
-		<label for="n-cutter">Show <em>n</em>-cutters:</label>
-		<select id="n-cutter"> 
-			<option selected="selected">1</option>
-			<option>2</option>
-			<option>3</option>
-			<option>4</option>
-		</select>
+<form action="" id="feature-options">
+	<fieldset><legend>Feature Options</legend>
+		<table><tbody>
+		<tr><td><fieldset><legend class="enzymes">Restriction Enzymes</legend>
+		<label>Show <br />
+			<select name="all-enzyme" multiple="multiple" size="3"> 
+				<option selected="selected">1-cutters</option>
+				<option>2-cutters</option>
+				<option>3-cutters</option>
+			</select>
+		</label>
+		<label>Hide in table
+			<input type="checkbox" checked="checked"
+			       name="hide-enzyme-rows" value="hide" />
+		</label>
+		</fieldset></td>
+		<td><fieldset><legend class="features-genes">Generic Features</legend>
+			<label>Label
+			<input type="checkbox" checked="checked"
+			       name="all-feature" value="label" />
+			</label><br />
+			<label>Show
+			<input type="checkbox" checked="checked"
+			       name="all-feature" value="show" />
+			</label>
+		</fieldset></td>
+		<td><fieldset><legend class="features-genes">Genes</legend>
+			<label>Label
+			<input type="checkbox" checked="checked"
+			       name="all-gene" value="label" />
+			</label><br />
+			<label>Show
+			<input type="checkbox" checked="checked"
+			       name="all-gene" value="show" />
+			</label>
+		</fieldset></td>
+		<td><fieldset><legend class="origins-regulatory">Regulatory</legend>
+			<label>Label
+			<input type="checkbox" checked="checked"
+			       name="all-regulatory" value="label" />
+			</label><br />
+			<label>Show
+			<input type="checkbox" checked="checked"
+			       name="all-regulatory" value="show" />
+			</label>
+		</fieldset></td></tr>
+		<tr><td><fieldset><legend class="promoters-primers-terminators">Promoters</legend>
+			<label>Label
+			<input type="checkbox" checked="checked"
+			       name="all-promoter" value="label" />
+			</label><br />
+			<label>Show
+			<input type="checkbox" checked="checked"
+			       name="all-promoter" value="show" />
+			</label>
+		</fieldset></td>
+		<td><fieldset><legend class="promoters-primers-terminators">Primers</legend>
+			<label>Label
+			<input type="checkbox" checked="checked"
+			       name="all-primer" value="label" />
+			</label><br />
+			<label>Show
+			<input type="checkbox" checked="checked"
+			       name="all-primer" value="show" />
+			</label>
+		</fieldset></td>
+		<td><fieldset><legend class="promoters-primers-terminators">Terminators</legend>
+			<label>Label
+			<input type="checkbox" checked="checked"
+			       name="all-terminator" value="label" />
+			</label><br />
+			<label>Show
+			<input type="checkbox" checked="checked"
+			       name="all-terminator" value="show" />
+			</label>
+		</fieldset></td>
+		<td><fieldset><legend class="origins-regulatory">Origins</legend>
+			<label>Label
+			<input type="checkbox" checked="checked"
+			       name="all-origin" value="label" />
+			</label><br />
+			<label>Show
+			<input type="checkbox" checked="checked"
+			       name="all-origin" value="show" />
+			</label>
+		</fieldset></td></tr>
+		</tbody></table>
 	</fieldset>
 </form>
 
@@ -27,24 +105,26 @@
 	<div id="sequence-data-length">{{sequence.sequence|length}}</div>
 </div>
 
-<table id="feature-list" class="table-list alter-row feature-list">
+<table id="the-feature-list" class="table-list feature-list">
 	<thead>
 		<tr>
 			<th>
 				<form action="">
-				<input id="show-all-features" type="checkbox"
-				       checked="checked" value="show-all" />
-				<label for="show-all-features">Show</label>
+				<label>Show
+					<input name="all-features" type="checkbox"
+					       checked="checked"   value="show" />
+				</label>
 				</form> 
 			</th>
 			<th>
 				<form action="">
-				<input id="label-all-features" type="checkbox"
-				       checked="checked" value="label-all" />
-				<label for="label-all-features">Label</label>
+				<label>Label
+					<input name="all-features" type="checkbox"
+					       checked="checked"   value="label" />
+				</label>
 				</form> 
 			</th>
-			<th>Feature</th><th>Start</th><th>End</th><th>Type</th>
+			<th>Feature</th><th>Start</th><th>End</th><th class="feature-type">Type</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -53,12 +133,16 @@
 				<tr>
 					<td>
 						<form action="">
-						<input type="checkbox" checked="checked" value="show" />
+							<input type="checkbox"
+							       name="feature-{{forloop.counter0}}"
+								   checked="checked" value="show" />
 						</form>
 					</td>
 					<td>
 						<form action="">
-						<input type="checkbox" checked="checked" value="label" />
+							<input type="checkbox"
+							       name="feature-{{forloop.counter0}}"
+								   checked="checked" value="label" />
 						</form>
 					</td>
 					<td>{{ f.feature }}</td>
@@ -69,30 +153,32 @@
 						<td>{{ f.end }}</td>
 						<td>{{ f.start }}</td> 
 					{% endif %}
-					<td>{{ f.feature.type }}</td>
+					<td class="feature-type">{{ f.feature.type }}</td>
 				</tr>
 			{% endspaceless %}{% endifnotequal %}{% endfor %}
 	</tbody>
 </table>
 
-<table id="enzyme-list" class="table-list alter-row feature-list">
+<table id="the-enzyme-list" class="table-list feature-list">
 	<thead>
 		<tr>
 			<th>
 				<form action="">
-				<input id="show-all-enzymes" type="checkbox"
-				       checked="checked" value="show-all" />
-				<label for="show-all-enzymes">Show</label>
+				<label>Show
+					<input name="all-enzymes" type="checkbox" 
+					       checked="checked"  value="show" />
+				</label>
 				</form> 
 			</th>
 			<th>
 				<form action="">
-				<input id="label-all-enzymes" type="checkbox"
-				       checked="checked" value="label-all" />
-				<label for="label-all-enzymes">Label</label>
+				<label>Label
+					<input name="all-enzymes" type="checkbox"
+					       checked="checked" value="label" />
+				</label>
 				</form> 
 			</th>
-			<th>Feature</th><th>Start</th><th>End</th><th>Type</th>
+			<th>Feature</th><th>Start</th><th>End</th><th class="feature-type">Type</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -101,18 +187,23 @@
 				<tr>
 					<td>
 						<form action="">
-						<input type="checkbox" checked="checked" value="show" />
+							<input type="checkbox"
+							       name="enzyme-{{forloop.counter0}}"
+								   value="show" />
 						</form>
 					</td>
 					<td>
 						<form action="">
-						<input type="checkbox" checked="checked" value="label" />
+							<input type="checkbox"
+							       name="enzyme-{{forloop.counter0}}"
+								   checked="checked" disabled="disabled"
+								   value="label" />
 						</form>
 					</td>
 					<td>{{ f.feature }}</td>
 					<td>{{ f.start }}</td>
 					<td>{{ f.end }}</td>
-					<td>{{ f.feature.type }}</td>
+					<td class="feature-type">{{ f.feature.type }}</td>
 				</tr>
 			{% endspaceless %}{% endifequal %}{% endfor %}
 	</tbody>
