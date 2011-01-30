@@ -9,10 +9,14 @@ django.contrib.admin.autodiscover()
 urlpatterns = patterns('',
     (r'^admin/', include(django.contrib.admin.site.urls)),
     (r'^blat/', include('giraffe.blat.urls')),
+
+    (r'^test/draw/', direct_to_template, { 'template' : 'test/draw.html' }),
 )
 
 if settings.DEBUG:
     urlpatterns += patterns('',
+        (r'^api/(?P<path>.*)$', 'django.views.static.serve',
+         {'document_root': settings.STATIC_API_ROOT}),
         (r'^headers/(?P<path>.*)$', 'django.views.static.serve',
          {'document_root': settings.STATIC_HEADERS_ROOT}),
         (r'^images/(?P<path>.*)$', 'django.views.static.serve',

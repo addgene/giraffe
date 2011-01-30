@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %} Drawing API Test {% endblock %}
+
+{% block body %}
+<div id="plasmid-map"></div>
+{% endblock %}
+
+{% block pagejs %}
+<script src="/headers/js/raphael-min.js"></script>
+<script src="http://127.0.0.1:8080/api/js/draw.js"></script>
+<script src="http://127.0.0.1:8080/blat/8de364690dbeb88d2ab63bd66861725539aa3204
+/default?jsonp=giraffe_draw_init()"></script>
+{% endblock %}
+

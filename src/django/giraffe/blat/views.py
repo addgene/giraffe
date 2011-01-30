@@ -34,7 +34,7 @@ def get(request,hash,db_name):
     db = models.Feature_Database.objects.get(name=db_name)
     sequence = models.Sequence.objects.get(db=db,hash=hash)
 
-    res = []
+    res = [len(sequence.sequence),]
     for f in sequence.sequence_feature_set.order_by("start"):
         res.append(f.to_dict())
 

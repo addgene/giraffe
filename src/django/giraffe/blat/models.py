@@ -16,10 +16,13 @@ class Sequence_Feature(models.Model):
 
     def to_dict(self):
         return {
+            "feature" : self.feature.name,
             "feature_id" : self.feature_id,
             "start" : self.start,
             "end" : self.end,
-            "clockwise" : self.clockwise
+            "clockwise" : self.clockwise,
+            "type" : self.feature.type.type,
+            "type_id" : self.feature.type.id,
         }
 
 

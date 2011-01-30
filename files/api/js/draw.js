@@ -1,4 +1,9 @@
-jQuery(document).ready(function ($) {
+//
+// Drawing API: caller should call this function to get a drawing
+// function, customized with the drawing options. Then call the
+// drawing fuction with JSON feature lists.
+//
+function giraffe_draw_init() {
 	var _debug = false;
 	///////////////////////////////////////////////////////////////////
 	// Global parameters
@@ -10,7 +15,6 @@ jQuery(document).ready(function ($) {
 
 	// Global plasmid info
 	var plasmid_start = 90; // degrees
-	var seq_length = parseInt($("#sequence-data-length").html());
 
 	// Loop radii
 	var radius_spacing = 20; // spacing
@@ -537,29 +541,6 @@ jQuery(document).ready(function ($) {
 
 	}; // END Feature Class
 
-	
-	///////////////////////////////////////////////////////////////////
-	// Global functions
-	
-	// Control setup: should be done by the html, but firefox seems to
-	// ignore this in favor of "memory"
-	function set_control_defaults() {
-		$('#the-enzyme-list>tbody input[value="show"]').each(function (ix) {
-			var label_checkbox = $(this).parent().parent().next()
-			                            .children().children().first();
-			$(this).removeAttr("checked");
-			label_checkbox.attr("checked", "checked");
-			label_checkbox.attr("disabled", "disabled");
-		});
-		$('#the-feature-list>tbody input[value="show"]').each(function (ix) {
-			var label_checkbox = $(this).parent().parent().next()
-			                            .children().children().first();
-			$(this).attr("checked", "checked");
-			label_checkbox.attr("checked", "checked");
-			label_checkbox.removeAttr("disabled");
-		});
-	}
-
 	// Circle setup
 	function draw_plasmid() {
 		function draw_tic_mark(a) {
@@ -592,29 +573,22 @@ jQuery(document).ready(function ($) {
 		}
 	}
 
-	// Load info for features
-	// Parsing is to be done only once. All features are read, regardless of whether
-	// or not they're shown. Showing and hiding is controlled by internal variables
-	// later
-	function parse_features() {
+	function parse_features_from_json(features_json) {
 		var features = [];
-
-		// Parse through the plasmid table and draw the features
-		$("table.feature-list>tbody>tr").each(function (rx) {
-			// Parse out the index of the appropriate feature
-			// from the name attribute of the "label" checkbox.
-			var idx = 
-				parseInt($(this).find('input[value="label"]').attr("name").match(/\d+/));
+        // features_json[0] is sequence length
+        var seqlen = features_json[0]
+        for (var i=1; i<features_json.length; i++) {
 			var row = []
-			$(this).find("td").each( function () {
-				row.push($(this).html());
-			});
-			var feat = new Feature(row.slice(2)); // row[0:2] are the checkboxes
-			features[idx] = feat;
-		})
-
-
-		return features;
+            row[0] = features_json[i]['feature']; // name str
+            row[1] = features_json[i]['start'];
+            row[2] = features_json[i]['end'];
+            row[3] = features_json[i]['type']; // type str
+            row[4] = features_json[i]['clockwise'];
+			var feat = new Feature(row)
+            // loop started at 1
+			features[i-1] = feat;
+		}
+		return [seqlen, features];
 	}
 
 	// Calculate cut counts of all Restriction enzyme
@@ -776,206 +750,26 @@ jQuery(document).ready(function ($) {
 		}
 	}
 
-	function register_control_handlers() {
+    //
+    // this is what callers should call to draw the plasmid
+    //
+    function draw(features_json) {
+	    paper = Raphael("plasmid-map", map_width, map_height); // global
+	    // These things are only done once
+	    var fv = parse_features_from_json(features_json);
+        seq_length = fv[0]; // global
+        features = fv[1]; // global
+	    draw_plasmid();
+	    cut_counts(); 
 
-		// Clicks to individual features' Show checkboxes
-		$('.feature-list>tbody input[value="show"]').click(function (event) {
-			var value = $(this).attr("checked");
-			var idx = parseInt($(this).attr("name").match(/\d+/));
-			var label_checkbox = $(this).parent().parent().next()
-			                            .children().children().first();
-			if (value) {
-				features[idx].show();
-				label_checkbox.removeAttr("disabled");
-				if (label_checkbox.attr("checked")) {
-					features[idx].show_label();
-					if (!features[idx].label_drawn())
-						features[idx].draw_label(label_radius);
-				} else
-					features[idx].hide_label();
-			} else {
-				features[idx].hide();
-				label_checkbox.attr("disabled", "disabled");
-				$(this).closest("table").find('thead input[value="show"]')
-				       .removeAttr("checked");
-			}
+	    // These things may need to be redone
+	    var max_radius = resolve_conflicts();
+	    var label_radius = max_radius + label_radius_offset; 
+	    draw_features(); // Draw all the features initially
+	    show_hide_cutters(); // Hide the right cutters
+	    draw_labels(label_radius); // Draw only the necessary labels
+    }
 
-			return;
-		});
+    return draw
+}
 
-		// Clicks to individual features' Label checkboxes
-		$('.feature-list>tbody input[value="label"]').click(function (event) {
-			var value = $(this).attr("checked");
-			var idx = parseInt($(this).attr("name").match(/\d+/));
-			if (value) {
-				features[idx].show_label();
-				if (!features[idx].label_drawn())
-					features[idx].draw_label(label_radius);
-			} else {
-				$(this).closest("table").find('thead input[value="label"]')
-				       .removeAttr("checked");
-				features[idx].hide_label();
-			}
-
-			return;
-		});
-
-		// Changes to the Restriction Enzyme selection
-		$('#feature-options select[name="all-enzyme"]').change(function (event) {
-			var opts = [];
-
-			// Parse out selected options
-			$(this).find("option:selected").each(function () {
-				opts.push(parseInt($(this).text().match(/\d+/)));
-			});
-
-			// Change which cutters to show, and redraw the labels, as this affects
-			// many features at once
-			cutters_to_show = opts;
-			show_hide_cutters();
-			draw_labels(label_radius);
-
-			set_checkboxes();
-
-		}).change(); // Run it as soon as you register it
-
-
-		// Make enzyme row hiding checkbox work
-		$('#feature-options input[name="hide-enzyme-rows"]').click(function (event) {
-			hide_enzyme_rows = $(this).attr("checked");
-			// Show the rows if we need to
-			if (hide_enzyme_rows) {
-				set_checkboxes();
-
-				// Only a reasonable number of rows are being shown: disable
-				// the "show-all-enzymes" checkbox
-				$('#the-enzyme-list>thead input[value="show"]').
-					removeAttr("disabled");
-			} else {
-				// Show all rows
-				$('#the-enzyme-list>tbody tr').removeClass("hidden-row");
-
-				// All rows are being shown: disable the "show-all-enzymes"
-				// checkbox
-				$('#the-enzyme-list>thead input[value="show"]').
-					attr("disabled", "disabled");
-			}
-		});
-
-		// Make feature-type checkboxes work
-		$('#feature-options input[name^="all"]').click(function (event) {
-			// Figure out the filetype
-			var type_str = $(this).attr("name").match(/all-(\w+)/)[1];
-			var type = ft[type_str];
-
-			// Is it the label or the whole feature?
-			var label_only = $(this).attr("value") == "label";
-			// Do we show or hide?
-			var value = $(this).attr("checked");
-
-			for (var fx in features) {
-				if (features[fx].type() == type) {
-					if (label_only) {
-						if (value)
-							features[fx].show_label();
-						else
-							features[fx].hide_label();
-					} else { // Whole thing
-						// Find the label checkbox
-						var label_checkbox = $(this).parent().siblings()
-													.children().first();
-						if (value) {
-							features[fx].show();
-							label_checkbox.removeAttr("disabled");
-							if (label_checkbox.attr("checked"))
-								features[fx].show_label();
-						} else {
-							features[fx].hide();
-							label_checkbox.attr("disabled", "disabled");
-						}
-					}
-				}
-			}
-
-			draw_labels(label_radius);
-			set_checkboxes();
-		});
-
-		// Make show-all and label-all checkboxes work
-		$('.feature-list>thead input').click(function (ix) {
-			// Is it the label or the whole feature?
-			var value = $(this).attr("value");
-			// Do we show or hide?
-			var checked = $(this).attr("checked");
-
-			// Go down the table and click on every non-hidden-row
-			// check box with the same value whose checked status
-			// is not the same as this box's
-			$(this).closest("table").find("tbody tr").not(".hidden-row")
-			       .find('input[value="' + value + '"]').not("[disabled]")
-			       .not('[checked = "' + checked + '"]').each(function (ix) {
-				// XXX NOT SURE WHY THIS WORKS
-				if (checked)
-					$(this).attr("checked", checked);
-				else
-					$(this).removeAttr("checked", checked);
-				$(this).click();
-				if (checked)
-					$(this).attr("checked", checked);
-				else
-					$(this).removeAttr("checked", checked);
-			});
-		});
-
-
-		// Update checkboxes to reflect current status
-		function set_checkboxes() { 
-			$('.feature-list>tbody input[value="show"]').each(function (ix) {
-				var idx = parseInt($(this).attr("name").match(/\d+/));
-				var is_enzyme = $(this).attr("name").search(/enzyme/) >= 0;
-				var label_checkbox = $(this).parent().parent().next()
-											.children().children().first();
-
-				var row = $(this).closest("tr");
-				var f = features[idx];
-				if (f.visible()) {
-					if (hide_enzyme_rows && is_enzyme)
-						row.removeClass("hidden-row");
-					$(this).attr("checked", "checked")
-					label_checkbox.removeAttr("disabled");
-					if (f.labeled()) 
-						label_checkbox.attr("checked", "checked");
-					else
-						label_checkbox.removeAttr("checked");
-				} else {
-					$(this).removeAttr("checked");
-					label_checkbox.attr("disabled", "disabled");
-					if (hide_enzyme_rows && is_enzyme)
-						row.addClass("hidden-row");
-				}
-			});
-		}
-
-	};
-
-
-	///////////////////////////////////////////////////////////////////
-	// MAIN ENTRY POINT
-	var paper = Raphael("plasmid-map", map_width, map_height);
-
-	// These things are only done once
-	set_control_defaults();
-	draw_plasmid();
-	var features = parse_features(); // features list is global
-	cut_counts(); 
-
-	// These things may need to be redone
-	var max_radius = resolve_conflicts();
-	var label_radius = max_radius + label_radius_offset; 
-	draw_features(); // Draw all the features initially
-	show_hide_cutters(); // Hide the right cutters
-	draw_labels(label_radius); // Draw only the necessary labels
-
-	register_control_handlers();
-	
-})

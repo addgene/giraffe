@@ -1,6 +1,6 @@
 function blat_api_closure(features) {
     var $ = jQuery
-	
+
     function draw() {
         alert(features.length)
 	}
