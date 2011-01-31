@@ -1,5 +1,6 @@
-Giraffe: Sequence BLAT and mapping, and JavaScript based DNA cloning
-tools.
+Giraffe: tool for detecting popular features in DNA sequence, creating
+maps of those features, and performing sequence analysis.
 
-From Addgene.
+This software is written and copyrighted by Addgene, and released
+under the MIT License. See LICENSE file.
 
