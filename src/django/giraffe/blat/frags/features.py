@@ -32,16 +32,16 @@ def _get_frags(db_name,sequence):
     shift
     """
 
-    BIN_PATH = '/usr/local/bin/'
-    DATA_PATH = '/usr/local/share/giraffe/'
+    DATA_PATH = BIN_PATH = os.path.dirname(__file__)
 
     tmp_file = tempfile.NamedTemporaryFile(delete=False)
     tmp_file.write(sequence)
     tmp_file.close()
 
-    cmd = '%s/giraffe-frags %s/%s.data %s' % (
+    cmd = '%s/bin/frags %s/data/%s.data %s' % (
         BIN_PATH, DATA_PATH, db_name, tmp_file.name
     )
+
     f = os.popen(cmd)
     res = f.readlines()
     os.unlink(tmp_file.name)
