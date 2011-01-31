@@ -19,7 +19,7 @@ SELECT 1
 
 @150
 
-`cd ../../src/django/giraffe/blat/frags; python create_frag_db.py default > data/default.data`
+`python create_frag_db.py default > ../../src/django/giraffe/blat/frags/data/default.data`
 
 @200
 
@@ -39,7 +39,7 @@ SELECT 1
 
 @250
 
-`cd ../../src/django/giraffe/blat/frags; python create_frag_db.py afire > data/afire.data`
+`python create_frag_db.py afire > ../../src/django/giraffe/blat/frags/data/afire.data`
 
 @300
 

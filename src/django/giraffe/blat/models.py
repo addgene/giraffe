@@ -4,6 +4,40 @@ import hashlib
 import re
 
 
+class Giraffe_Mappable_Model(models.Model):
+    """This is an API for other apps to use with their models."""
+
+    class Meta:
+        abstract = True
+
+    sequence = models.TextField()
+    sequence_giraffe_id = models.CharField(max_length=64,null=True,blank=True)
+    sequence_giraffe_time = models.DateTimeField(null=True,blank=True)
+
+    @staticmethod
+    def blat(sequence,db_name):
+        import frags.features
+        db = Feature_Database.objects.get(name=db_name)
+        s = frags.features.blat(db,sequence)
+        return s.hash
+
+    def giraffe_ready(self,db_name='default',save=True):
+        import datetime
+        s = Giraffe_Mappable_Model.blat(self.sequence,db_name)
+        self.sequence_giraffe_id = s
+        self.sequence_giraffe_time = datetime.datetime.now()
+        if save:
+            self.save()
+    giraffe_ready.alters_data = True
+
+    def save(self):
+        (s,h) = Sequence.clean_and_hash(self.sequence)
+        if h != self.sequence_giraffe_id:
+            self.giraffe_ready(save=False)
+        return super(Giraffe_Mappable_Model,self).save()
+    save.alters_data = True
+
+
 class Sequence_Feature(models.Model):
     sequence = models.ForeignKey('Sequence')
     feature = models.ForeignKey('Feature')

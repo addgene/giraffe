@@ -4,18 +4,11 @@ import json
 import httplib
 
 import models
-import frags.features
 
 from django.shortcuts import redirect
 from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-
-
-def run(db_name,sequence):
-    db = models.Feature_Database.objects.get(name=db_name)
-    s = frags.features.blat(db,sequence)
-    return s.hash
 
 
 def post(request):
@@ -27,7 +20,7 @@ def post(request):
     else:
         db_name = request.POST['db']
         sequence = request.POST['sequence']
-        hash = run(db_name, sequence)
+        hash = models.Giraffe_Mappable_Model.blat(sequence,db_name)
         return redirect(reverse(get,args=[hash,db_name]))
 
 
