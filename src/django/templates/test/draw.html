@@ -9,13 +9,14 @@
 {% block pagejs %}
 <script src="/headers/js/raphael-min.js"></script>
 <script src="/headers/js/scale.raphael.js"></script>
-<script src="http://127.0.0.1:8080/api/js/draw.js"></script>
+<script src="http://127.0.0.1:8800/api/js/draw.js"></script>
 <script>
 draw_fn = giraffe_draw_init({
-    'map_dom_id' : 'map'
+    'map_dom_id' : 'map',
+    'plasmid_name' : 'pLKO.1 TRC Cloning Vector',
 })
 </script>
-<script src="http://127.0.0.1:8080/blat/8de364690dbeb88d2ab63bd66861725539aa3204
+<script src="http://127.0.0.1:8800/blat/8de364690dbeb88d2ab63bd66861725539aa3204
 /default?jsonp=draw_fn"></script>
 {% endblock %}
 

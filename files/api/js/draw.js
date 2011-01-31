@@ -27,9 +27,16 @@
 //
 //  feature_opacity: opacity when feature is shown. if not 1.0, then
 //  when feature is moused over or clicked on, the opacity will become
-//  1.0. Default is 1.0.
+//  1.0. Default is 0.8.
 //
 //  map_width, map_height: default 640, 640.
+//
+//  label_font_size, plasmid_font_size: font size for the labels and
+//  center plasmid name and size. E.g. "12pt". Defaults are "12pt" and
+//  "16pt" respectively.
+//
+//  plasmid_name: if given, show this name together with size of
+//  sequence in the middle of the plasmid. Default is "".
 //
 function giraffe_draw_init(options) {
 
@@ -74,8 +81,8 @@ function giraffe_draw_init(options) {
 	var enzyme_weight = 1; // Restriction enzymes are drawn differently
 	                       // This controls their "thickness" on the map
 	var enzyme_bold_weight = 1.5*enzyme_weight; 
-	var feature_opacity = 1.0;
-	var enzyme_opacity = 1.0;
+	var feature_opacity = 0.8;
+	var enzyme_opacity = 0.8;
     if ('opacity' in options) {
 	    feature_opacity = parseFloat(options['opacity']);
 	    enzyme_opacity = parseFloat(options['opacity']);
@@ -102,6 +109,20 @@ function giraffe_draw_init(options) {
 	var tic_mark_length = 15;
 	var tic_mark_radius = inner_radius - tic_mark_length/2;
 	var tic_label_radius = tic_mark_radius - 1.5*tic_mark_length;
+
+    // Labels and other text
+    var label_font_size = '12pt';
+    if ('label_font_size' in options) {
+        label_font_size = options['label_font_size'];
+    }
+    var plasmid_font_size = '16pt';
+    if ('plasmid_font_size' in options) {
+        plasmid_font_size = options['plasmid_font_size'];
+    }
+    var plasmid_name = '';
+    if ('plasmid_name' in options) {
+        plasmid_name = options['plasmid_name'];
+    }
 
 	// Table display
 	var hide_enzyme_rows = true; // Hide rows for cutter types not shown
@@ -507,9 +528,9 @@ function giraffe_draw_init(options) {
 			
 			var xy1 = convert.polar_to_rect(r_l, section_angle);
 			if (xy1.y > cy) { // Lower half: add below
-				xy1.y += y_shift;
+				xy1.y += y_shift+1;
 			} else { // Upper half: add above
-				xy1.y -= y_shift;
+				xy1.y -= (y_shift+1);
 			}
 
 			// Draw the line to the label position
@@ -528,9 +549,10 @@ function giraffe_draw_init(options) {
 			} // Top and bottom default to middle, which is correct
 
 			// Update the label heights
-			label_heights[section] += label.getBBox().height;
+			label_heights[section] += label.getBBox().height+1;
 
-			label.attr({"fill": _color, "font-size":"12pt",
+			label.attr({"fill": _color,
+                        "font-size": label_font_size,
 			            "opacity": _opacity});
 
 			_label_set.push(label_line);
@@ -613,9 +635,13 @@ function giraffe_draw_init(options) {
 
 		var plasmid = paper.circle(cx, cy, plasmid_radius);
 		plasmid.attr("stroke", color_plasmid);
-		var plasmid_label = paper.text(cx, cy, seq_length + " bp");
+        var title = seq_length+' bp';
+        if (plasmid_name != "") {
+            title = plasmid_name+"\n"+title;
+        }
+		var plasmid_label = paper.text(cx, cy, title);
 		plasmid_label.attr({"fill":      color_plasmid,
-							"font-size": "18pt"});
+							"font-size": plasmid_font_size, });
 
 		for (var ang = 0; ang < 360; ang += 30) {
 			draw_tic_mark(ang);
@@ -783,14 +809,15 @@ function giraffe_draw_init(options) {
 		}
 	}
 
-	// Global label height list: keeps track of the current heights of each of
-	// the 8 label lists, so that we know at what height to add the next label.
+    // Global label height list: keeps track of the current heights of
+    // each of the 8 label lists, so that we know at what height to
+    // add the next label.
 	var label_heights = new Array(16);
 	function draw_labels(label_radius) {
 
-		// Global label height list: keeps track of the current heights of each of
-		// the 16 label lists, so that we know at what height to add the next label.
-		// Reset the list
+        // Global label height list: keeps track of the current
+        // heights of each of the 16 label lists, so that we know at
+        // what height to add the next label. Reset the list
 		label_heights = [0, 0, 0, 0, 0, 0, 0, 0];
 	
 		// Iterate counterclockwise
