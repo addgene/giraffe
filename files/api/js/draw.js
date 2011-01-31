@@ -27,16 +27,19 @@
 //
 //  feature_opacity: opacity when feature is shown. if not 1.0, then
 //  when feature is moused over or clicked on, the opacity will become
-//  1.0. Default is 0.8.
+//  1.0. Default is 0.7.
 //
 //  map_width, map_height: default 640, 640.
 //
 //  label_font_size, plasmid_font_size: font size for the labels and
-//  center plasmid name and size. E.g. "12pt". Defaults are "12pt" and
+//  center plasmid name and size. E.g. "14pt". Defaults are "14pt" and
 //  "16pt" respectively.
 //
 //  plasmid_name: if given, show this name together with size of
 //  sequence in the middle of the plasmid. Default is "".
+//
+//  label_radius_offset: how far from the outter feature should we
+//  start drawing labels. Default is "10".
 //
 function giraffe_draw_init(options) {
 
@@ -44,8 +47,8 @@ function giraffe_draw_init(options) {
 
     // Paper setup - not the final width, but how we will draw the
     // map, we will scale later on
-	var map_width = 640;
-	var map_height = 640;
+	var map_width = 800;
+	var map_height = 800;
 	var cx = map_width/2;
 	var cy = map_height/2;
 
@@ -73,7 +76,10 @@ function giraffe_draw_init(options) {
 	var plasmid_radius = 200;
 	var inner_radius = plasmid_radius - radius_spacing; 
 	var outer_radius = plasmid_radius + radius_spacing;
-	var label_radius_offset = 0;
+	var label_radius_offset = 10;
+    if ('label_radius_offset' in options) {
+        label_radius_offset = parseInt(options['label_radius_offset']);
+    }
 
 	// Feature visual properties
 	var feature_width = 15;
@@ -81,8 +87,8 @@ function giraffe_draw_init(options) {
 	var enzyme_weight = 1; // Restriction enzymes are drawn differently
 	                       // This controls their "thickness" on the map
 	var enzyme_bold_weight = 1.5*enzyme_weight; 
-	var feature_opacity = 0.8;
-	var enzyme_opacity = 0.8;
+	var feature_opacity = 0.7;
+	var enzyme_opacity = 0.7;
     if ('opacity' in options) {
 	    feature_opacity = parseFloat(options['opacity']);
 	    enzyme_opacity = parseFloat(options['opacity']);
@@ -111,7 +117,7 @@ function giraffe_draw_init(options) {
 	var tic_label_radius = tic_mark_radius - 1.5*tic_mark_length;
 
     // Labels and other text
-    var label_font_size = '12pt';
+    var label_font_size = '13pt';
     if ('label_font_size' in options) {
         label_font_size = options['label_font_size'];
     }
@@ -123,6 +129,11 @@ function giraffe_draw_init(options) {
     if ('plasmid_name' in options) {
         plasmid_name = options['plasmid_name'];
     }
+
+    // This is based on using 8 label lists, which is pretty much hard
+    // coded in a few places, so don't change this unless you figure
+    // out how to change the number of label lists.
+    var label_section_degree = 45;
 
 	// Table display
 	var hide_enzyme_rows = true; // Hide rows for cutter types not shown
@@ -376,6 +387,7 @@ function giraffe_draw_init(options) {
 
             if (fade_time) { sets.animate(props, fade_time); }
             else { sets.attr(props); }
+            _label.attr({"opacity":1.0});
 		}
 
 		// Toggle solid/light upon click
@@ -404,6 +416,7 @@ function giraffe_draw_init(options) {
 		var _arrow_set = paper.set();
 
 		var _label_set = paper.set();
+        var _label = undefined;
 		var _label_drawn = false;
 
 		// Feature drawing
@@ -505,39 +518,102 @@ function giraffe_draw_init(options) {
 
 		} // END Feature::draw()
 
-		// Draw the label associated with that feature
-		this.draw_label = function (r_l) {
+        // Should we draw the label?
+        this.should_draw_label = function () {
 			// Don't bother unless we need to
 			if (!_visible || !_labeled) 
-				return;
+				return false;
+            return true;
+        }
+
+        // Set which label list this feature's label should be in
+        this.set_label_list = function () {
+            if (!_this.should_draw_label()) { return; }
+
+            // Figure out the center of the feature
+			var a_c = (_this.start_degrees()+_this.end_degrees())/2.0;
+            var adjust_a_c = a_c;
+            if (adjust_a_c < 0) { adjust_a_c += 360; }
+
+			// Figure out the label position: divide the grid up into eight
+			// sections
+			var section =
+                Math.floor((plasmid_start - a_c)/label_section_degree);
+
+            var l = label_f_c[section].length;
+            // because this value is always positive, going 0 to 360,
+            // that means if we sort by this value, we are going
+            // counter-clockwise.
+			var xy0 = convert.polar_to_rect(_this.radius, a_c);
+            label_f_c[section][l] = [adjust_a_c,xy0];
+        }
+
+		// Draw the label associated with that feature
+		this.draw_label = function () {
+            if (!_this.should_draw_label()) { return; }
 
 			if (_label_drawn)
 				_this.clear_label();
 
 			// Figure out the center of the feature
-			var a_c = (_this.start_degrees() + _this.end_degrees()) / 2.0;
+			var a_c = (_this.start_degrees()+_this.end_degrees())/2.0;
+            var adjust_a_c = a_c;
+            if (adjust_a_c < 0) { adjust_a_c += 360; }
+
 			var xy0 = convert.polar_to_rect(_this.radius, a_c);
 			
 			// Figure out the label position: divide the grid up into eight
 			// sections
-			var section_size = 45; // degrees
-			var section = Math.floor((plasmid_start - a_c) / section_size);
-			var section_angle = plasmid_start - section_size/2.0 - section*section_size;
+			var section =
+                Math.floor((plasmid_start - a_c)/label_section_degree);
+			var section_angle = plasmid_start - label_section_degree/2.0 - section*label_section_degree;
 
-			y_shift = label_heights[section];
-			
-			var xy1 = convert.polar_to_rect(r_l, section_angle);
-			if (xy1.y > cy) { // Lower half: add below
-				xy1.y += y_shift+1;
-			} else { // Upper half: add above
-				xy1.y -= (y_shift+1);
-			}
+            // Figure out position in the label list - remember,
+            // sorting by label_f_c means going counterclockwise.
+            var pos_ls = 0
+            for (pos_ls=0; pos_ls<label_f_c[section].length; pos_ls++) {
+                if (label_f_c[section][pos_ls][0] == adjust_a_c) {
+                    // Claim this spot, 999 is not a valid value for
+                    // adjust_a_c.
+                    label_f_c[section][pos_ls][0] = 999;
+                    break;
+                }
+            }
+            var sec_labels = label_f_c[section].length;
+			var y_shift = pos_ls*label_height;
+			var xy1 = {}
+            xy1.x = label_list_pos[section][0]
+            xy1.y = label_list_pos[section][1]
+
+            // We want to minimize the number of label lines that
+            // cross. Which means depends on which section we are in,
+            // we draw labels in different orders. See draw_labels on
+            // how the positions are setup. Remember, because are
+            // sorted by label_f_c, we are going counter clockwise and
+            // the label_list_pos elements have the lower y
+            // coordinates.
+            if (section == 0 || section == 1) {
+                // upper right, higher bp at bottom
+                xy1.y -= y_shift;
+            }
+            else if (section == 2 || section == 3) {
+                // lower right, higher bp at bottom
+                xy1.y -= y_shift;
+            }
+            else if (section == 4 || section == 5) {
+                // lower left, higher bp on top
+                xy1.y = xy1.y - sec_labels*label_height + y_shift;
+            }
+            else if (section == 6 || section == 7) {
+                // upper left, high bp on top
+                xy1.y = xy1.y - sec_labels*label_height + y_shift;
+            }
 
 			// Draw the line to the label position
 			var label_line = paper.path(svg.move(xy0.x, xy0.y) +
 										svg.line(xy1.x, xy1.y));
 			label_line.attr({"stroke": color_bg_text,
-			                 "opacity": feature_opacity});
+			                 "opacity": 0.5 });
 
 			var label = paper.text(xy1.x, xy1.y, _name);
 			if (a_c < plasmid_start - 180 && a_c > plasmid_start - 360) { 
@@ -548,15 +624,13 @@ function giraffe_draw_init(options) {
 				label.attr({"text-anchor": "start"});
 			} // Top and bottom default to middle, which is correct
 
-			// Update the label heights
-			label_heights[section] += label.getBBox().height+1;
-
 			label.attr({"fill": _color,
                         "font-size": label_font_size,
-			            "opacity": _opacity});
+			            "opacity": 1.0 });
 
 			_label_set.push(label_line);
 			_label_set.push(label);
+            _label = label;
 
 			// Handlers
 			_label_set.click(_click);
@@ -566,7 +640,7 @@ function giraffe_draw_init(options) {
 
 			_labeled = true;
 			_label_drawn = true;
-		} // END Feature::draw_label(r_l)
+		} // END Feature::draw_label()
 
 		this.hide = function () {
 			if (_visible) {
@@ -637,7 +711,7 @@ function giraffe_draw_init(options) {
 		plasmid.attr("stroke", color_plasmid);
         var title = seq_length+' bp';
         if (plasmid_name != "") {
-            title = plasmid_name+"\n"+title;
+            title = plasmid_name+"\n\n"+title;
         }
 		var plasmid_label = paper.text(cx, cy, title);
 		plasmid_label.attr({"fill":      color_plasmid,
@@ -809,20 +883,128 @@ function giraffe_draw_init(options) {
 		}
 	}
 
-    // Global label height list: keeps track of the current heights of
-    // each of the 8 label lists, so that we know at what height to
-    // add the next label.
-	var label_heights = new Array(16);
+    // Global label list: keeps track of which label should be in each
+    // label list, and where the label line should point to, so we can
+    // use this information to figure out where to put the label and
+    // minimize the number of lines that intersect.
+    var label_f_c = new Array(8);
+    var label_list_pos = new Array(8);
 	function draw_labels(label_radius) {
 
-        // Global label height list: keeps track of the current
-        // heights of each of the 16 label lists, so that we know at
-        // what height to add the next label. Reset the list
-		label_heights = [0, 0, 0, 0, 0, 0, 0, 0];
+        // Keeps track of feature centers for each label list, we need
+        // this to compute exactly where a label should be within a
+        // label list, so to minimize intersecting lines.
+        label_f_c = [[], [], [], [], [], [], [], []];
+
+        // y starting position for each label list
+        label_list_pos = [[0,0], [0,0], [0,0], [0,0],
+                          [0,0], [0,0], [0,0], [0,0]];
 	
-		// Iterate counterclockwise
+		// Iterate counterclockwise, first get counts
 		for (var fx = features.length - 1; fx >= 0; fx--) {
-			features[fx].draw_label(label_radius);
+			features[fx].set_label_list();
+		}
+
+        // Sort feature center list for each label list, and also
+        // figure out where each label list should start
+        for (var i=0; i<label_f_c.length; i++) {
+            label_f_c[i].sort(function(a,b){return (a[0]-b[0])})
+			var section_angle = plasmid_start-label_section_degree/2.0-i*label_section_degree;
+			var xy1 = convert.polar_to_rect(label_radius, section_angle);
+            // get lower y coordinate and x coordinate
+            if (i == 0 || i == 1) {
+                // upper right, higher bp at bottom
+                xy1.x += 20;
+            }
+            else if (i == 2 || i == 3) {
+                // lower right, higher bp at bottom
+                xy1.y += label_f_c[i].length*label_height;
+                xy1.x += 20;
+            }
+            else if (i == 4 || i == 5) {
+                // lower left, higher bp on top
+                xy1.y += label_f_c[i].length*label_height;
+                xy1.x -= 20;
+            }
+            else if (i == 6 || i == 7) {
+                // upper left, high bp on top
+                xy1.x -= 20;
+            }
+            label_list_pos[i][0] = xy1.x;
+            label_list_pos[i][1] = xy1.y;
+        }
+        // We want to adjust label sections 1 and 2, and sections 5
+        // and 6, so that the labels appear next to the features,
+        // rather than on top or below. Note that how we adjust is
+        // based on what we think will look best on screen, not some
+        // rule for optimization.
+        //
+        // for label list 1, see if we can move label list down; see
+        // if we can put the highest-y label next to the highest-y
+        // feature.
+        if (label_f_c[1].length) {
+            section_1_high_bp_feature_y = label_f_c[1][0][1].y;
+            // make sure won't conflict with section 2 label list
+            if (label_list_pos[2][1]-label_f_c[2].length*label_height <
+                section_1_high_bp_feature_y+label_height) {
+              section_1_high_bp_feature_y =
+                label_list_pos[2][1]-label_f_c[2].length*label_height
+                -label_height;
+            }
+            if (section_1_high_bp_feature_y > label_list_pos[1][1]) {
+                // can move down
+                label_list_pos[1][1] = section_1_high_bp_feature_y-label_height;
+            }
+        }
+        // for label list 2, see if we can move label list up,
+        // checking against the adjusted y position of label list 1.
+        if (label_f_c[2].length) {
+            section_2_low_bp_feature_y =
+                label_f_c[2][label_f_c[2].length-1][1].y;
+            // make sure won't conflict with section 1 label list
+            if (section_2_low_bp_feature_y <
+                label_list_pos[1][1]+label_height) {
+              section_2_low_bp_feature_y = label_list_pos[1][1]+label_height;
+            }
+            if (section_2_low_bp_feature_y <
+                label_list_pos[2][1]-label_f_c[2].length*label_height) {
+                // can move up
+                label_list_pos[2][1] =
+                  section_2_low_bp_feature_y+label_f_c[2].length*label_height;
+            }
+        }
+        // for label list 5, see if we can move label list up; see if
+        // we can put the lowest-y label next to the lowest-y feature.
+        if (label_f_c[5].length) {
+            section_5_high_bp_feature_y = label_f_c[5][0][1].y;
+            // at this point, since we've not moved section 6 list
+            // down, we know we won't conflict with section 6 yet.
+            if (section_5_high_bp_feature_y <
+                label_list_pos[5][1]-label_f_c[5].length*label_height) {
+                // can move up
+                label_list_pos[5][1] =
+                  section_5_high_bp_feature_y+label_f_c[5].length*label_height;
+            }
+        }
+        // for label list 6, see if we can move label list down,
+        // checking against the adjusted y position of label list 5.
+        if (label_f_c[6].length) {
+            section_6_low_bp_feature_y =
+                label_f_c[6][label_f_c[6].length-1][1].y;
+            // make sure won't conflict with section 5 label list
+            if (section_6_low_bp_feature_y >
+                label_list_pos[5][1]-label_height) {
+              section_6_low_bp_feature_y = label_list_pos[5][1]-label_height;
+            }
+            if (section_6_low_bp_feature_y > label_list_pos[6][1]) {
+                // can move down
+                label_list_pos[6][1] = section_6_low_bp_feature_y;
+            }
+        }
+ 
+        // Finally draw labels
+		for (var fx = features.length - 1; fx >= 0; fx--) {
+			features[fx].draw_label();
 		}
 	}
 
@@ -831,6 +1013,14 @@ function giraffe_draw_init(options) {
     //
     function draw(features_json) {
 	    paper = ScaleRaphael(map_dom_id, map_width, map_height); // global
+
+        // draw a text and erase it, but use this to figure out text
+        // height
+		var label = paper.text(0,0,'label');
+        label.attr({"font-size": label_font_size});
+		label_height = label.getBBox().height; // global
+        paper.clear();
+
 	    // These things are only done once
 	    var fv = parse_features_from_json(features_json);
         seq_length = fv[0]; // global
