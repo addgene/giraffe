@@ -12,6 +12,12 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 
 
+def run(db_name,sequence):
+    db = models.Feature_Database.objects.get(name=db_name)
+    s = frags.features.blat(db,sequence)
+    return s.hash
+
+
 def post(request):
     if request.method == 'GET':
         return render_to_response(
@@ -21,9 +27,8 @@ def post(request):
     else:
         db_name = request.POST['db']
         sequence = request.POST['sequence']
-        db = models.Feature_Database.objects.get(name=db_name)
-        s = frags.features.blat(db,sequence)
-        return redirect(reverse(get,args=[s.hash,db_name]))
+        hash = run(db_name, sequence)
+        return redirect(reverse(get,args=[hash,db_name]))
 
 
 def get(request,hash,db_name):
@@ -55,19 +60,6 @@ def get(request,hash,db_name):
     return http_res
 
 
-def post_check(request):
-    assert(request.method == 'POST')
-    db_name = request.POST['db']
-    sequence = request.POST['sequence']
-    (sequence,hash) = models.Sequence.clean_and_hash(sequence)
-    db = models.Feature_Database.objects.get(name=db_name)
-    obj = models.Sequence.objects.filter(db=db,hash=hash)
-    if len(obj) > 0:
-        return get(request, hash, db_name)
-    else:
-        return post(request)
-
-
 def draw(request,hash,db_name):
     """
     Get features of a sequence, using the sequence's sha-1 hash as the
@@ -81,4 +73,5 @@ def draw(request,hash,db_name):
         { "sequence" : sequence }, 
         context_instance=RequestContext(request)
     )
+
 
