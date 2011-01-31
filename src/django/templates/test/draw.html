@@ -3,13 +3,19 @@
 {% block title %} Drawing API Test {% endblock %}
 
 {% block body %}
-<div id="plasmid-map"></div>
+<div id="map"></div>
 {% endblock %}
 
 {% block pagejs %}
 <script src="/headers/js/raphael-min.js"></script>
+<script src="/headers/js/scale.raphael.js"></script>
 <script src="http://127.0.0.1:8080/api/js/draw.js"></script>
+<script>
+draw_fn = giraffe_draw_init({
+    'map_dom_id' : 'map'
+})
+</script>
 <script src="http://127.0.0.1:8080/blat/8de364690dbeb88d2ab63bd66861725539aa3204
-/default?jsonp=giraffe_draw_init()"></script>
+/default?jsonp=draw_fn"></script>
 {% endblock %}
 

@@ -3,15 +3,60 @@
 // function, customized with the drawing options. Then call the
 // drawing fuction with JSON feature lists.
 //
-function giraffe_draw_init() {
+// Options can be passed in via the dictionary argument. For example:
+//
+//    draw_fn = giraffe_draw_init({ "map_dom_id" : "some_id", ... })
+//
+// The result is something you can pass as the JSONP argument to the
+// BLAT get API (i.e. API to retrieve array of features of a sequence
+// from the server):
+//
+//    <script src="/headers/js/raphael-min.js"></script>
+//    <script src="http://host/api/js/draw.js"></script>
+//    <script>draw_fn = giraffe_draw_init({...})</script>
+//    <script src="http://host/blat/8de36469..../default?jsonp=draw_fn">
+//    </script>
+//
+// Available options are:
+//
+//  map_dom_id: ID of the DOM element that contains the map. Default
+//  is "giraffe-draw-map"
+//
+//  fade_time: if non-zero, then highlight a feature will cause an
+//  animated fade-in/out effect. Default is 0.
+//
+//  feature_opacity: opacity when feature is shown. if not 1.0, then
+//  when feature is moused over or clicked on, the opacity will become
+//  1.0. Default is 1.0.
+//
+//  map_width, map_height: default 640, 640.
+//
+function giraffe_draw_init(options) {
+
 	var _debug = false;
-	///////////////////////////////////////////////////////////////////
-	// Global parameters
-	// Paper setup
+
+    // Paper setup - not the final width, but how we will draw the
+    // map, we will scale later on
 	var map_width = 640;
 	var map_height = 640;
 	var cx = map_width/2;
 	var cy = map_height/2;
+
+    // Where to draw the map
+    var map_dom_id = 'giraffe-draw-map';
+    if ('map_dom_id' in options) {
+        map_dom_id = options['map_dom_id'];
+    }
+
+    // Final size
+    var final_map_width = 640;
+    var final_map_height = 640;
+    if ('map_width' in options) {
+        final_map_width = parseInt(options['map_width'])
+    }
+    if ('map_height' in options) {
+        final_map_height = parseInt(options['map_height'])
+    }
 
 	// Global plasmid info
 	var plasmid_start = 90; // degrees
@@ -29,8 +74,12 @@ function giraffe_draw_init() {
 	var enzyme_weight = 1; // Restriction enzymes are drawn differently
 	                       // This controls their "thickness" on the map
 	var enzyme_bold_weight = 1.5*enzyme_weight; 
-	var feature_opacity = 1.0/3.0;
-	var enzyme_opacity = 0.4;
+	var feature_opacity = 1.0;
+	var enzyme_opacity = 1.0;
+    if ('opacity' in options) {
+	    feature_opacity = parseFloat(options['opacity']);
+	    enzyme_opacity = parseFloat(options['opacity']);
+    }
 	var bold_opacity = 1.0;
 	var head_width = 25;
 	var head_length = 7;
@@ -39,7 +88,10 @@ function giraffe_draw_init() {
 	var cutters_to_show = [1];
 
 	// Animation properties
-	var fade_time = 300;
+	var fade_time = 0;
+    if ('fade_time' in options) {
+        fade_time = parseInt(options['fade_time'])
+    }
 
 	// Overlaps
 	var min_overlap_cutoff = -0.1;// in degrees
@@ -269,14 +321,12 @@ function giraffe_draw_init() {
 		var _bolder = function () {
 			var sets = paper.set();
 			sets.push(_feature_set);
-			var props = {"opacity": bold_opacity};
+			var props = {"opacity": bold_opacity, "font-weight": "bold" };
 
 			// Cutters: make them thicker and highlight
 			//          related examples
 			if (_type == ft.enzyme) {
 				props["stroke-width"] = enzyme_bold_weight;
-				props["font-weight"] = "bold";
-
 				// Highlight other examples of this enzyme
 				// if it's a multi-cutter
 				for (var fx in _other_cutters) {
@@ -284,7 +334,8 @@ function giraffe_draw_init() {
 				}
 			}
 
-			sets.animate(props, fade_time);
+            if (fade_time) { sets.animate(props, fade_time); }
+            else { sets.attr(props); }
 		}
 
 		var _lighter = function () {
@@ -292,18 +343,18 @@ function giraffe_draw_init() {
 			sets.push(_feature_set);
 
 			// Cutters: restore them and related examples to normal
-			var props = {"opacity": _opacity};
+			var props = {"opacity": _opacity, "font-weight":"normal"};
 			if (_type == ft.enzyme) {
 				props["stroke-width"] = enzyme_weight;
-				props["font-weight"] = "normal";
-
 				// Highlight other examples of this enzyme
 				// if it's a multi-cutter
 				for (var fx in _other_cutters) {
 					sets.push(_other_cutters[fx].feature_set());
 				}
 			}
-			sets.animate(props, fade_time);
+
+            if (fade_time) { sets.animate(props, fade_time); }
+            else { sets.attr(props); }
 		}
 
 		// Toggle solid/light upon click
@@ -442,7 +493,6 @@ function giraffe_draw_init() {
 			if (_label_drawn)
 				_this.clear_label();
 
-			
 			// Figure out the center of the feature
 			var a_c = (_this.start_degrees() + _this.end_degrees()) / 2.0;
 			var xy0 = convert.polar_to_rect(_this.radius, a_c);
@@ -454,7 +504,6 @@ function giraffe_draw_init() {
 			var section_angle = plasmid_start - section_size/2.0 - section*section_size;
 
 			y_shift = label_heights[section];
-			
 			
 			var xy1 = convert.polar_to_rect(r_l, section_angle);
 			if (xy1.y > cy) { // Lower half: add below
@@ -481,7 +530,7 @@ function giraffe_draw_init() {
 			// Update the label heights
 			label_heights[section] += label.getBBox().height;
 
-			label.attr({"fill": _color,
+			label.attr({"fill": _color, "font-size":"12pt",
 			            "opacity": _opacity});
 
 			_label_set.push(label_line);
@@ -566,7 +615,7 @@ function giraffe_draw_init() {
 		plasmid.attr("stroke", color_plasmid);
 		var plasmid_label = paper.text(cx, cy, seq_length + " bp");
 		plasmid_label.attr({"fill":      color_plasmid,
-							"font-size": "12pt"});
+							"font-size": "18pt"});
 
 		for (var ang = 0; ang < 360; ang += 30) {
 			draw_tic_mark(ang);
@@ -754,7 +803,7 @@ function giraffe_draw_init() {
     // this is what callers should call to draw the plasmid
     //
     function draw(features_json) {
-	    paper = Raphael("plasmid-map", map_width, map_height); // global
+	    paper = ScaleRaphael(map_dom_id, map_width, map_height); // global
 	    // These things are only done once
 	    var fv = parse_features_from_json(features_json);
         seq_length = fv[0]; // global
@@ -768,6 +817,11 @@ function giraffe_draw_init() {
 	    draw_features(); // Draw all the features initially
 	    show_hide_cutters(); // Hide the right cutters
 	    draw_labels(label_radius); // Draw only the necessary labels
+
+        if (final_map_width != map_width ||
+            final_map_height != map_height) {
+            paper.changeSize(final_map_width,final_map_height,true,false)
+        }
     }
 
     return draw
