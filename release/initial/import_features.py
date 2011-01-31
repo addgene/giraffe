@@ -10,6 +10,7 @@ setup_environ(giraffe.settings)
 import re
 from giraffe.blat.models import Feature
 from giraffe.blat.models import Feature_Database
+from giraffe.blat.models import Feature_In_Database
 
 db = sys.argv[1]
 
@@ -23,6 +24,8 @@ if db != 'none':
 
 for line in sys.stdin.readlines():
     m = re.match('^E:(\w+),(\d)\/(\d) (.+)$',line)
+    m1 = re.match('^E\*:(\w+),(\d)\/(\d) (.+)$',line)
+
     if m != None:
         id = 4
         type = 'Enzyme'
@@ -41,7 +44,35 @@ for line in sys.stdin.readlines():
             f = Feature.objects.get(name=name,hash=f.hash)
 
         if db != 'none':
-            fdb.features.add(f)
+            m = Feature_In_Database()
+            m.feature = f
+            m.feature_database = fdb
+            m.show_feature = False
+            m.save()
+
+    elif m1 != None:
+        id = 4
+        type = 'Enzyme'
+        name = m1.group(1)
+        cut_after = int(m1.group(2))
+        sequence = m1.group(4)
+
+        f = Feature()
+        f.type_id = id
+        f.name = name
+        f.sequence = sequence
+        f.cut_after = cut_after
+        try:
+            f.save()
+        except:
+            f = Feature.objects.get(name=name,hash=f.hash)
+
+        if db != 'none':
+            m = Feature_In_Database()
+            m.feature = f
+            m.feature_database = fdb
+            m.show_feature = True
+            m.save()
 
     else:
         m = re.match('^(\w+):(\S+) (.+)$',line)
@@ -86,5 +117,10 @@ for line in sys.stdin.readlines():
                 f = Feature.objects.get(name=name,hash=f.hash)
         
             if db != 'none':
-                fdb.features.add(f)
+                m = Feature_In_Database()
+                m.feature = f
+                m.feature_database = fdb
+                m.show_feature = True
+                m.save()
+
 

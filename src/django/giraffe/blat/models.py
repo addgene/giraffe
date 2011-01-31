@@ -101,8 +101,14 @@ class Feature(models.Model):
 
 class Feature_Database(models.Model):
     name = models.CharField(max_length=64,unique=True)
-    features = models.ManyToManyField(Feature)
+    features = models.ManyToManyField(Feature, through='Feature_In_Database')
     last_built = models.DateTimeField(null=True,blank=True)
+
+
+class Feature_In_Database(models.Model):
+    feature = models.ForeignKey(Feature)
+    feature_database = models.ForeignKey(Feature_Database)
+    show_feature = models.BooleanField(default=True)
 
 
 class Feature_DB_Index(models.Model):
