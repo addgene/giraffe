@@ -35,7 +35,9 @@ def get(request,hash,db_name):
     sequence = models.Sequence.objects.get(db=db,hash=hash)
 
     res = [len(sequence.sequence),]
-    for f in sequence.sequence_feature_set.order_by("start"):
+    for f in sequence.sequence_feature_set.order_by("start").select_related(
+        'feature', 'feature__type',
+      ):
         res.append(f.to_dict())
 
     j = json.JSONEncoder().encode(res)

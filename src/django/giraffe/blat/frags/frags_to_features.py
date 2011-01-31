@@ -762,6 +762,7 @@ def _trains_to_features(trains):
 
     return features
 
+
 ## Main entry point
 def frags_to_features(frags_strings, db, seq_length):
     """
@@ -769,7 +770,7 @@ def frags_to_features(frags_strings, db, seq_length):
     """
 
     all_trains = [] 
-
+    
     # Sort the fragments into groups of the same feature index
     frags_by_feature_index = _group_frags_by_feature_index(frags_strings)
 
@@ -777,8 +778,11 @@ def frags_to_features(frags_strings, db, seq_length):
     for (feature_index, single_index_frags) in frags_by_feature_index.items():
 
         # Pull the feature data from the DB
-        feature_db = Feature_DB_Index.objects.get(feature_index=feature_index,
-                                                  db=db)
+        feature_db = Feature_DB_Index.objects.select_related(
+            'feature', 'feature__type'
+        ).get(
+            feature_index=feature_index,db=db
+        )
 
         # Make the biggest possible trains you can
         single_index_trains  = _frags_to_trains(single_index_frags,

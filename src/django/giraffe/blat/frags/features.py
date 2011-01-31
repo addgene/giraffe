@@ -7,8 +7,6 @@ from giraffe.blat.models import Feature_DB_Index
 from giraffe.blat.models import Feature
 from giraffe.blat.frags.frags_to_features import frags_to_features
 
-from django.db import transaction
-
 # For Debugging
 import time
 _debug = True
@@ -56,22 +54,16 @@ def _get_frags(db_name,sequence):
 
     return res
 
-@transaction.commit_manually()
 def blat(db,sequence):
     """ Analyze the features of a sequence. """
     sequence = Sequence.strip(sequence)
 
     # create sequence record
-    try:
-        s = Sequence()
-        s.sequence = sequence
-        s.db = db
-        s.save()
-        s.clear_features()
-    except:
-        transaction.rollback()
-    else:
-        transaction.commit()
+    s = Sequence()
+    s.sequence = sequence
+    s.db = db
+    s.save()
+    s.clear_features()
 
     t = timer()
     t.next()
@@ -85,15 +77,9 @@ def blat(db,sequence):
 
     # Store features into database
     if _debug: print "Storing %d features" % len(features)
-    try:
-        for feature in features:
-            feature.sequence = s
-            feature.save()
-    except Exception, e:
-        transaction.rollback()
-        raise e
-    else:
-        transaction.commit()
+    for feature in features:
+        feature.sequence = s
+        feature.save()
 
     if _debug: print "Database adds took %f seconds" % t.next()
 
