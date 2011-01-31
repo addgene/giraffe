@@ -98,12 +98,8 @@ INSTALLED_APPS = (
     'giraffe.blat',
 )
 
-# for debugging server, we serve these from django
-
-STATIC_API_ROOT = '../../../files/api'
-STATIC_HEADERS_ROOT = '../../../files/headers'
-STATIC_IMAGES_ROOT = '../../../files/images'
-STATIC_ROOT = '../../../files/static'
+# set this to where you want your static files to db
+STATIC_ROOT = '../../../files'
 
 SESSION_COOKIE_NAME = 'giraffe'
 

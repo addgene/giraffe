@@ -15,12 +15,6 @@ urlpatterns = patterns('',
 
 if settings.DEBUG:
     urlpatterns += patterns('',
-        (r'^api/(?P<path>.*)$', 'django.views.static.serve',
-         {'document_root': settings.STATIC_API_ROOT}),
-        (r'^headers/(?P<path>.*)$', 'django.views.static.serve',
-         {'document_root': settings.STATIC_HEADERS_ROOT}),
-        (r'^images/(?P<path>.*)$', 'django.views.static.serve',
-         {'document_root': settings.STATIC_IMAGES_ROOT}),
         (r'^static/(?P<path>.*)$', 'django.views.static.serve',
          {'document_root': settings.STATIC_ROOT}),
     )
