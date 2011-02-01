@@ -10,7 +10,7 @@ class Giraffe_Mappable_Model(models.Model):
     class Meta:
         abstract = True
 
-    sequence = models.TextField()
+    sequence = models.TextField(null=True,blank=True)
     sequence_giraffe_id = models.CharField(max_length=64,null=True,blank=True)
     sequence_giraffe_time = models.DateTimeField(null=True,blank=True)
 
