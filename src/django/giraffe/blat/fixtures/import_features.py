@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../../src/django')
+sys.path.append('../../..')
 
 from django.core.management import setup_environ
 import giraffe.settings

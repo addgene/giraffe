@@ -1,0 +1,27 @@
+
+How to generate fixtures?
+-------------------------
+
+DO NOT DO THIS IF YOU ALREADY HAVE SEQUENCE STORED. There are FK
+references from your sequence data to data in models that may become
+inconsistent if you replace data in the models.
+
+List of features to be detected are stored in ./features/.
+
+mk_db.sh groups features into feature databases.
+
+If you make changes to files in ./features/ or to mk_db.sh, you should
+re-create the fixtures for this app to make the changes visible. To do
+so, on a test machine, 
+
+1. Blow away data in all the models in the "blat" application
+
+2. Load feature_types.json
+
+3. Run mk_db.sh
+
+4. In ../.., run "python manage.py dumpdata blat" to create a new
+initial_data.json, and move that file to this directory.
+
+After that, anytime you run syncdb, the new fixture will be loaded.
+

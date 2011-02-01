@@ -1,0 +1,39 @@
+[
+  { "model" : "blat.Feature_Type",
+    "pk" : 1,
+    "fields" : { "type" : "Feature" }
+  },
+  { "model" : "blat.Feature_Type",
+    "pk" : 2,
+    "fields" : { "type" : "Promoter" }
+  },
+  { "model" : "blat.Feature_Type",
+    "pk" : 3,
+    "fields" : { "type" : "Primer" }
+  },
+  { "model" : "blat.Feature_Type",
+    "pk" : 4,
+    "fields" : { "type" : "Enzyme" }
+  },
+  { "model" : "blat.Feature_Type",
+    "pk" : 5,
+    "fields" : { "type" : "Gene" }
+  },
+  { "model" : "blat.Feature_Type",
+    "pk" : 6,
+    "fields" : { "type" : "Origin" }
+  },
+  { "model" : "blat.Feature_Type",
+    "pk" : 7,
+    "fields" : { "type" : "Regulatory" }
+  },
+  { "model" : "blat.Feature_Type",
+    "pk" : 8,
+    "fields" : { "type" : "Terminator" }
+  },
+  { "model" : "blat.Feature_Type",
+    "pk" : 9,
+    "fields" : { "type" : "ExactFeature" }
+  }
+]
+

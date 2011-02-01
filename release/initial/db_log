@@ -5,47 +5,4 @@ SELECT 1
 @50
 `cd ../../src/django/giraffe/blat/frags; gcc -O6 -o bin/frags frags.c`
 
-@100
-
-`python import_features.py default < features/generic.features`
-
-@101
-
-`python import_features.py default < features/generic.primers`
-
-@102
-
-`python import_features.py default < features/tb.enzymes`
-
-@150
-
-`python create_frag_db.py default > ../../src/django/giraffe/blat/frags/data/default.data`
-
-@200
-
-`python import_features.py afire < features/af.unc`
-
-@201
-
-`python import_features.py afire < features/af.custom`
-
-@202
-
-`python import_features.py afire < features/af.features`
-
-@203
-
-`python import_features.py afire < features/af.enzymes`
-
-@250
-
-`python create_frag_db.py afire > ../../src/django/giraffe/blat/frags/data/afire.data`
-
-@300
-
-`python import_features.py none < features/all.features`
-
-@301
-
-`python import_features.py none < features/all.enzymes`
 
