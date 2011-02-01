@@ -212,19 +212,13 @@ function giraffe_draw_init(options) {
 	///////////////////////////////////////////////////////////////////
 	// Feature class
     //
-    // Takes in a feature_list f:
-    //   f[0] - name
-    //   f[1] - start
-    //   f[2] - end
-    //   f[3] - type
-    //
-	function Feature(feature_list) {
+	function Feature(name, start, end, type) {
 
 		// Private data members, from the argument list
-		var _name = feature_list[0];
-		var _start = parseInt(feature_list[1]);
-		var _end = parseInt(feature_list[2]);
-		var _type = feature_list[3];
+		var _name = name;
+		var _start = parseInt(start);
+		var _end = parseInt(end);
+		var _type = type;
 		var _clockwise = (_start <= _end);
 		var _other_cutters = []; // only for enzymes;
 
@@ -727,13 +721,13 @@ function giraffe_draw_init(options) {
         // features_json[0] is sequence length
         var seqlen = features_json[0]
         for (var i=1; i<features_json.length; i++) {
-			var row = []
-            row[0] = features_json[i]['feature']; // name str
-            row[1] = features_json[i]['start'];
-            row[2] = features_json[i]['end'];
-            row[3] = features_json[i]['type']; // type str
-            row[4] = features_json[i]['clockwise'];
-			var feat = new Feature(row)
+			var feat = new Feature(
+                features_json[i]['feature'], // name str
+                features_json[i]['start'],
+                features_json[i]['end'],
+                features_json[i]['type'], // type str
+                features_json[i]['clockwise']
+            );
             // loop started at 1
 			features[i-1] = feat;
 		}
