@@ -1,11 +1,16 @@
 from django.db import models
 from django.db import utils
+import datetime
 import hashlib
 import re
 
 
 class Giraffe_Mappable_Model(models.Model):
-    """This is an API for other apps to use with their models."""
+    """
+    This is an abstract class for other apps to use with their models;
+    this class requires the giraffe.blat app being deployed with the
+    app using this class.
+    """
 
     class Meta:
         abstract = True
@@ -21,18 +26,22 @@ class Giraffe_Mappable_Model(models.Model):
         s = frags.features.blat(db,sequence)
         return s.hash
 
-    def giraffe_ready(self,db_name='default',save=True):
-        import datetime
-        s = Giraffe_Mappable_Model.blat(self.sequence,db_name)
-        self.sequence_giraffe_id = s
-        self.sequence_giraffe_time = datetime.datetime.now()
-        if save:
-            self.save()
+    def giraffe_ready(self,db_name='default',force=False,save=True):
+        run = force
+        if not force:
+            (s,h) = Sequence.clean_and_hash(self.sequence)
+            if h != self.sequence_giraffe_id:
+                run = True
+        if run:
+            s = Giraffe_Mappable_Model.blat(self.sequence,db_name)
+            self.sequence_giraffe_id = s
+            self.sequence_giraffe_time = datetime.datetime.now()
+            if save:
+                self.save()
     giraffe_ready.alters_data = True
 
-    def save(self):
-        (s,h) = Sequence.clean_and_hash(self.sequence)
-        if h != self.sequence_giraffe_id:
+    def save(self,run_giraffe_ready=True):
+        if run_giraffe_ready:
             self.giraffe_ready(save=False)
         return super(Giraffe_Mappable_Model,self).save()
     save.alters_data = True
