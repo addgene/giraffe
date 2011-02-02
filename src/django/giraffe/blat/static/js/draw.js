@@ -12,6 +12,7 @@
 // from the server):
 //
 //    <script src="/headers/js/raphael-min.js"></script>
+//    <script src="/headers/js/scale.raphael.js"></script>
 //    <script src="http://host/api/js/draw.js"></script>
 //    <script>draw_fn = giraffe_draw_init({...})</script>
 //    <script src="http://host/blat/8de36469..../default?jsonp=draw_fn">
