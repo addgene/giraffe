@@ -213,24 +213,15 @@ function giraffe_draw_init(options) {
 	///////////////////////////////////////////////////////////////////
 	// Feature class
     //
-	function Feature(name, start, end, type) {
+	function Feature(name, start, end, clockwise, type) {
 
 		// Private data members, from the argument list
 		var _name = name;
 		var _start = parseInt(start);
 		var _end = parseInt(end);
 		var _type = type;
-		var _clockwise = (_start <= _end);
+		var _clockwise = clockwise;
 		var _other_cutters = []; // only for enzymes;
-
-		// Because we store the clockwise information in a separate variable,
-		// ensure that start and end go clockwise (end > start), regardless
-		// of what the original feature data was
-		if (!_clockwise) {
-			var _tmp = _start;
-			_start = _end;
-			_end = _tmp;
-		}
 
 		// Visual properties
 		var _visible = true;
@@ -704,9 +695,9 @@ function giraffe_draw_init(options) {
 
 		var plasmid = paper.circle(cx, cy, plasmid_radius);
 		plasmid.attr("stroke", color_plasmid);
-        var title = seq_length+' bp';
+        var title = seq_length + ' bp';
         if (plasmid_name != "") {
-            title = plasmid_name+"\n\n"+title;
+            title = plasmid_name + "\n\n" + title;
         }
 		var plasmid_label = paper.text(cx, cy, title);
 		plasmid_label.attr({"fill":      color_plasmid,
@@ -726,8 +717,8 @@ function giraffe_draw_init(options) {
                 features_json[i]['feature'], // name str
                 features_json[i]['start'],
                 features_json[i]['end'],
-                features_json[i]['type'], // type str
-                features_json[i]['clockwise']
+                features_json[i]['clockwise'], // Bool
+                features_json[i]['type']  // type str
             );
             // loop started at 1
 			features[i-1] = feat;
