@@ -220,7 +220,7 @@ function giraffe_draw_init(options) {
 	///////////////////////////////////////////////////////////////////
 	// Feature class
     //
-	function Feature(name, start, end, clockwise, type) {
+	function Feature(name, start, end, clockwise, type, cut) {
 
 		// Private data members, from the argument list
 		var _name = name;
@@ -229,6 +229,7 @@ function giraffe_draw_init(options) {
 		var _type = type;
 		var _clockwise = clockwise;
 		var _other_cutters = []; // only for enzymes;
+		var _cut = cut; // only for enzymes;
 
 		// Visual properties
 		var _visible = true;
@@ -608,7 +609,13 @@ function giraffe_draw_init(options) {
 			label_line.attr({"stroke": color_bg_text,
 			                 "opacity": 0.5 });
 
-			var label = paper.text(xy1.x, xy1.y, _name);
+			// Enzymes show their cut sites in the label
+			var label_name = _name;
+			if (_type == ft.enzyme) {
+				label_name += " " + _cut;
+			}
+			var label = paper.text(xy1.x, xy1.y, label_name);
+
 			if (a_c < plasmid_start - 180 && a_c > plasmid_start - 360) { 
 				// Left half of wheel: align right
 				label.attr({"text-anchor": "end"});
@@ -725,7 +732,8 @@ function giraffe_draw_init(options) {
                 features_json[i]['start'],
                 features_json[i]['end'],
                 features_json[i]['clockwise'], // Bool
-                features_json[i]['type']  // type str
+                features_json[i]['type'],  // type str
+                features_json[i]['cut']  // type str
             );
             // loop started at 1
 			features[i-1] = feat;

@@ -58,7 +58,7 @@ class Sequence_Feature(models.Model):
         ordering = ['start','end']
 
     def to_dict(self):
-        return {
+        d = {
             "feature" : self.feature.name,
             "feature_id" : self.feature_id,
             "start" : self.start,
@@ -67,6 +67,16 @@ class Sequence_Feature(models.Model):
             "type" : self.feature.type.type,
             "type_id" : self.feature.type.id,
         }
+
+        # Modify enzyme names to include their cut position
+        if d["type_id"] == Feature_Type.ENZYME:
+            if d["clockwise"]:
+                cp = d["start"] + (self.feature.cut_after - 1)
+            else:
+                cp = d["end"] - (self.feature.cut_after - 1)
+            d["cut"] = cp
+
+        return d
 
 
 class Sequence(models.Model):
