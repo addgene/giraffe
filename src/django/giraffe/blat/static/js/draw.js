@@ -42,6 +42,10 @@
 //  label_radius_offset: how far from the outter feature should we
 //  start drawing labels. Default is "10".
 //
+//  cutters: which kinds of restriction enzymes to show, if any. This list
+//  of integers is interpreted as follows: [1, 2]: show 1- and 2- cut restriction 
+//  enzymes. []: show nothing. etc. Default is [1].
+//
 function giraffe_draw_init(options) {
 
 	var _debug = false;
@@ -100,6 +104,9 @@ function giraffe_draw_init(options) {
 
 	// Cutters to show
 	var cutters_to_show = [1];
+    if ('cutters' in options) {
+		cutters_to_show = options['cutters'];
+	}
 
 	// Animation properties
 	var fade_time = 0;
