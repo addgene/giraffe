@@ -612,7 +612,7 @@ function giraffe_draw_init(options) {
 			// Enzymes show their cut sites in the label
 			var label_name = _name;
 			if (_type == ft.enzyme) {
-				label_name += " " + _cut;
+				label_name += " (" + _cut + ")";
 			}
 			var label = paper.text(xy1.x, xy1.y, label_name);
 
