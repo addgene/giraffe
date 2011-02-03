@@ -156,15 +156,9 @@ function giraffe_draw_init(options) {
 
 	// Feature Types
 	var ft = { 
-		gene: "Gene",
-		regulatory: "Regulatory",
-		enzyme: "Enzyme",
-		primer: "Primer",
-		promoter: "Promoter",
-		terminator: "Terminator",
-		origin: "Origin",
-		feature: "Feature",
-		exact_feature: "Exact Feature"
+		feature:    1, promoter:   2, primer:        3,
+		enzyme:     4, gene:       5, origin:        6,
+		regulatory: 7, terminator: 8, exact_feature: 9
 	};
 
 	///////////////////////////////////////////////////////////////////
@@ -732,7 +726,7 @@ function giraffe_draw_init(options) {
                 features_json[i]['start'],
                 features_json[i]['end'],
                 features_json[i]['clockwise'], // Bool
-                features_json[i]['type'],  // type str
+                features_json[i]['type_id'],  // type id
                 features_json[i]['cut']  // type str
             );
             // loop started at 1

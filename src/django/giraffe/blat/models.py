@@ -64,7 +64,6 @@ class Sequence_Feature(models.Model):
             "start" : self.start,
             "end" : self.end,
             "clockwise" : self.clockwise,
-            "type" : self.feature.type.type,
             "type_id" : self.feature.type.id,
         }
 
