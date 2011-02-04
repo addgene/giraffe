@@ -81,7 +81,10 @@ class Sequence_Feature(models.Model):
 class Sequence(models.Model):
     @staticmethod
     def strip(sequence):
-        sequence = re.sub(r'\s', '', sequence)
+        if sequence:
+            sequence = re.sub(r'\s', '', sequence)
+        else:
+            sequence = ''
         return sequence
 
     @staticmethod
