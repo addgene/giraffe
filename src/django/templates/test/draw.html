@@ -10,12 +10,14 @@
 <script src="/static/js/raphael-min.js"></script>
 <script src="/static/js/scale.raphael.js"></script>
 <script src="/static/blat/js/draw.js"></script>
+<script> var gd = GiraffeDraw(); </script>
+<script src="/blat/8de364690dbeb88d2ab63bd66861725539aa3204/default?jsonp=gd.read"></script>
 <script>
-draw_fn = giraffe_draw_init({
+gd.draw_circular_map({
     'map_dom_id' : 'map',
     'plasmid_name' : 'pLKO.1 TRC Cloning Vector',
+	'cutters': [2]	
 })
 </script>
-<script src="/blat/8de364690dbeb88d2ab63bd66861725539aa3204/default?jsonp=draw_fn"></script>
 {% endblock %}
 
