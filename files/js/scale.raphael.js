@@ -4,6 +4,8 @@
  * Licensed under the MIT license.
  *
  * www.shapevent.com/scaleraphael/
+ *
+ * Modified 2/4/2011 Mikhail Wolfson (wolfsonm@addgene.org) (MYW)
  */
 (function(){
   window.ScaleRaphael = function(container, width, height){
@@ -16,11 +18,15 @@
     var nestedWrapper;
       
     if (Raphael.type == "VML"){
-      wrapper.innerHTML = "<rvml:group style='position : absolute; width: 1000px; height: 1000px; top: 0px; left: 0px' coordsize='1000,1000' class='rvml' id='vmlgroup'><\/rvml:group>";
-      nestedWrapper = document.getElementById("vmlgroup");
+      // MYW START
+      wrapper.innerHTML = "<rvml:group style='position : absolute; width: 1000px; height: 1000px; top: 0px; left: 0px' coordsize='1000,1000' class='rvml' class='vmlgroup'><\/rvml:group>";
+      nestedWrapper = wrapper.firstChild;
+      // MYW END
     }else{
-      wrapper.innerHTML = "<div id='svggroup'><\/div>";
-      nestedWrapper = document.getElementById("svggroup");
+      // MYW START
+      wrapper.innerHTML = "<div class='svggroup'><\/div>";
+      nestedWrapper = wrapper.firstChild;
+      // MYW END
     }
  
     var paper = new Raphael(nestedWrapper, width, height);
