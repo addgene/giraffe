@@ -54,6 +54,12 @@ class Sequence_Feature(models.Model):
     end = models.PositiveIntegerField()
     clockwise = models.BooleanField()
 
+    # Gene variant info
+    subset_start = models.PositiveIntegerField(default=0)
+    subset_end = models.PositiveIntegerField(default=0)
+    is_variant = models.BooleanField(default=False)
+    has_gaps = models.BooleanField(default=False)
+
     class Meta:
         ordering = ['start','end']
 
@@ -67,13 +73,26 @@ class Sequence_Feature(models.Model):
             "type_id" : self.feature.type.id,
         }
 
-        # Modify enzyme names to include their cut position
+        # Include cut position
         if d["type_id"] == Feature_Type.ENZYME:
             if d["clockwise"]:
                 cp = d["start"] + (self.feature.cut_after - 1)
             else:
                 cp = d["end"] - (self.feature.cut_after - 1)
             d["cut"] = cp
+        # Include gene variant name modifications
+        elif d["type_id"] == Feature_Type.GENE: 
+            if self.is_variant:
+                d["feature"] = d["feature"] + " (variant)";
+            elif self.has_gaps:
+                d["feature"] = d["feature"] + " (w/ gaps)";
+            elif self.subset_end > 0:
+                if d["clockwise"]:
+                    d["feature"] = "%s (%d - %d)" % (d["feature"], self.subset_start,
+                            self.subset_end);
+                else:
+                    d["feature"] = "%s (%d - %d)" % (d["feature"], self.subset_end,
+                            self.subset_start);
 
         return d
 

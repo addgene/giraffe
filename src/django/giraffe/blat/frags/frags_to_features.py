@@ -196,7 +196,7 @@ class FragTrain(object):
 
     @property
     def stop_position(self):
-        """ The starting position of the first fragment, regardless of direction. """
+        """ The stopping position of the last fragment, regardless of direction. """
         try:
             return self.__stop_position
         except AttributeError:
@@ -298,6 +298,21 @@ class FragTrain(object):
         # Feature object itself is private, to prevent unnecessary db access
         seq_feat.feature = self.feature._FeatureData__feature
 
+        # Variant labels for genes
+        #  XXX FeatureType-Dependent Code
+        if self.feature.type == Feature_Type.GENE:
+            # A "high-fidelity" gene with a high deletion rate must just
+            # be a fragment of a gene
+            if not _percent_identity_threshold and self.is_high_fidelity():
+                s_start = self.head.fragment_index() * Frag.SIZE
+                s_end = s_start + self.stop_position() - self.start_position()
+                seq_feat.subset_start = s_start
+                seq_feat.subset_end = s_end
+            elif self.score > WT_THRESHOLD or self.deletes > Frag.SIZE:
+                seq_feat.is_variant = True
+            elif self.inserts > 2 * Frag.SIZE:
+                seq_feat.has_gaps = True
+        #  XXX END FeatureType-Dependent Code
         return seq_feat
 
     ## Overloaded operators
