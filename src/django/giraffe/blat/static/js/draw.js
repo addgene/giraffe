@@ -78,7 +78,10 @@
 // |
 // -- draw_linear_map() (maybe) 
 //    linear feature drawing, which makes its own extended clones of objects
-function GiraffeDraw() {
+
+// Protect scope, but ensure that GiraffeDraw() is global
+(function(){window.GiraffeDraw = function () {
+
 	var gd = {}; // The "export variable" to return as a closure.
 
 	///////////////////////////////////////////////////////////////////
@@ -275,6 +278,8 @@ function GiraffeDraw() {
 		var tic_label_radius = tic_mark_radius - 1.5*tic_mark_length;
 
 		// Labels and other text
+		var label_line_weight = 1;
+		var label_line_bold_weight = 1.5 * label_line_weight;
 		var label_font_size = '13pt';
 		if ('label_font_size' in options) {
 			label_font_size = options['label_font_size'];
@@ -297,12 +302,14 @@ function GiraffeDraw() {
 		var hide_enzyme_rows = true; // Hide rows for cutter types not shown
 
 		// Colors
-		var color_bg_text = "#aaa";
-		var color_plasmid = "#000";
-		var color_feature = "#f00";
-		var color_primer  = "#090";
-		var color_origin  = "#333";
-		var color_enzyme  = "#00c";
+		var colors = {
+			bg_text: "#aaa",
+			plasmid: "#000",
+			feature: "#f00",
+			primer: "#090",
+			origin: "#333",
+			enzyme: "#00c"
+		};
 
 
 		///////////////////////////////////////////////////////////////////
@@ -350,7 +357,7 @@ function GiraffeDraw() {
 			var _labeled = true;
 
 			// Type-based property selection
-			var _color = color_feature;
+			var _color = colors.feature;
 			var _width = feature_width;
 			var _draw_head = false;
 			var _opacity = feature_opacity;
@@ -360,14 +367,14 @@ function GiraffeDraw() {
 				case ft.primer:
 					_draw_head = true; // Promotors and primers are the only primer-colored
 				case ft.terminator:   // features with heads
-					_color = color_primer;
+					_color = colors.primer;
 					break;
 				case ft.regulatory:
 				case ft.origin:
-					_color = color_origin;
+					_color = colors.origin;
 					break;
 				case ft.enzyme:
-					_color = color_enzyme;
+					_color = colors.enzyme;
 					_width = enzyme_width;
 					_opacity = enzyme_opacity;
 					break;
@@ -386,6 +393,7 @@ function GiraffeDraw() {
 			// Check to see if label has been drawn yet
 			_this.label_drawn = function() { return _label_drawn; };
 			_this.feature_set = function() { return _feature_set };
+			_this.label_set = function() { return _label_set };
 
 			// Calculated properties
 			
@@ -441,10 +449,12 @@ function GiraffeDraw() {
 
 
 			// Actions for interactivity
-			var _bolder = function () {
+			// Generic fading animation/property setting mechanism
+			var _fade = function (props, line_props) {
 				var sets = paper.set();
+				var lines = paper.set();
 				sets.push(_feature_set);
-				var props = {"opacity": bold_opacity, "font-weight": "bold" };
+				lines.push(_label_set[0]); // label line
 
 				// Cutters: make them thicker and highlight
 				//          related examples
@@ -455,32 +465,35 @@ function GiraffeDraw() {
 					for (var fx in _this.other_cutters()) {
 						var f = features[_this.other_cutters()[fx]];
 						sets.push(f.feature_set());
+						lines.push(f.label_set()[0]);
 					}
 				}
 
-				if (fade_time) { sets.animate(props, fade_time); }
-				else { sets.attr(props); }
+				if (fade_time) { 
+					sets.animate(props, fade_time); 
+					lines.animateWith(sets, line_props, fade_time); 
+				} else { 
+					sets.attr(props);
+					lines.attr(line_props); 
+				}
+			}
+
+			var _bolder = function () {
+				var props = {"opacity": bold_opacity, "font-weight": "bold" };
+				var line_props = {"stroke": colors.plasmid, 
+				                  "stroke-width": label_line_bold_weight};
+
+				_fade(props, line_props);
 			}
 
 			var _lighter = function () {
-				var sets = paper.set();
-				sets.push(_feature_set);
-
-				// Cutters: restore them and related examples to normal
 				var props = {"opacity": _opacity, "font-weight":"normal"};
-				if (_this.type() == ft.enzyme) {
-					props["stroke-width"] = enzyme_weight;
-					// Highlight other examples of this enzyme
-					// if it's a multi-cutter
-					for (var fx in _this.other_cutters()) {
-						var f = features[_this.other_cutters()[fx]];
-						sets.push(f.feature_set());
-					}
-				}
+				var line_props = {"stroke": colors.bg_text,
+				                  "stroke-width": label_line_weight};
+				_fade(props, line_props);
 
-				if (fade_time) { sets.animate(props, fade_time); }
-				else { sets.attr(props); }
-				_label.attr({"opacity":1.0});
+				// Don't fade label text opacity
+				_label_set[1].attr({"opacity":1.0});// label text
 			}
 
 			// Toggle solid/light upon click
@@ -509,7 +522,6 @@ function GiraffeDraw() {
 			var _arrow_set = paper.set();
 
 			var _label_set = paper.set();
-			var _label = undefined;
 			var _label_drawn = false;
 
 			// Feature drawing
@@ -705,7 +717,8 @@ function GiraffeDraw() {
 				// Draw the line to the label position
 				var label_line = paper.path(svg.move(xy0.x, xy0.y) +
 											svg.line(xy1.x, xy1.y));
-				label_line.attr({"stroke": color_bg_text,
+				label_line.attr({"stroke": colors.bg_text,
+				                 "stroke-width": label_line_weight,
 								 "opacity": 0.5 });
 
 				// Enzymes show their cut sites in the label
@@ -729,7 +742,6 @@ function GiraffeDraw() {
 
 				_label_set.push(label_line);
 				_label_set.push(label);
-				_label = label;
 
 				// Handlers
 				_label_set.click(_click);
@@ -798,11 +810,11 @@ function GiraffeDraw() {
 				var xy1 = convert.polar_to_rect(r1,a);
 				var tic = paper.path(svg.move(xy0.x, xy0.y) +
 									 svg.line(xy1.x, xy1.y));
-				tic.attr({"stroke": color_bg_text});
+				tic.attr({"stroke": colors.bg_text});
 
 				var xyl = convert.polar_to_rect(tic_label_radius, a);
 				var label = paper.text(xyl.x, xyl.y, String(convert.angle_to_pos(a)));
-				label.attr({"fill": color_bg_text});
+				label.attr({"fill": colors.bg_text});
 				if (a < plasmid_start || a > 360 - plasmid_start) { // Right half of wheel: align right
 					label.attr({"text-anchor": "end"});
 				} else if (a > plasmid_start && a < 360 - plasmid_start) { // Left half of wheel: align left
@@ -811,13 +823,13 @@ function GiraffeDraw() {
 			}
 
 			var plasmid = paper.circle(cx, cy, plasmid_radius);
-			plasmid.attr("stroke", color_plasmid);
+			plasmid.attr("stroke", colors.plasmid);
 			var title = seq_length + ' bp';
 			if (plasmid_name != "") {
 				title = plasmid_name + "\n\n" + title;
 			}
 			var plasmid_label = paper.text(cx, cy, title);
-			plasmid_label.attr({"fill":      color_plasmid,
+			plasmid_label.attr({"fill":      colors.plasmid,
 								"font-size": plasmid_font_size, });
 
 			for (var ang = 0; ang < 360; ang += 30) {
@@ -1078,6 +1090,7 @@ function GiraffeDraw() {
 			}
 		}
 
+		var paper;
 		function initialize() {
 			paper = ScaleRaphael(map_dom_id, map_width, map_height); // global
 
@@ -1105,7 +1118,9 @@ function GiraffeDraw() {
 			// Rescale
 			if (final_map_width != map_width ||
 				final_map_height != map_height) {
-				paper.changeSize(final_map_width,final_map_height,true,false)
+				// "center" parameter just adds unnecessary CSS to the container
+				// object to give it an absolute position: not what we need
+				paper.changeSize(final_map_width,final_map_height,false,false)
 			}
 		}
 
@@ -1120,5 +1135,4 @@ function GiraffeDraw() {
 	gd.draw_linear_map = function () {};
 
 	return gd;
-}
-
+}})();
