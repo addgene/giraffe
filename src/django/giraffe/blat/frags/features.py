@@ -65,8 +65,9 @@ def blat(db,sequence):
     s.save()
     s.clear_features()
 
-    t = timer()
-    t.next()
+    if _debug: 
+        t = timer()
+        t.next()
     frags = _get_frags(db.name,sequence)
     if _debug: print "get_frags took %f seconds" % t.next()
 
@@ -80,7 +81,6 @@ def blat(db,sequence):
     for feature in features:
         feature.sequence = s
         feature.save()
-
     if _debug: print "Database adds took %f seconds" % t.next()
 
     return s
