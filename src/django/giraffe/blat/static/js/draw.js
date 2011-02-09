@@ -200,6 +200,9 @@
 	// Circular Map Drawing
 	gd.draw_circular_map = function(options) {
 
+		// Map-specific canvas element
+		var paper;
+
 		// Map-specific feature list
 		var features = [];
 
@@ -1090,7 +1093,6 @@
 			}
 		}
 
-		var paper;
 		function initialize() {
 			paper = ScaleRaphael(map_dom_id, map_width, map_height); // global
 
@@ -1104,6 +1106,7 @@
 			// Extend the basic features
 			extend_features(); 
 		}
+
 		function draw() {
 			paper.clear();
 			draw_plasmid();
@@ -1128,6 +1131,8 @@
 		// Main entry point.
 		initialize();
 		draw();
+
+		return paper;
 	}
 
 	///////////////////////////////////////////////////////////////////
