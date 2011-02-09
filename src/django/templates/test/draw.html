@@ -3,21 +3,29 @@
 {% block title %} Drawing API Test {% endblock %}
 
 {% block body %}
-<div id="map"></div>
+<div style="height: 640px; width: 640px; border: 1px solid red" id="map-10878"></div>
+<div style="height: 640px; width: 640px; border: 1px solid blue" id="map-1654"></div>
 {% endblock %}
 
 {% block pagejs %}
-<script src="/static/js/raphael-min.js"></script>
-<script src="/static/js/scale.raphael.js"></script>
-<script src="/static/blat/js/draw.js"></script>
-<script> var gd = GiraffeDraw(); </script>
-<script src="/blat/8de364690dbeb88d2ab63bd66861725539aa3204/default?jsonp=gd.read"></script>
-<script>
-gd.draw_circular_map({
-    'map_dom_id' : 'map',
+<script type="text/javascript" src="/static/js/raphael-min.js"></script>
+<script type="text/javascript" src="/static/js/scale.raphael.js"></script>
+<script type="text/javascript" src="/static/blat/js/draw.js"></script>
+<script type="text/javascript">var gd = GiraffeDraw();</script>
+<script type="text/javascript" src="/blat/8de364690dbeb88d2ab63bd66861725539aa3204/default?jsonp=gd.read"></script>
+<script type="text/javascript">gd.draw_circular_map({
+    'map_dom_id' : 'map-10878',
     'plasmid_name' : 'pLKO.1 TRC Cloning Vector',
+    'fade_time' : 300,
 	'cutters': [2]	
-})
+});</script>
+<script type="text/javascript" src="/blat/9e12e3f7dca0497ffdd2e5a538efd21cc22f88c1/default?jsonp=gd.read"></script>
+<script type="text/javascript"> var map_1654 = gd.draw_circular_map({
+    'map_dom_id' : 'map-1654',
+    'plasmid_name' : 'L4440',
+    'fade_time' : 300,
+	'cutters': [1, 2]	
+});
 </script>
 {% endblock %}
 
