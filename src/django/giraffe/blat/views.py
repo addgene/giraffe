@@ -28,15 +28,41 @@ def get(request,hash,db_name):
     """
     Get features of a sequence, using the sequence's sha-1 hash as the
     identifier.
+
+    If the 'sc' key appears in GET dictionary, then return single
+    cutters and non-cutter features. Otherwise, return all cutters and
+    non-cutter features.
     """
     db = models.Feature_Database.objects.get(name=db_name)
     sequence = models.Sequence.objects.get(db=db,hash=hash)
 
     res = [len(sequence.sequence),]
-    for f in sequence.sequence_feature_set.order_by("start").select_related(
-        'feature', 'feature__type',
-      ):
-        res.append(f.to_dict())
+
+    if 'sc' in request.GET:
+        features = []
+        cutters = {}
+        for f in sequence.sequence_feature_set.order_by("start").select_related(
+            'feature', 'feature__type',
+        ):
+            features.append(f)
+            if f.feature.type_id == models.Feature_Type.ENZYME:
+                if f.feature.name in cutters:
+                    cutters[f.feature.name] = cutters[f.feature.name]+1
+                else:
+                    cutters[f.feature.name] = 1
+
+        for f in features:
+            if f.feature.type_id == models.Feature_Type.ENZYME:
+                if cutters[f.feature.name] == 1:
+                    res.append(f.to_dict())
+            else:
+                res.append(f.to_dict())
+
+    else:
+        for f in sequence.sequence_feature_set.order_by("start").select_related(
+            'feature', 'feature__type',
+        ):
+            res.append(f.to_dict())
 
     j = json.JSONEncoder().encode(res)
 
