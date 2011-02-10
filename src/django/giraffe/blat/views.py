@@ -71,11 +71,16 @@ def get(request,hash,db_name):
         http_res = HttpResponse(
             j,mimetype="text/javascript",status=httplib.OK
         )
+
     else:
         http_res = HttpResponse(
             j,mimetype="application/json",status=httplib.OK
         )
 
+    # we tell browser to cache this; if the sequence change, the hash would
+    # change. the only danger is if we re-blat the sequence, in that case the
+    # features list cached by browser will be out of date.
+    http_res['Cache-Control'] = 'max-age=2592000'
     return http_res
 
 
