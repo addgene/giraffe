@@ -298,14 +298,20 @@ class FragTrain(object):
         # Feature object itself is private, to prevent unnecessary db access
         seq_feat.feature = self.feature._FeatureData__feature
 
+        if globals()["_debug"]: 
+            if self.feature_index in globals()["_debug_features_to_observe"]:
+                print "local index %d is %s" % \
+                      (self.feature_index, self.feature.name)
+
+
         # Variant labels for genes
         #  XXX FeatureType-Dependent Code
         if self.feature.type == Feature_Type.GENE:
             # A "high-fidelity" gene with a high deletion rate must just
             # be a fragment of a gene
-            if not _percent_identity_threshold and self.is_high_fidelity():
-                s_start = self.head.fragment_index() * Frag.SIZE
-                s_end = s_start + self.stop_position() - self.start_position()
+            if not _percent_identity_threshold(self) and self.is_high_fidelity:
+                s_start = self.head.fragment_index * Frag.SIZE
+                s_end = s_start + self.stop_position - self.start_position
                 seq_feat.subset_start = s_start
                 seq_feat.subset_end = s_end
             elif self.score > WT_THRESHOLD or self.deletes > Frag.SIZE:
@@ -454,12 +460,15 @@ class FragTrainLink(object):
         Return a hypothetical train: useful in calculating whether or not the
         missing fragments are due to a deletion or not.
         """
-        hypo_train = deepcopy(self.train)
-        hypo_train.deletes += abs(self.insert_size)
+        #hypo_train = deepcopy(self.train)
+        hypo_train = FragTrain(self.train.feature,
+                mutations = self.train.mutations,
+                inserts = self.train.inserts)
+        hypo_train.deletes = self.train.deletes + abs(self.insert_size)
 
         # Hypothetical hits is current hits plus all remaining
         # fragments
-        hypo_train.hits = Frag.SIZE *(len(hypo_train) + 1) + \
+        hypo_train.hits = Frag.SIZE *(len(self.train) + 1) + \
                           self.train.feature.length - \
                           self.frag.fragment_index * Frag.SIZE
 
