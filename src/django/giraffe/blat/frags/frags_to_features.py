@@ -10,7 +10,6 @@
 ##############################################################################
 ## Imports
 from __future__ import division
-from copy import deepcopy
 from operator import attrgetter
 
 from giraffe.blat.models import Feature_Type
@@ -230,25 +229,21 @@ class FragTrain(object):
             return self.__is_high_fidelity
 
     ## Action methods
-    def extend(self, frag):
+    def extend(self, frag, add_hits = True):
         """ Adds one fragment to the end of the train. """
         self.__train.append(frag)
-        self.hits += self.__calculate_hit_score(frag)
 
-        # Reset the appropriate stored calculations, if they exist
-        try:
-            del self.__stop_position
-        except AttributeError:
-            pass
-        try:
-            del self.__is_high_fidelity
-        except AttributeError:
-            pass
-        if not self.feature.clockwise:
-            try:
-                del self.__left_position
-            except AttributeError:
-                pass
+        if add_hits:
+            self.hits += self.__calculate_hit_score(frag)
+
+    def clone(self):
+        # Don't want true deep copy: __feature_data stays shallow
+        new_train = FragTrain(self.__feature_data,  hits=self.hits,
+                              short=self.short,     mutations=self.mutations,
+                              inserts=self.inserts, deletes=self.deletes,
+                              frags=self.__train)
+
+        return new_train
 
     ## Comparison methods
     def overlaps_with_preceeding(self, preceeding_train):
@@ -333,8 +328,10 @@ class FragTrain(object):
             
     ## Private utility methods
     def __make_train(self, frags):
+        add_hits = (self.hits == 0) # only add in the hits if we have no
+                                    # hit score yet
         for frag in frags:
-            self.extend(frag)
+            self.extend(frag, add_hits)
 
     def __calculate_hit_score(self, frag):
         """
@@ -457,10 +454,10 @@ class FragTrainLink(object):
 
     def make_hypo_train(self):
         """
-        Return a hypothetical train: useful in calculating whether or not the
-        missing fragments are due to a deletion or not.
+        Return a hypothetical empty train with only the counts: useful in
+        calculating whether or not the missing fragments are due to a deletion
+        or not.
         """
-        #hypo_train = deepcopy(self.train)
         hypo_train = FragTrain(self.train.feature,
                 mutations = self.train.mutations,
                 inserts = self.train.inserts)
@@ -636,7 +633,7 @@ def _frags_to_trains(frags, feature_data, seq_length,
                 # to the list of trains, and only extend one of the trains.
                 elif link.has_insert():
                     if train_matches(train):
-                        new_train = deepcopy(train)
+                        new_train = train.clone()
                         new_train.short = True
                         trains.append(new_train)
 
@@ -671,7 +668,7 @@ def _frags_to_trains(frags, feature_data, seq_length,
                         # insert the new, identical copy before the iterator, so
                         # that it doesn't get iterated over again, or else an
                         # infinite loop results in certain cases
-                        new_train = deepcopy(train)
+                        new_train = train.clone()
                         trains.insert(fx, new_train)
 
                         # Solidify the link by extending the train
