@@ -346,6 +346,77 @@ class FragTrain(object):
         if hit_score > Frag.SIZE: hit_score = Frag.SIZE
         return hit_score
             
+    ##############################################################################
+    ## Match Evaluation
+    #  This method should be the only explicitly feature type-dependent
+    #  code in this module
+    #  TODO: Make this error/threshold function part of the FeatureType class
+    #  XXX FeatureType-Dependent Code
+    def matches(self):
+        """ 
+        Use a heuristic weighted sum to approximate how much of the feature's
+        sequence is mutated.
+
+        If the feature is exact, determine if the match is perfect and return either
+        a perfect score or a perfect fail.
+        """
+
+        # Exact features must be exact: no scoring system
+        if (self.feature.type == Feature_Type.EXACT_FEATURE) or \
+           (self.feature.type == Feature_Type.ENZYME):
+            if self.hits == self.feature.length and \
+               self.inserts == 0 and self.deletes == 0 and self.mutations == 0:
+                pct_identity_error = 0.0 # Perfect score
+            else:
+                pct_identity_error = 1.0 # Perfect fail
+        else:
+            # All other features: scoring system
+            # scoring function:
+            #   +1   for each exact match
+            #   +0   for missing nucleotides at the start or end of sequence
+            #   +0.3 for each nucleotide in a mutated fragment
+            #        (i.e. assume roughly 70% of the fragment are mutated)
+            #   -0.1 for each deleted nucleotide
+            #   +0   for each inserted nucleotide in a gene and if total inserts
+            #        is less than a threshold that's related to gene size
+            #        (i.e. we don't penalize small inserts for genes)
+            #   -0.1 for each inserted nucleotide not in a gene
+
+            factor_match        =  1.0
+           #factor_missing      =  0.0
+            factor_mutations    =  0.3
+            factor_deletes      = -0.1
+           #factor_inserts_gene =  0.0
+            factor_inserts      = -0.1
+
+            net_matches = self.hits * factor_match
+
+            # Missing nucleotides
+            # net_matches += (self.feature.length - (net_matches + self.mutations)) * \
+            #                 factor_missing
+
+            # Mutations
+            net_matches += self.mutations * factor_mutations
+
+            # Deletions
+            net_matches += self.deletes * factor_deletes
+
+            # Insertions
+            if self.feature.type != Feature_Type.GENE or \
+               self.inserts > self.feature.length * Fragself.MAX_INSERT_FRACTION:
+                net_matches += self.inserts * factor_inserts
+            else:
+                pass
+                # net_matches += self.inserts * factor_inserts_gene
+
+            # Normalization
+            pct_identity_error = 1 - net_matches / self.feature.length
+
+        # Store the most recently calculated error score in the train
+        self.score = pct_identity_error
+        return pct_identity_error < PCT_IDENTITY_ERROR_THRESHOLD
+    #  XXX End FeatureType-Dependent Code
+
 
 class FragTrainLink(object):
     """ Links a Frag to a FragTrain, temporarily or permanently. """
@@ -474,77 +545,6 @@ class FragTrainLink(object):
         return hypo_train
 
 
-##############################################################################
-## Callback 
-#  This callback function should be the only explicitly feature type-dependent
-#  code in this module
-#  TODO: Make this error/threshold function part of the FeatureType class
-#  XXX FeatureType-Dependent Code
-def _percent_identity_threshold(train):
-    """ 
-    Use a heuristic weighted sum to approximate how much of the feature's
-    sequence is mutated.
-
-    If the feature is exact, determine if the match is perfect and return either
-    a perfect score or a perfect fail.
-    """
-
-    # Exact features must be exact: no scoring system
-    if (train.feature.type == Feature_Type.EXACT_FEATURE) or \
-       (train.feature.type == Feature_Type.ENZYME):
-        if train.hits == train.feature.length and \
-           train.inserts == 0 and train.deletes == 0 and train.mutations == 0:
-            pct_identity_error = 0.0 # Perfect score
-        else:
-            pct_identity_error = 1.0 # Perfect fail
-    else:
-        # All other features: scoring system
-        # scoring function:
-        #   +1   for each exact match
-        #   +0   for missing nucleotides at the start or end of sequence
-        #   +0.3 for each nucleotide in a mutated fragment
-        #        (i.e. assume roughly 70% of the fragment are mutated)
-        #   -0.1 for each deleted nucleotide
-        #   +0   for each inserted nucleotide in a gene and if total inserts
-        #        is less than a threshold that's related to gene size
-        #        (i.e. we don't penalize small inserts for genes)
-        #   -0.1 for each inserted nucleotide not in a gene
-
-        factor_match        =  1.0
-       #factor_missing      =  0.0
-        factor_mutations    =  0.3
-        factor_deletes      = -0.1
-       #factor_inserts_gene =  0.0
-        factor_inserts      = -0.1
-
-        net_matches = train.hits * factor_match
-
-        # Missing nucleotides
-        # net_matches += (train.feature.length - (net_matches + train.mutations)) * \
-        #                 factor_missing
-
-        # Mutations
-        net_matches += train.mutations * factor_mutations
-
-        # Deletions
-        net_matches += train.deletes * factor_deletes
-
-        # Insertions
-        if train.feature.type != Feature_Type.GENE or \
-           train.inserts > train.feature.length * FragTrainLink.MAX_INSERT_FRACTION:
-            net_matches += train.inserts * factor_inserts
-        else:
-            pass
-            # net_matches += train.inserts * factor_inserts_gene
-
-        # Normalization
-        pct_identity_error = 1 - net_matches / train.feature.length
-
-    # Store the most recently calculated error score in the train
-    train.score = pct_identity_error
-    return pct_identity_error < PCT_IDENTITY_ERROR_THRESHOLD
-#  XXX End FeatureType-Dependent Code
-
 
 ##############################################################################
 ## Global Functions
@@ -567,17 +567,13 @@ def _group_frags_by_feature_index(frags_strings):
 
     return frags_by_feature
 
-def _frags_to_trains(frags, feature_data, seq_length,
-                     train_matches = _percent_identity_threshold):
+def _frags_to_trains(frags, feature_data, seq_length):
     """
     Converts a list of fragments (of a single feature index) into a list of
     trains of fragments, which are candidates for feature identification.
 
     Arguments:
         frags         --- the list of fragments
-        train_matches --- a call-back function to use when evaluating
-                          whether or not a train is of high enough quality.
-                          must take a (train) as its argument
     """
     if _debug: 
         if frags[0].feature_index in _debug_features_to_observe:
@@ -634,7 +630,7 @@ def _frags_to_trains(frags, feature_data, seq_length,
                 # a deletion in a train, we add a copy of that train
                 # to the list of trains, and only extend one of the trains.
                 elif link.has_insert():
-                    if train_matches(train):
+                    if train.matches():
                         new_train = deepcopy(train)
                         new_train.short = True
                         trains.append(new_train)
@@ -664,7 +660,7 @@ def _frags_to_trains(frags, feature_data, seq_length,
                     hypo_train = link.make_hypo_train()
                     # XXX I don't understand why this has to be the case
 
-                    if train_matches(hypo_train):
+                    if hypo_train.matches():
                         # Append an identical copy of the train in its current
                         # state to the beginning of the train list.  We need to
                         # insert the new, identical copy before the iterator, so
@@ -712,8 +708,7 @@ def _frags_to_trains(frags, feature_data, seq_length,
 
     return trains
 
-def _pick_good_trains(trains,
-                      train_matches = _percent_identity_threshold):
+def _pick_good_trains(trains)
     """
     Pick only trains of sufficiently high quality that don't overlap.
 
@@ -733,7 +728,7 @@ def _pick_good_trains(trains,
         #     check_features in old code would go here. Can be moved off
         #     to the JavaScript code
         # XXX FeatureType-Dependent Code
-        if train_matches(train) or (train.feature.type == Feature_Type.GENE and
+        if train.matches() or (train.feature.type == Feature_Type.GENE and
                 train.is_high_fidelity):
             good_trains.append(train)
             last_train = train
