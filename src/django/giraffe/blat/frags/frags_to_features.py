@@ -10,6 +10,7 @@
 ##############################################################################
 ## Imports
 from __future__ import division
+from copy import deepcopy
 from operator import attrgetter
 
 from giraffe.blat.models import Feature_Type
@@ -236,8 +237,9 @@ class FragTrain(object):
         if add_hits:
             self.hits += self.__calculate_hit_score(frag)
 
-    def clone(self):
-        # Don't want true deep copy: __feature_data stays shallow
+    def __deepcopy__(self, memo):
+        # Don't want true deep copy: __feature_data stays shallow, as
+        # do the Frags in the __train itself
         new_train = FragTrain(self.__feature_data,  hits=self.hits,
                               short=self.short,     mutations=self.mutations,
                               inserts=self.inserts, deletes=self.deletes,
@@ -633,7 +635,7 @@ def _frags_to_trains(frags, feature_data, seq_length,
                 # to the list of trains, and only extend one of the trains.
                 elif link.has_insert():
                     if train_matches(train):
-                        new_train = train.clone()
+                        new_train = deepcopy(train)
                         new_train.short = True
                         trains.append(new_train)
 
@@ -668,7 +670,7 @@ def _frags_to_trains(frags, feature_data, seq_length,
                         # insert the new, identical copy before the iterator, so
                         # that it doesn't get iterated over again, or else an
                         # infinite loop results in certain cases
-                        new_train = train.clone()
+                        new_train = deepcopy(train)
                         trains.insert(fx, new_train)
 
                         # Solidify the link by extending the train
