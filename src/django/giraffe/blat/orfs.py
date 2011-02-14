@@ -1,6 +1,7 @@
 
 import models
 from Bio.Seq import Seq
+import math
 
 trans_table = 1 # standard translation table
 min_protein_len = 200
@@ -9,8 +10,10 @@ def detect_orfs(sequence_object):
     features = []
     # each should be Sequence_Feature_Annotated()
 
-    seq = Seq(sequence_object.sequence)
-    seq_len = len(seq)
+    seq = Seq(sequence_object.sequence*2)
+    seq_len = len(sequence_object.sequence)
+    aa_len = math.floor(seq_len/3.0)
+    print 'aa_len is '+str(aa_len)
 
     for strand,nuc in [(+1,seq), (-1,seq.reverse_complement())]:
         for frame in range(3):
@@ -22,7 +25,7 @@ def detect_orfs(sequence_object):
             aa_end = 0
             # go through the translation one by one, so we know where
             # the ORFs start and end
-            while aa_start < trans_len:
+            while aa_start < trans_len and aa_start < aa_len:
                 #print 'start '+str(aa_start)
                 aa_end = trans.find("*", aa_start)
                 start_codon = trans.find('M', aa_start)
@@ -45,10 +48,14 @@ def detect_orfs(sequence_object):
                     # 1, not 0.
                     if strand == 1:
                         start = frame+start_codon*3+1
-                        end = min(seq_len,frame+aa_end*3+has_stop*3)
+                        end = frame+aa_end*3+has_stop*3
+                        if end > seq_len:
+                            end = end % seq_len
                     else:
                         start = seq_len-frame-aa_end*3-has_stop*3+1
                         end = seq_len-frame-start_codon*3
+                        if start < 0:
+                            start = seq_len+start
 
                     f = models.Sequence_Feature_Annotated()
                     f.sequence = sequence_object
