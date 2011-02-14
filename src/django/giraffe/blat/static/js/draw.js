@@ -58,9 +58,9 @@
 //  label_radius_offset: how far from the outter feature should we
 //  start drawing labels. Default is "10".
 //
-//  cutters: which kinds of restriction enzymes to show, if any. This list
-//  of integers is interpreted as follows: [1, 2]: show 1- and 2- cut restriction 
-//  enzymes. []: show nothing. etc. Default is [1].
+//  cutters: which kinds of restriction enzymes to show, if any. This
+//  list of integers is interpreted as follows: [1, 2]: show 1- and 2-
+//  cut restriction enzymes. []: show nothing. etc. Default is [1].
 //
 //
 //
@@ -94,7 +94,8 @@
 	var ft = { 
 		feature:    1, promoter:   2, primer:        3,
 		enzyme:     4, gene:       5, origin:        6,
-		regulatory: 7, terminator: 8, exact_feature: 9
+		regulatory: 7, terminator: 8, exact_feature: 9,
+        orf:       10
 	};
 
 	//// Package-scope utility functions
@@ -311,7 +312,8 @@
 			feature: "#f00",
 			primer: "#090",
 			origin: "#333",
-			enzyme: "#00c"
+			enzyme: "#00c",
+            orf: "#00c8c8",
 		};
 
 
@@ -381,6 +383,8 @@
 					_width = enzyme_width;
 					_opacity = enzyme_opacity;
 					break;
+                case ft.orf:
+                    _color = colors.orf;
 				case ft.gene:
 					_draw_head = true;
 					break;

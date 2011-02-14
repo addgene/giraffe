@@ -3,7 +3,7 @@ import models
 from Bio.Seq import Seq
 
 trans_table = 1 # standard translation table
-min_protein_len = 100
+min_protein_len = 200
 
 def detect_orfs(sequence_object):
     features = []
@@ -41,16 +41,18 @@ def detect_orfs(sequence_object):
                 if aa_end-start_codon >= min_protein_len:
                     #print 'found '+trans[aa_start:aa_end]
 
+                    # the following start and end need to start with
+                    # 1, not 0.
                     if strand == 1:
-                        start = frame+start_codon*3
+                        start = frame+start_codon*3+1
                         end = min(seq_len,frame+aa_end*3+has_stop*3)
                     else:
-                        start = seq_len-frame-aa_end*3-has_stop*3
+                        start = seq_len-frame-aa_end*3-has_stop*3+1
                         end = seq_len-frame-start_codon*3
 
                     f = models.Sequence_Feature_Annotated()
                     f.sequence = sequence_object
-                    f.feature_name = 'ORF'
+                    f.feature_name = 'ORF frame '+str(frame+1)
                     f.feature_type_id = models.Feature_Type.ORF
                     f.orf_frame = frame
                     f.start = start
