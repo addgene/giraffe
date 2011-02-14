@@ -20,7 +20,7 @@ def post(request):
     else:
         db_name = request.POST['db']
         sequence = request.POST['sequence']
-        hash = models.Giraffe_Mappable_Model.blat(sequence,db_name)
+        hash = models.Giraffe_Mappable_Model.detect_features(sequence,db_name)
         return redirect(reverse(get,args=[hash,db_name]))
 
 
@@ -74,7 +74,8 @@ def get(request,hash,db_name):
 
     else:
         http_res = HttpResponse(
-            j,mimetype="application/json",status=httplib.OK
+            #j,mimetype="application/json",status=httplib.OK
+            j,status=httplib.OK
         )
 
     # we tell browser to cache this; if the sequence change, the hash would

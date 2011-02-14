@@ -20,10 +20,14 @@ class Giraffe_Mappable_Model(models.Model):
     sequence_giraffe_time = models.DateTimeField(null=True,blank=True)
 
     @staticmethod
-    def blat(sequence,db_name):
+    def detect_features(sequence,db_name):
         import frags.features
+        import orfs
         db = Feature_Database.objects.get(name=db_name)
+        # run blat algorithm to automatically detect features
         s = frags.features.blat(db,sequence)
+        # detect ORFs
+        orfs.detect_orfs(s)
         return s.hash
 
     def giraffe_ready(self,db_name='default',force=False,save=True):
@@ -39,7 +43,7 @@ class Giraffe_Mappable_Model(models.Model):
             if h != self.sequence_giraffe_id:
                 run = True
         if run:
-            s = Giraffe_Mappable_Model.blat(self.sequence,db_name)
+            s = Giraffe_Mappable_Model.detect_features(self.sequence,db_name)
             self.sequence_giraffe_id = s
             self.sequence_giraffe_time = datetime.datetime.now()
             if save:
@@ -53,12 +57,26 @@ class Giraffe_Mappable_Model(models.Model):
     save.alters_data = True
 
 
-class Sequence_Feature(models.Model):
+class Sequence_Feature_Base(models.Model):
+    class Meta:
+        abstract = True
+
     sequence = models.ForeignKey('Sequence')
-    feature = models.ForeignKey('Feature')
     start = models.PositiveIntegerField()
     end = models.PositiveIntegerField()
     clockwise = models.BooleanField()
+
+    def to_dict(self):
+        d = {
+            "start" : self.start,
+            "end" : self.end,
+            "clockwise" : self.clockwise,
+        }
+        return d
+
+
+class Sequence_Feature(Sequence_Feature_Base):
+    feature = models.ForeignKey('Feature')
 
     # Gene variant info
     subset_start = models.PositiveIntegerField(default=0)
@@ -70,14 +88,10 @@ class Sequence_Feature(models.Model):
         ordering = ['start','end']
 
     def to_dict(self):
-        d = {
-            "feature" : self.feature.name,
-            "feature_id" : self.feature_id,
-            "start" : self.start,
-            "end" : self.end,
-            "clockwise" : self.clockwise,
-            "type_id" : self.feature.type.id,
-        }
+        d = super(Sequence_Feature,self).to_dict()
+        d['feature'] = self.feature.name
+        d['feature_id'] = self.feature_id
+        d['type_id'] = self.feature.type_id
 
         # Include cut position
         if d["type_id"] == Feature_Type.ENZYME:
@@ -139,9 +153,19 @@ class Sequence(models.Model):
             self.id = s.id
     save.alters_data = True
 
-    def clear_features(self):
-        Sequence_Feature.objects.filter(sequence=self).delete()
+    def clear_features(self,feature_type=None):
+        a = { 'sequence' : self }
+        if feature_type:
+            a['feature__type'] = feature_type
+        Sequence_Feature.objects.filter(**a).delete()
     clear_features.alters_data = True 
+
+    def clear_annotated_features(self,feature_type=None):
+        a = { 'sequence' : self }
+        if feature_type:
+            a['feature_type'] = feature_type
+        Sequence_Feature_Annotated.objects.filter(**a).delete()
+    clear_annotated_features.alters_data = True 
 
 
 class Feature_Type(models.Model):
@@ -150,7 +174,8 @@ class Feature_Type(models.Model):
     # Feature type ID constants
     (FEATURE,    PROMOTER,   PRIMER,
      ENZYME,     GENE,       ORIGIN,
-     REGULATORY, TERMINATOR, EXACT_FEATURE) = range(1, 10)
+     REGULATORY, TERMINATOR, EXACT_FEATURE,
+     ORF) = range(1, 11)
 
     def __unicode__(self):
         return self.type
@@ -201,4 +226,18 @@ class Feature_DB_Index(models.Model):
         unique_together = (("db","feature_index"),)
 
 
+class Sequence_Feature_Annotated(Sequence_Feature_Base):
+    feature_name = models.CharField(max_length=64)
+    feature_type = models.ForeignKey(Feature_Type)
+
+    orf_frame = models.PositiveIntegerField(null=True)
+    orf_annotated = models.ForeignKey('self',null=True)
+
+    def to_dict(self):
+        d = super(Sequence_Feature_Annotated,self).to_dict()
+        d['feature'] = self.feature_name
+        d['type_id'] = self.feature_type_id
+        if self.orf_frame:
+            d['orf_frame'] = self.orf_frame
+        return d
 
