@@ -27,6 +27,12 @@ class Giraffe_Mappable_Model(models.Model):
         return s.hash
 
     def giraffe_ready(self,db_name='default',force=False,save=True):
+        if not self.sequence:
+            self.sequence_giraffe_id = ''
+            self.sequence_giraffe_time = None
+            if save:
+                self.save()
+            return
         run = force
         if not force:
             (s,h) = Sequence.clean_and_hash(self.sequence)
