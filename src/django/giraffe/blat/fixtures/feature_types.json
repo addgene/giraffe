@@ -34,6 +34,10 @@
   { "model" : "blat.Feature_Type",
     "pk" : 9,
     "fields" : { "type" : "ExactFeature" }
+  },
+  { "model" : "blat.Feature_Type",
+    "pk" : 10,
+    "fields" : { "type" : "ORF" }
   }
 ]
 
