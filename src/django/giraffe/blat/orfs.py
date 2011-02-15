@@ -75,8 +75,9 @@ def detect_orfs(sequence_object):
 
                     # also try to see if we can find any protein tags
                     # in this ORF
-                    for tag in tags.PROTEIN_TAGS:
-                        peptide = tags.PROTEIN_TAGS[tag]
+                    for tag_pair in tags.PROTEIN_TAGS:
+                        tag = tag_pair[0]
+                        peptide = tag_pair[1]
                         tag_aa_start = trans.find(peptide,start_codon,aa_end)
                         if tag_aa_start >= 0:
                             tag_aa_end = tag_aa_start+len(peptide)

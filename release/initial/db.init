@@ -7,7 +7,7 @@
 echo 'DROP DATABASE giraffe' | mysql -u root -ppassword
 echo "CREATE DATABASE giraffe CHARACTER SET 'utf8'" | mysql -u root -ppassword
 
-(cd ../../src/django/giraffe; python manage.py syncdb)
+(cd ../../src/django/giraffe; python manage.py syncdb --noinput)
 
 # migrate data
 ../../bin/syncsql init
