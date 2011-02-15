@@ -167,6 +167,15 @@ class Sequence(models.Model):
         Sequence_Feature_Annotated.objects.filter(**a).delete()
     clear_annotated_features.alters_data = True 
 
+    def clear_orf_features(self):
+        Sequence_Feature_Annotated.objects.filter(
+            feature_type=Feature_Type.ORF,sequence=self
+        ).delete()
+        Sequence_Feature_Annotated.objects.filter(
+            orf_annotated__isnull=False,sequence=self
+        ).delete()
+    clear_orf_features.alters_data = True 
+
 
 class Feature_Type(models.Model):
     type = models.CharField(max_length=64)
@@ -231,7 +240,7 @@ class Sequence_Feature_Annotated(Sequence_Feature_Base):
     feature_type = models.ForeignKey(Feature_Type)
 
     orf_frame = models.PositiveIntegerField(null=True)
-    orf_annotated = models.ForeignKey('self',null=True)
+    orf_annotated = models.ForeignKey('Sequence_Feature_Annotated',null=True)
 
     def to_dict(self):
         d = super(Sequence_Feature_Annotated,self).to_dict()

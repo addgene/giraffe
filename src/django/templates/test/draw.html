@@ -3,8 +3,12 @@
 {% block title %} Drawing API Test {% endblock %}
 
 {% block body %}
-<div style="height: 640px; width: 640px; border: 1px solid red" id="map-10878"></div>
-<div style="height: 640px; width: 640px; border: 1px solid blue" id="map-1654"></div>
+<div style="height: 640px; width: 640px; border: 1px solid red"
+ id="map-10878"></div>
+<div style="height: 640px; width: 640px; border: 1px solid blue"
+ id="map-15300"></div>
+<div style="height: 640px; width: 640px; border: 1px solid green"
+ id="map-12522"></div>
 {% endblock %}
 
 {% block pagejs %}
@@ -17,15 +21,24 @@
     'map_dom_id' : 'map-10878',
     'plasmid_name' : 'pLKO.1 TRC Cloning Vector',
     'fade_time' : 300,
-	'cutters': [2]	
+	'cutters': [1]
 });</script>
 <script type="text/javascript">var gd2 = GiraffeDraw();</script>
-<script type="text/javascript" src="/blat/9e12e3f7dca0497ffdd2e5a538efd21cc22f88c1/default?jsonp=gd2.read"></script>
-<script type="text/javascript"> var map_1654 = gd2.draw_circular_map({
-    'map_dom_id' : 'map-1654',
-    'plasmid_name' : 'L4440',
+<script type="text/javascript" src="/blat/cab6427281228b7ca1d1699b95202eff367658ae/default?jsonp=gd2.read"></script>
+<script type="text/javascript">gd2.draw_circular_map({
+    'map_dom_id' : 'map-15300',
+    'plasmid_name' : 'pWZL-Neo-Myr-Flag-DEST',
     'fade_time' : 300,
-	'cutters': [1, 2]	
+	'cutters': [1]
+});
+</script>
+<script type="text/javascript">var gd3 = GiraffeDraw();</script>
+<script type="text/javascript" src="/blat/41ec2e41df504bdd69b246f6e3fdf65647e634bb/default?jsonp=gd3.read"></script>
+<script type="text/javascript">gd3.draw_circular_map({
+    'map_dom_id' : 'map-12522',
+    'plasmid_name' : 'pBabe puro HA PIK3CA Sequence',
+    'fade_time' : 300,
+	'cutters': [1]
 });
 </script>
 {% endblock %}

@@ -10,7 +10,5 @@ python import_features.py afire < features/af.features
 python import_features.py afire < features/af.enzymes
 python create_frag_db.py afire > ../frags/data/afire.data
 
-python import_features.py none < features/all.features
 python import_features.py none < features/all.enzymes
-
 
