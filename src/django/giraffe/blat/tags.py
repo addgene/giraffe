@@ -16,24 +16,19 @@ PROTEIN_TAGS = (
     ("SBP Tag","MDEKTTGWRGGHVVEGLAGELEQLRARLEHHPQGQREP"),
     ("TAP","GRRIPGLINPWKRRWKKNFIAVSAANRFKKISSSGALDYDIPTTASENLYFQGEFGLAQHDEAVDNKFNKEQQNAFYEILHLPNLNEEQRNAFIQSLKDDPSQSANLLAEAKKLNDAQAPKVDNKFNKEQQNAFYEILHLPNLNEEQRNAFIQSLKDDPSQSANLLAEAKKLNDAQAPKVDANHQ"),
 
-    ("EGFP (Y66)", "VTTLTYGVQC"),
-    ("ECFP (Y66W)","VTTLTWGVQC"),
-    ("EBFP (Y66H)","VTTLTHGVQC"),
-    ("EYFP (T203Y)","DNHYLSYQSALSK"),
-    ("Cerulean (Y145A,H148D)","LEYNANSDNV"),
-    ("Venus (M153T,V163A,S175G)","YITADKQKNGIKANFKIRHNIEDGGVQL"),
-
-    # removed start codon M; may not be there for fusion protein
-    ("mRFP/Tan/Hon 5' terminal","ASSEDVIK"),
-    ("mCherry 5' terminal",     "VSKGEEDNMA"),
-    ("GFP 5' terminal",         "VSKGEENNMA"),
-    ("GFP 3' terminal",         "GMDELYK"),
-    ("mCherry (Q66M)",              "FAWDILSPQFMYGSKAYV"),
-    ("mStrawberry (S62T,Q64N,Q66T)","FAWDILTPNFTYGSKAYV"),
-    ("mOrange (Q66T)",              "FAWDILSPQFTYGSKAYV"),
-    ("mTan/Ban (Q66C)",             "FAWDILSPQFCYGSKAYV"),
-    ("mHoneydew (Y67W)",            "FAWDILSPQFMWGSKAYV"),
-    ("mBanana (I197E)",             "YIAGEKIDI"),
-    ("mTangerine (I197)",           "YKTDIKLDI"),
+    # the following are critical mutations in FPs
+    ("Y66 (EGFP)",                  "VTTLTYGVQC"),
+    ("Y66W (ECFP)",                 "VTTLTWGVQC"),
+    ("Y66H (EBFP)",                 "VTTLTHGVQC"),
+    ("T203Y (EYFP)",                "DNHYLSYQSALSK"),
+    ("Y145A,H148D (Cerulean)",      "LEYNANSDNV"),
+    ("M153T,V163A,S175G (Venus)",   "YITADKQKNGIKANFKIRHNIEDGGVQL"),
+    ("Q66M (mCherry)",              "FAWDILSPQFMYGSKAYV"),
+    ("S62T,Q64N,Q66T (mStrawberry)","FAWDILTPNFTYGSKAYV"),
+    ("Q66T (mOrange)",              "FAWDILSPQFTYGSKAYV"),
+    ("Y67W (mHoneydew)",            "FAWDILSPQFMWGSKAYV"),
+    ("Q66C (mTan/Ban)",             "FAWDILSPQFCYGSKAYV"),
+    ("I197E (mBanana)",             "YIAGEKIDI"),
+    ("I197 (mTangerine)",           "YKTDIKLDI"),
 )
 

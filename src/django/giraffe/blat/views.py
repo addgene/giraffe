@@ -14,7 +14,7 @@ from django.template import RequestContext
 def post(request):
     if request.method == 'GET':
         return render_to_response(
-            'blat/post.html', {}, 
+            'test/post.html', {}, 
             context_instance=RequestContext(request)
         )
     else:
@@ -107,8 +107,8 @@ def draw(request,hash,db_name):
     sequence = models.Sequence.objects.get(db=db,hash=hash)
 
     return render_to_response(
-        'blat/draw.html',
-        { "sequence" : sequence }, 
+        'test/draw.html',
+        { "hash" : hash }, 
         context_instance=RequestContext(request)
     )
 
