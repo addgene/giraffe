@@ -32,8 +32,8 @@ def detect_orfs(sequence_object):
                 aa_end = trans.find("*", aa_start)
                 has_stop = 1
                 if aa_end == -1:
-                    aa_end = trans_len
-                    has_stop = 0
+                    # no more stop codon, just abort...
+                    break
 
                 start_codon = trans.find('M', aa_start, aa_end)
 
