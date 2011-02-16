@@ -11,11 +11,10 @@ def test_draw(request,hash,db_name):
     """
     db = blat.models.Feature_Database.objects.get(name=db_name)
     sequence = blat.models.Sequence.objects.get(db=db,hash=hash)
-    ts = time.mktime(sequence.modified.timetuple())
+    ts = int(time.mktime(sequence.modified.timetuple()))
 
     return render_to_response(
-        'test/draw.html',
-        { "hash" : hash, "mtime" : sequence.modified },
+        'test/draw.html', { "hash" : hash, "mtime" : ts },
         context_instance=RequestContext(request)
     )
 
