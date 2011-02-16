@@ -129,6 +129,7 @@
 		var _start = parseInt(feat.start);
 		var _end = parseInt(feat.end);
 		var _type = parseInt(feat.type_id);
+        var _default_show_feature = parseInt(feat.show_feature);
 		var _clockwise = feat.clockwise;
 		var _cut = parseInt(feat.cut); // only for enzymes;
 		var _other_cutters = []; // only for enzymes;
@@ -139,6 +140,7 @@
 		this.end = function() { return _end; };
 		this.type = function() { return _type; };
 		this.clockwise = function() { return _clockwise; };
+        this.default_show_feature = function() { return _default_show_feature; }
 		// returns - 1 if not enzyme		
 		this.cut = function() { return _type == ft.enzyme ? _cut : -1 }; 
 
@@ -956,16 +958,26 @@
 		function show_hide_cutters() {
 			for (var fx in features) {
 				var f = features[fx];
-				// Only draw enzymes if they are in the list of cutters to show
-				if (f.type() == ft.enzyme) {
-					if (cutters_to_show.indexOf(f.cut_count()) < 0) {
-						f.hide();
-						f.clear_label();
-					} else {
-						f.show();
-						f.show_label();
-					}
-				}
+                if (f.default_show_feature()) {
+                    // Only draw enzymes if they are in the list of
+                    // cutters to show - i.e. 1 cutter, 2 cutters,
+                    // etc.
+                    if (f.type() == ft.enzyme) {
+					    if (cutters_to_show.indexOf(f.cut_count()) < 0) {
+						    f.hide();
+						    f.clear_label();
+					    } else {
+						    f.show();
+						    f.show_label();
+					    }
+				    }
+                }
+                else {
+                    // If the enzyme is not set to be shown by
+                    // default, don't show it
+                    f.hide();
+                    f.clear_label();
+                }
 			}
 		}
 

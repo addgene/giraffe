@@ -6,11 +6,14 @@ from django.shortcuts import redirect
 import django.contrib.admin
 django.contrib.admin.autodiscover()
 
+import views
+
 urlpatterns = patterns('',
     (r'^admin/', include(django.contrib.admin.site.urls)),
     (r'^blat/', include('giraffe.blat.urls')),
 
-    (r'^test/draw/', direct_to_template, { 'template' : 'test/draw.html' }),
+    (r'^test/(\w+)/(\w+)/draw/?$', views.test_draw),
+    (r'^test/$', direct_to_template, { 'template' : 'test/post.html' }),
 )
 
 if settings.DEBUG:

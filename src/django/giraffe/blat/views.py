@@ -12,16 +12,11 @@ from django.template import RequestContext
 
 
 def post(request):
-    if request.method == 'GET':
-        return render_to_response(
-            'test/post.html', {}, 
-            context_instance=RequestContext(request)
-        )
-    else:
-        db_name = request.POST['db']
-        sequence = request.POST['sequence']
-        hash = models.Giraffe_Mappable_Model.detect_features(sequence,db_name)
-        return redirect(reverse(get,args=[hash,db_name]))
+    assert (request.method == 'POST')
+    db_name = request.POST['db']
+    sequence = request.POST['sequence']
+    hash = models.Giraffe_Mappable_Model.detect_features(sequence,db_name)
+    return redirect(reverse(get,args=[hash,db_name]))
 
 
 def get(request,hash,db_name):
@@ -44,7 +39,9 @@ def get(request,hash,db_name):
         features = []
         cutters = {}
         for f in sequence.sequence_feature_set.order_by("start").select_related(
-            'feature', 'feature__type',
+            'feature_db_index',
+            'feature_db_index__feature',
+            'feature_db_index__feature__type',
         ):
             features.append(f)
             if f.feature.type_id == models.Feature_Type.ENZYME:
@@ -62,13 +59,17 @@ def get(request,hash,db_name):
 
     else:
         for f in sequence.sequence_feature_set.order_by("start").select_related(
-            'feature', 'feature__type',
+            'feature_db_index',
+            'feature_db_index__feature',
+            'feature_db_index__feature__type',
         ):
             res.append(f.to_dict())
 
     # get annotated features
 
-    for f in sequence.sequence_feature_annotated_set.order_by("start").select_related('feature_type'):
+    for f in sequence.sequence_feature_annotated_set.order_by(
+        "start"
+    ).select_related('feature_type'):
         res.append(f.to_dict())
 
     # now sort everything by start
@@ -87,29 +88,20 @@ def get(request,hash,db_name):
 
     else:
         http_res = HttpResponse(
-            #j,mimetype="application/json",status=httplib.OK
+            # technically we should be returning "application/json",
+            # but in that case browsers force user to download into a
+            # file, and for debugging we want to be able to see the
+            # JSON list in browser. looks like most browsers will
+            # handle JSON sent back as text/html anyways.
+            #mimetype="application/json",
             j,status=httplib.OK
         )
 
     # we tell browser to cache this; if the sequence change, the hash would
     # change. the only danger is if we re-blat the sequence, in that case the
-    # features list cached by browser will be out of date.
+    # features list cached by browser will be out of date. so client
+    # should attach some kind of CGI string to invalidate cache.
     http_res['Cache-Control'] = 'max-age=2592000'
     return http_res
-
-
-def draw(request,hash,db_name):
-    """
-    Get features of a sequence, using the sequence's sha-1 hash as the
-    identifier.
-    """
-    db = models.Feature_Database.objects.get(name=db_name)
-    sequence = models.Sequence.objects.get(db=db,hash=hash)
-
-    return render_to_response(
-        'test/draw.html',
-        { "hash" : hash }, 
-        context_instance=RequestContext(request)
-    )
 
 

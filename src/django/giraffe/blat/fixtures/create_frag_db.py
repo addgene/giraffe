@@ -66,6 +66,7 @@ def reverse_complement(s):
 
 from giraffe.blat.models import Feature_Type
 from giraffe.blat.models import Feature_Database
+from giraffe.blat.models import Feature_In_Database
 from giraffe.blat.models import Feature
 from giraffe.blat.models import Feature_DB_Index
 
@@ -84,11 +85,14 @@ for f in fdb.features.all():
         continue
     s = f.sequence.lower()
 
+    f_in_db = Feature_In_Database.objects.get(feature=f, feature_database=fdb)
+
     fn = Feature_DB_Index()
     fn.db = fdb
     fn.feature_index = feature_index
     fn.feature = f
     fn.antisense = False
+    fn.show_feature = f_in_db.show_feature
     fn.save()
     features.append(fn)
     feature_index = feature_index+1
@@ -101,6 +105,7 @@ for f in fdb.features.all():
             fn.feature_index = feature_index
             fn.feature = f
             fn.antisense = True
+            fn.show_feature = f_in_db.show_feature
             fn.save()
             features.append(fn)
             feature_index = feature_index+1

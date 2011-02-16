@@ -32,6 +32,7 @@ _debug_features_to_observe = (98, 132)
 class FeatureData(object):
     """ Caches feature data to prevent db access. """
     def __init__(self, fdb):
+        self.__fdb = fdb
         self.__feature = fdb.feature
         self.__type = self.__feature.type_id
         self.__name = self.__feature.name
@@ -296,7 +297,7 @@ class FragTrain(object):
         seq_feat.clockwise = self.feature.clockwise
 
         # Feature object itself is private, to prevent unnecessary db access
-        seq_feat.feature = self.feature._FeatureData__feature
+        seq_feat.feature_db_index = self.feature._FeatureData__fdb
 
         if globals()["_debug"]: 
             if self.feature_index in globals()["_debug_features_to_observe"]:

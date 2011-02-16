@@ -2,9 +2,6 @@ import os
 import tempfile
 
 from giraffe.blat.models import Sequence
-from giraffe.blat.models import Sequence_Feature
-from giraffe.blat.models import Feature_DB_Index
-from giraffe.blat.models import Feature
 from giraffe.blat.frags.frags_to_features import frags_to_features
 
 # For Debugging

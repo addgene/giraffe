@@ -76,7 +76,11 @@ class Sequence_Feature_Base(models.Model):
 
 
 class Sequence_Feature(Sequence_Feature_Base):
-    feature = models.ForeignKey('Feature')
+    feature_db_index = models.ForeignKey('Feature_DB_Index')
+
+    @property
+    def feature(self):
+        return self.feature_db_index.feature
 
     # Gene variant info
     subset_start = models.PositiveIntegerField(default=0)
@@ -90,8 +94,9 @@ class Sequence_Feature(Sequence_Feature_Base):
     def to_dict(self):
         d = super(Sequence_Feature,self).to_dict()
         d['feature'] = self.feature.name
-        d['feature_id'] = self.feature_id
+        d['feature_id'] = self.feature.id
         d['type_id'] = self.feature.type_id
+        d['show_feature'] = self.feature_db_index.show_feature
 
         # Include cut position
         if d["type_id"] == Feature_Type.ENZYME:
@@ -230,6 +235,7 @@ class Feature_DB_Index(models.Model):
     feature_index = models.PositiveIntegerField(db_index=True)
     feature = models.ForeignKey(Feature)
     antisense = models.BooleanField()
+    show_feature = models.BooleanField(default=True)
 
     class Meta:
         unique_together = (("db","feature_index"),)
