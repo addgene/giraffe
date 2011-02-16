@@ -58,9 +58,9 @@
 //  label_radius_offset: how far from the outter feature should we
 //  start drawing labels. Default is "10".
 //
-//  cutters: which kinds of restriction enzymes to show, if any. This list
-//  of integers is interpreted as follows: [1, 2]: show 1- and 2- cut restriction 
-//  enzymes. []: show nothing. etc. Default is [1].
+//  cutters: which kinds of restriction enzymes to show, if any. This
+//  list of integers is interpreted as follows: [1, 2]: show 1- and 2-
+//  cut restriction enzymes. []: show nothing. etc. Default is [1].
 //
 //
 //
@@ -94,7 +94,8 @@
 	var ft = { 
 		feature:    1, promoter:   2, primer:        3,
 		enzyme:     4, gene:       5, origin:        6,
-		regulatory: 7, terminator: 8, exact_feature: 9
+		regulatory: 7, terminator: 8, exact_feature: 9,
+        orf:       10
 	};
 
 	//// Package-scope utility functions
@@ -128,6 +129,7 @@
 		var _start = parseInt(feat.start);
 		var _end = parseInt(feat.end);
 		var _type = parseInt(feat.type_id);
+        var _default_show_feature = parseInt(feat.show_feature);
 		var _clockwise = feat.clockwise;
 		var _cut = parseInt(feat.cut); // only for enzymes;
 		var _other_cutters = []; // only for enzymes;
@@ -138,6 +140,7 @@
 		this.end = function() { return _end; };
 		this.type = function() { return _type; };
 		this.clockwise = function() { return _clockwise; };
+        this.default_show_feature = function() { return _default_show_feature; }
 		// returns - 1 if not enzyme		
 		this.cut = function() { return _type == ft.enzyme ? _cut : -1 }; 
 
@@ -247,7 +250,7 @@
 		var enzyme_width = 25;
 		var enzyme_weight = 1; // Restriction enzymes are drawn differently
 							   // This controls their "thickness" on the map
-		var enzyme_bold_weight = 1.5*enzyme_weight; 
+		var enzyme_bold_weight = 3; // How thick when highlighted
 		var feature_opacity = 0.7;
 		var enzyme_opacity = 0.7;
 		if ('opacity' in options) {
@@ -300,6 +303,7 @@
 		// coded in a few places, so don't change this unless you figure
 		// out how to change the number of label lists.
 		var label_section_degree = 45;
+        var label_section_half = label_section_degree/2;
 
 		// Table display
 		var hide_enzyme_rows = true; // Hide rows for cutter types not shown
@@ -311,7 +315,8 @@
 			feature: "#f00",
 			primer: "#090",
 			origin: "#333",
-			enzyme: "#00c"
+			enzyme: "#00c",
+            orf: "#00c8c8",
 		};
 
 
@@ -381,6 +386,8 @@
 					_width = enzyme_width;
 					_opacity = enzyme_opacity;
 					break;
+                case ft.orf:
+                    _color = colors.orf;
 				case ft.gene:
 					_draw_head = true;
 					break;
@@ -459,12 +466,9 @@
 				sets.push(_feature_set);
 				lines.push(_label_set[0]); // label line
 
-				// Cutters: make them thicker and highlight
-				//          related examples
-				if (_this.type() == ft.enzyme) {
-					props["stroke-width"] = enzyme_bold_weight;
-					// Highlight other examples of this enzyme
-					// if it's a multi-cutter
+                // Cutters: highlight other examples of this enzyme if
+                // it's a multi-cutter
+                if (_this.type() == ft.enzyme) {
 					for (var fx in _this.other_cutters()) {
 						var f = features[_this.other_cutters()[fx]];
 						sets.push(f.feature_set());
@@ -482,21 +486,25 @@
 			}
 
 			var _bolder = function () {
-				var props = {"opacity": bold_opacity, "font-weight": "bold" };
+				var props = {"opacity": bold_opacity,
+                             "font-weight": "bold" };
+                if (_this.type() == ft.enzyme) {
+				    props["stroke-width"] = enzyme_bold_weight;
+                }
 				var line_props = {"stroke": colors.plasmid, 
 				                  "stroke-width": label_line_bold_weight};
-
 				_fade(props, line_props);
 			}
 
 			var _lighter = function () {
-				var props = {"opacity": _opacity, "font-weight":"normal"};
+				var props = {"opacity": _opacity,
+                             "font-weight":"normal"};
+                if (_this.type() == ft.enzyme) {
+				    props["stroke-width"] = enzyme_weight;
+                }
 				var line_props = {"stroke": colors.bg_text,
 				                  "stroke-width": label_line_weight};
 				_fade(props, line_props);
-
-				// Don't fade label text opacity
-				_label_set[1].attr({"opacity":1.0});// label text
 			}
 
 			// Toggle solid/light upon click
@@ -643,17 +651,16 @@
 				var adjust_a_c = a_c;
 				if (adjust_a_c < 0) { adjust_a_c += 360; }
 
-				// Figure out the label position: divide the grid up into eight
-				// sections
-				var section =
-					Math.floor((plasmid_start - a_c)/label_section_degree);
+                // Figure out which section this label is in: divide
+                // the grid up into eight sections. First section is
+                // -label_section_degree/2 to +label_section_degree/2,
+                // and so on.
+				var section = Math.floor((plasmid_start-a_c)/label_section_degree);
 
 				var l = label_f_c[section].length;
-				// because this value is always positive, going 0 to 360,
-				// that means if we sort by this value, we are going
-				// counter-clockwise.
 				var xy0 = convert.polar_to_rect(_this.radius, a_c);
 				label_f_c[section][l] = [adjust_a_c,xy0];
+
 			} // END CircularFeature::set_label_list()
 
 			// Draw the label associated with that feature
@@ -670,12 +677,11 @@
 
 				var xy0 = convert.polar_to_rect(_this.radius, a_c);
 				
-				// Figure out the label position: divide the grid up into eight
-				// sections
-				var section =
-					Math.floor((plasmid_start - a_c)/label_section_degree);
-				var section_angle = plasmid_start - label_section_degree/2.0 - section*label_section_degree;
-
+                // Figure out which section this label is in: divide
+                // the grid up into eight sections. First section is
+                // -label_section_degree/2 to +label_section_degree/2,
+                // and so on.
+				var section = Math.floor((plasmid_start - a_c)/label_section_degree);
 				// Figure out position in the label list - remember,
 				// sorting by label_f_c means going counterclockwise.
 				var pos_ls = 0
@@ -731,13 +737,14 @@
 				}
 				var label = paper.text(xy1.x, xy1.y, label_name);
 
-				if (a_c < plasmid_start - 180 && a_c > plasmid_start - 360) { 
+                if (section > 3) {
 					// Left half of wheel: align right
 					label.attr({"text-anchor": "end"});
-				} else if (a_c < plasmid_start && a_c > plasmid_start - 180) { 
+				}
+                else {
 					// Right half of wheel: align left
 					label.attr({"text-anchor": "start"});
-				} // Top and bottom default to middle, which is correct
+				}
 
 				label.attr({"fill": _color,
 							"font-size": label_font_size,
@@ -750,7 +757,9 @@
 				_label_set.click(_click);
 				_label_set.hover(_mouse_over, _mouse_up);
 
-				_feature_set.push(_label_set);
+                // Only push label_line, so when we fade in and out,
+                // we don't also fade the label.
+				_feature_set.push(label_line);
 
 				_labeled = true;
 				_label_drawn = true;
@@ -949,16 +958,26 @@
 		function show_hide_cutters() {
 			for (var fx in features) {
 				var f = features[fx];
-				// Only draw enzymes if they are in the list of cutters to show
-				if (f.type() == ft.enzyme) {
-					if (cutters_to_show.indexOf(f.cut_count()) < 0) {
-						f.hide();
-						f.clear_label();
-					} else {
-						f.show();
-						f.show_label();
-					}
-				}
+                if (f.default_show_feature()) {
+                    // Only draw enzymes if they are in the list of
+                    // cutters to show - i.e. 1 cutter, 2 cutters,
+                    // etc.
+                    if (f.type() == ft.enzyme) {
+					    if (cutters_to_show.indexOf(f.cut_count()) < 0) {
+						    f.hide();
+						    f.clear_label();
+					    } else {
+						    f.show();
+						    f.show_label();
+					    }
+				    }
+                }
+                else {
+                    // If the enzyme is not set to be shown by
+                    // default, don't show it
+                    f.hide();
+                    f.clear_label();
+                }
 			}
 		}
 
@@ -989,25 +1008,32 @@
 			for (var i=0; i<label_f_c.length; i++) {
 				label_f_c[i].sort(function(a,b){return (a[0]-b[0])})
 				var section_angle = plasmid_start-label_section_degree/2.0-i*label_section_degree;
+                // get lower y coordinate and x coordinate of the
+                // label list
 				var xy1 = convert.polar_to_rect(label_radius, section_angle);
-				// get lower y coordinate and x coordinate
+                // for each section, we also shift the x coordinate to
+                // be further away from the circle, so that as much as
+                // possible, the angle between a) line from the label
+                // to the feature and b) the label is more than 90
+                // degrees (i.e. visually, you don't have lines going
+                // "backward").
 				if (i == 0 || i == 1) {
 					// upper right, higher bp at bottom
-					xy1.x += 20;
+					xy1.x += 60;
 				}
 				else if (i == 2 || i == 3) {
 					// lower right, higher bp at bottom
 					xy1.y += label_f_c[i].length*label_height;
-					xy1.x += 20;
+					xy1.x += 60;
 				}
 				else if (i == 4 || i == 5) {
 					// lower left, higher bp on top
 					xy1.y += label_f_c[i].length*label_height;
-					xy1.x -= 20;
+					xy1.x -= 60;
 				}
 				else if (i == 6 || i == 7) {
 					// upper left, high bp on top
-					xy1.x -= 20;
+					xy1.x -= 60;
 				}
 				label_list_pos[i][0] = xy1.x;
 				label_list_pos[i][1] = xy1.y;
