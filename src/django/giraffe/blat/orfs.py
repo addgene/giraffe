@@ -24,8 +24,9 @@ def detect_orfs(sequence_object):
             trans_len = len(trans)
             aa_start = 0
             aa_end = 0
-            # go through the translation one by one, so we know where
-            # the ORFs start and end
+
+            # go through the translation and find end codons that
+            # follow a start codon.
             while aa_start < trans_len and aa_start < aa_len:
                 #print 'start '+str(aa_start)
                 aa_end = trans.find("*", aa_start)
@@ -37,7 +38,7 @@ def detect_orfs(sequence_object):
                 start_codon = trans.find('M', aa_start, aa_end)
 
                 # is there a start codon?
-                if start_codon == -1:
+                if start_codon == -1 or start_codon >= aa_len:
                     assert(aa_end != -1)
                     aa_start = aa_end+1
                     continue
