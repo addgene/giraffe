@@ -49,7 +49,7 @@
 //  map_width, map_height: default 640, 640.
 //
 //  label_font_size, plasmid_font_size: font size for the labels and
-//  center plasmid name and size. E.g. "14pt". Defaults are "14pt" and
+//  center plasmid name and size. E.g. "14pt". Defaults are "13pt" and
 //  "16pt" respectively.
 //
 //  plasmid_name: if given, show this name together with size of
@@ -652,9 +652,7 @@
 				if (adjust_a_c < 0) { adjust_a_c += 360; }
 
                 // Figure out which section this label is in: divide
-                // the grid up into eight sections. First section is
-                // -label_section_degree/2 to +label_section_degree/2,
-                // and so on.
+                // the grid up into eight sections.
 				var section = Math.floor((plasmid_start-a_c)/label_section_degree);
 
 				var l = label_f_c[section].length;
@@ -678,12 +676,9 @@
 				var xy0 = convert.polar_to_rect(_this.radius, a_c);
 				
                 // Figure out which section this label is in: divide
-                // the grid up into eight sections. First section is
-                // -label_section_degree/2 to +label_section_degree/2,
-                // and so on.
+                // the grid up into eight sections.
 				var section = Math.floor((plasmid_start - a_c)/label_section_degree);
-				// Figure out position in the label list - remember,
-				// sorting by label_f_c means going counterclockwise.
+				// Figure out position in the label list.
 				var pos_ls = 0
 				for (pos_ls=0; pos_ls<label_f_c[section].length; pos_ls++) {
 					if (label_f_c[section][pos_ls][0] == adjust_a_c) {
@@ -702,10 +697,12 @@
 				// We want to minimize the number of label lines that
 				// cross. Which means depends on which section we are in,
 				// we draw labels in different orders. See draw_labels on
-				// how the positions are setup. Remember, because are
-				// sorted by label_f_c, we are going counter clockwise and
-				// the label_list_pos elements have the lower y
-				// coordinates.
+                // how the positions of each label section are
+                // computed. Remember, because are sorted by
+                // label_f_c, we are going counter clockwise on the
+                // circle, drawing label for the feature with higher
+                // bp first. label_f_c has the lower x and y
+                // coordinates of each section.
 				if (section == 0 || section == 1) {
 					// upper right, higher bp at bottom
 					xy1.y -= y_shift;
@@ -989,13 +986,15 @@
 		var label_list_pos = new Array(8);
 		function draw_labels(label_radius) {
 
-			// Keeps track of feature centers for each label list, we need
-			// this to compute exactly where a label should be within a
-			// label list, so to minimize intersecting lines.
+            // Global: keeps track of feature centers for each label
+            // list, we need this to compute exactly where a label
+            // should be within a label list, so to minimize
+            // intersecting lines.
 			label_f_c = [[], [], [], [], [], [], [], []];
 
-			// y starting position for each label list
-			label_list_pos = [[0,0], [0,0], [0,0], [0,0],
+            // Global: lower x, y starting position for each label
+            // list
+            label_list_pos = [[0,0], [0,0], [0,0], [0,0],
 							  [0,0], [0,0], [0,0], [0,0]];
 		
 			// Iterate counterclockwise, first get counts
@@ -1008,8 +1007,6 @@
 			for (var i=0; i<label_f_c.length; i++) {
 				label_f_c[i].sort(function(a,b){return (a[0]-b[0])})
 				var section_angle = plasmid_start-label_section_degree/2.0-i*label_section_degree;
-                // get lower y coordinate and x coordinate of the
-                // label list
 				var xy1 = convert.polar_to_rect(label_radius, section_angle);
                 // for each section, we also shift the x coordinate to
                 // be further away from the circle, so that as much as
@@ -1017,22 +1014,21 @@
                 // to the feature and b) the label is more than 90
                 // degrees (i.e. visually, you don't have lines going
                 // "backward").
+                //
+                // we also compute the lower y coordinate of each
+                // label list below.
 				if (i == 0 || i == 1) {
-					// upper right, higher bp at bottom
 					xy1.x += 60;
 				}
 				else if (i == 2 || i == 3) {
-					// lower right, higher bp at bottom
 					xy1.y += label_f_c[i].length*label_height;
 					xy1.x += 60;
 				}
 				else if (i == 4 || i == 5) {
-					// lower left, higher bp on top
 					xy1.y += label_f_c[i].length*label_height;
 					xy1.x -= 60;
 				}
 				else if (i == 6 || i == 7) {
-					// upper left, high bp on top
 					xy1.x -= 60;
 				}
 				label_list_pos[i][0] = xy1.x;
