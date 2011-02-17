@@ -299,11 +299,12 @@
 			plasmid_name = options['plasmid_name'];
 		}
 
+        var label_height = 0;
+
 		// This is based on using 8 label lists, which is pretty much hard
 		// coded in a few places, so don't change this unless you figure
 		// out how to change the number of label lists.
 		var label_section_degree = 45;
-        var label_section_half = label_section_degree/2;
 
 		// Table display
 		var hide_enzyme_rows = true; // Hide rows for cutter types not shown
@@ -656,8 +657,7 @@
 				var section = Math.floor((plasmid_start-a_c)/label_section_degree);
 
 				var l = label_f_c[section].length;
-				var xy0 = convert.polar_to_rect(_this.radius, a_c);
-				label_f_c[section][l] = [adjust_a_c,xy0];
+				label_f_c[section][l] = adjust_a_c;
 
 			} // END CircularFeature::set_label_list()
 
@@ -681,10 +681,10 @@
 				// Figure out position in the label list.
 				var pos_ls = 0
 				for (pos_ls=0; pos_ls<label_f_c[section].length; pos_ls++) {
-					if (label_f_c[section][pos_ls][0] == adjust_a_c) {
+					if (label_f_c[section][pos_ls] == adjust_a_c) {
 						// Claim this spot, 999 is not a valid value for
 						// adjust_a_c.
-						label_f_c[section][pos_ls][0] = 999;
+						label_f_c[section][pos_ls] = 999;
 						break;
 					}
 				}
@@ -698,7 +698,7 @@
 				// cross. Which means depends on which section we are in,
 				// we draw labels in different orders. See draw_labels on
                 // how the positions of each label section are
-                // computed. Remember, because are sorted by
+                // computed. Remember, because we are sorted by
                 // label_f_c, we are going counter clockwise on the
                 // circle, drawing label for the feature with higher
                 // bp first. label_f_c has the lower x and y
@@ -984,28 +984,29 @@
 		// minimize the number of lines that intersect.
 		var label_f_c = new Array(8);
 		var label_list_pos = new Array(8);
-		function draw_labels(label_radius) {
 
+        function set_label_lists() {
             // Global: keeps track of feature centers for each label
             // list, we need this to compute exactly where a label
             // should be within a label list, so to minimize
             // intersecting lines.
 			label_f_c = [[], [], [], [], [], [], [], []];
+			for (var fx = features.length - 1; fx >= 0; fx--) {
+				features[fx].set_label_list();
+			}
+        }
 
-            // Global: lower x, y starting position for each label
-            // list
+		function draw_labels(label_radius) {
+
+            // lower x, y starting position for each label list
             label_list_pos = [[0,0], [0,0], [0,0], [0,0],
 							  [0,0], [0,0], [0,0], [0,0]];
 		
 			// Iterate counterclockwise, first get counts
-			for (var fx = features.length - 1; fx >= 0; fx--) {
-				features[fx].set_label_list();
-			}
-
 			// Sort feature center list for each label list, and also
 			// figure out where each label list should start
 			for (var i=0; i<label_f_c.length; i++) {
-				label_f_c[i].sort(function(a,b){return (a[0]-b[0])})
+				label_f_c[i].sort(function(a,b){return (a-b)})
 				var section_angle = plasmid_start-label_section_degree/2.0-i*label_section_degree;
 				var xy1 = convert.polar_to_rect(label_radius, section_angle);
                 // for each section, we also shift the x coordinate to
@@ -1034,74 +1035,6 @@
 				label_list_pos[i][0] = xy1.x;
 				label_list_pos[i][1] = xy1.y;
 			}
-			// We want to adjust label sections 1 and 2, and sections 5
-			// and 6, so that the labels appear next to the features,
-			// rather than on top or below. Note that how we adjust is
-			// based on what we think will look best on screen, not some
-			// rule for optimization.
-			//
-			// for label list 1, see if we can move label list down; see
-			// if we can put the highest-y label next to the highest-y
-			// feature.
-			if (label_f_c[1].length) {
-				section_1_high_bp_feature_y = label_f_c[1][0][1].y;
-				// make sure won't conflict with section 2 label list
-				if (label_list_pos[2][1]-label_f_c[2].length*label_height <
-					section_1_high_bp_feature_y+label_height) {
-				  section_1_high_bp_feature_y =
-					label_list_pos[2][1]-label_f_c[2].length*label_height
-					-label_height;
-				}
-				if (section_1_high_bp_feature_y > label_list_pos[1][1]) {
-					// can move down
-					label_list_pos[1][1] = section_1_high_bp_feature_y-label_height;
-				}
-			}
-			// for label list 2, see if we can move label list up,
-			// checking against the adjusted y position of label list 1.
-			if (label_f_c[2].length) {
-				section_2_low_bp_feature_y =
-					label_f_c[2][label_f_c[2].length-1][1].y;
-				// make sure won't conflict with section 1 label list
-				if (section_2_low_bp_feature_y <
-					label_list_pos[1][1]+label_height) {
-				  section_2_low_bp_feature_y = label_list_pos[1][1]+label_height;
-				}
-				if (section_2_low_bp_feature_y <
-					label_list_pos[2][1]-label_f_c[2].length*label_height) {
-					// can move up
-					label_list_pos[2][1] =
-					  section_2_low_bp_feature_y+label_f_c[2].length*label_height;
-				}
-			}
-			// for label list 5, see if we can move label list up; see if
-			// we can put the lowest-y label next to the lowest-y feature.
-			if (label_f_c[5].length) {
-				section_5_high_bp_feature_y = label_f_c[5][0][1].y;
-				// at this point, since we've not moved section 6 list
-				// down, we know we won't conflict with section 6 yet.
-				if (section_5_high_bp_feature_y <
-					label_list_pos[5][1]-label_f_c[5].length*label_height) {
-					// can move up
-					label_list_pos[5][1] =
-					  section_5_high_bp_feature_y+label_f_c[5].length*label_height;
-				}
-			}
-			// for label list 6, see if we can move label list down,
-			// checking against the adjusted y position of label list 5.
-			if (label_f_c[6].length) {
-				section_6_low_bp_feature_y =
-					label_f_c[6][label_f_c[6].length-1][1].y;
-				// make sure won't conflict with section 5 label list
-				if (section_6_low_bp_feature_y >
-					label_list_pos[5][1]-label_height) {
-				  section_6_low_bp_feature_y = label_list_pos[5][1]-label_height;
-				}
-				if (section_6_low_bp_feature_y > label_list_pos[6][1]) {
-					// can move down
-					label_list_pos[6][1] = section_6_low_bp_feature_y;
-				}
-			}
 	 
 			// Finally draw labels
 			for (var fx = features.length - 1; fx >= 0; fx--) {
@@ -1118,8 +1051,8 @@
 		function initialize() {
 			paper = ScaleRaphael(map_dom_id, map_width, map_height); // global
 
-			// draw a text and erase it, but use this to figure out text
-			// height
+            // draw a text and erase it, but use this to figure out
+            // text height
 			var label = paper.text(0,0,'label');
 			label.attr({"font-size": label_font_size});
 			label_height = label.getBBox().height; // global
@@ -1136,8 +1069,11 @@
 			//// These things may need to be redone
 			var max_radius = resolve_conflicts();
 			var label_radius = max_radius + label_radius_offset; 
+
 			draw_features(); // Draw all the features initially
 			show_hide_cutters(); // Hide the right cutters
+            set_label_lists();
+
 			draw_labels(label_radius); // Draw only the necessary labels
 
 			// Rescale
