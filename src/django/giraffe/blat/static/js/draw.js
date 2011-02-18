@@ -78,8 +78,6 @@
 // Protect scope, but ensure that GiraffeDraw() is global
 (function(){window.GiraffeDraw = function () {
 
-	var gd = {}; // The "export variable" to return as a closure.
-
 	///////////////////////////////////////////////////////////////////
 	// Package-scope variables
 	var _debug = false;
@@ -158,7 +156,7 @@
 
 	///////////////////////////////////////////////////////////////////
 	// JSON Parsing
-	gd.read = function (features_json) {
+	this.read = function (features_json) {
 		basic_features = []; // package scope
 		seq_length = features_json[0]; // package scope
 
@@ -200,7 +198,7 @@
 
 	///////////////////////////////////////////////////////////////////
 	// Circular Map Drawing Class
-	gd.CircularMap = function(options) {
+	this.CircularMap = function(options) {
 
 		// Map-specific canvas element
 		var paper;
@@ -1179,7 +1177,7 @@
 
 	///////////////////////////////////////////////////////////////////
 	// Linear map drawing
-	gd.draw_linear_map = function () {};
+	this.draw_linear_map = function () {};
 
-	return gd;
+	return this;
 }})();
