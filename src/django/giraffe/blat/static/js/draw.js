@@ -48,10 +48,6 @@
 //
 //  map_width, map_height: default 640, 640.
 //
-//  label_font_size, plasmid_font_size: font size for the labels and
-//  center plasmid name and size. E.g. "14pt". Defaults are "14pt" and
-//  "16pt" respectively.
-//
 //  plasmid_name: if given, show this name together with size of
 //  sequence in the middle of the plasmid. Default is "".
 //
@@ -129,7 +125,10 @@
 		var _start = parseInt(feat.start);
 		var _end = parseInt(feat.end);
 		var _type = parseInt(feat.type_id);
-        var _default_show_feature = parseInt(feat.show_feature);
+        var _default_show_feature = 1;
+        // Not all features have this option, e.g. annotated ones we
+        // have to show the feature.
+        if ('show_feature' in feat) { _default_show_feature = parseInt(feat.show_feature); }
 		var _clockwise = feat.clockwise;
 		var _cut = parseInt(feat.cut); // only for enzymes;
 		var _other_cutters = []; // only for enzymes;
@@ -287,23 +286,19 @@
 		var label_line_weight = 1;
 		var label_line_bold_weight = 1.5 * label_line_weight;
 		var label_font_size = '13pt';
-		if ('label_font_size' in options) {
-			label_font_size = options['label_font_size'];
-		}
 		var plasmid_font_size = '16pt';
-		if ('plasmid_font_size' in options) {
-			plasmid_font_size = options['plasmid_font_size'];
-		}
 		var plasmid_name = '';
 		if ('plasmid_name' in options) {
 			plasmid_name = options['plasmid_name'];
 		}
 
+        var label_letter_height = 0;
+        var label_letter_width = 0;
+
 		// This is based on using 8 label lists, which is pretty much hard
 		// coded in a few places, so don't change this unless you figure
 		// out how to change the number of label lists.
 		var label_section_degree = 45;
-        var label_section_half = label_section_degree/2;
 
 		// Table display
 		var hide_enzyme_rows = true; // Hide rows for cutter types not shown
@@ -341,14 +336,24 @@
 			},
 			/* Angle a is in degrees from the horizontal, counterclockwise, and
 			 * r is relative to the center of the paper */
-			polar_to_rect: function (r, a) {
+            polar_to_rect_center_at_zero: function (r, a) {
 				var rect = {};
-				rect.x = cx + r * Math.cos(Raphael.rad(a));
+				rect.x = r * Math.cos(Raphael.rad(a));
+				rect.y = r * Math.sin(Raphael.rad(a));
+				return rect;
+            },
+			polar_to_rect: function (r, a) {
+			    var rect = convert.polar_to_rect_center_at_zero(r,a);
+				rect.x += cx;
 				// Coordinates increase as you go down, so y is flipped.
-				rect.y = cy - r * Math.sin(Raphael.rad(a));
+                rect.y = cy - rect.y;
 				return rect;
 			}
 		};
+
+        function label_list_section_angle(section) {
+		    return plasmid_start-label_section_degree/2.0-section*label_section_degree;
+        };
 
 		///////////////////////////////////////////////////////////////////
 		// Circular Feature class
@@ -400,13 +405,26 @@
 			// Accessors for private properties set at creation
 			_this.visible = function() { return _visible; };
 			_this.labeled = function() { return _labeled; };
+
+			// The visual object to modify when accessing the feature.
+			var _feature_set;
+			var _arrow_set;
+			var _label_set;
+			var _label_drawn = false;
+
 			// Check to see if label has been drawn yet
 			_this.label_drawn = function() { return _label_drawn; };
 			_this.feature_set = function() { return _feature_set };
 			_this.label_set = function() { return _label_set };
 
+            _this.initialize = function() {
+			    _feature_set = paper.set();
+			    _arrow_set = paper.set();
+			    _label_set = paper.set();
+            }
+
 			// Calculated properties
-			
+
 			// Degree conversion, for overlap calculation:
 			// for these functions, the sequence starts at 90 degrees and goes down.
 			_this.start_degrees = function() {
@@ -456,7 +474,6 @@
 
 				return szd;
 			};
-
 
 			// Actions for interactivity
 			// Generic fading animation/property setting mechanism
@@ -528,16 +545,9 @@
 					_lighter();
 			};
 
-			// The visual object to modify when accessing the feature.
-			var _feature_set = paper.set();
-			var _arrow_set = paper.set();
-
-			var _label_set = paper.set();
-			var _label_drawn = false;
-
 			// Feature drawing
 			_this.draw = function () {
-
+                if (!_visible) { return; }
 
 				// Convert from sequence positions to angles
 				var a0 = convert.pos_to_angle(_this.start());
@@ -642,6 +652,15 @@
 				return true;
 			} // END CircularFeature::should_draw_label()
 
+            // What label should we draw?
+            _this.label_name = function () {
+				var label_name = _this.name();
+				if (_this.type() == ft.enzyme) {
+					label_name += " (" + _this.cut() + ")";
+				}
+                return label_name;
+            } // END CircularFeature::label_name()
+
 			// Set which label list this feature's label should be in
 			_this.set_label_list = function () {
 				if (!_this.should_draw_label()) { return; }
@@ -652,14 +671,11 @@
 				if (adjust_a_c < 0) { adjust_a_c += 360; }
 
                 // Figure out which section this label is in: divide
-                // the grid up into eight sections. First section is
-                // -label_section_degree/2 to +label_section_degree/2,
-                // and so on.
+                // the grid up into eight sections.
 				var section = Math.floor((plasmid_start-a_c)/label_section_degree);
 
 				var l = label_f_c[section].length;
-				var xy0 = convert.polar_to_rect(_this.radius, a_c);
-				label_f_c[section][l] = [adjust_a_c,xy0];
+				label_f_c[section][l] = [adjust_a_c,_this.label_name()];
 
 			} // END CircularFeature::set_label_list()
 
@@ -678,12 +694,9 @@
 				var xy0 = convert.polar_to_rect(_this.radius, a_c);
 				
                 // Figure out which section this label is in: divide
-                // the grid up into eight sections. First section is
-                // -label_section_degree/2 to +label_section_degree/2,
-                // and so on.
+                // the grid up into eight sections.
 				var section = Math.floor((plasmid_start - a_c)/label_section_degree);
-				// Figure out position in the label list - remember,
-				// sorting by label_f_c means going counterclockwise.
+				// Figure out position in the label list.
 				var pos_ls = 0
 				for (pos_ls=0; pos_ls<label_f_c[section].length; pos_ls++) {
 					if (label_f_c[section][pos_ls][0] == adjust_a_c) {
@@ -694,7 +707,7 @@
 					}
 				}
 				var sec_labels = label_f_c[section].length;
-				var y_shift = pos_ls*label_height;
+				var y_shift = pos_ls*label_letter_height;
 				var xy1 = {}
 				xy1.x = label_list_pos[section][0]
 				xy1.y = label_list_pos[section][1]
@@ -702,10 +715,12 @@
 				// We want to minimize the number of label lines that
 				// cross. Which means depends on which section we are in,
 				// we draw labels in different orders. See draw_labels on
-				// how the positions are setup. Remember, because are
-				// sorted by label_f_c, we are going counter clockwise and
-				// the label_list_pos elements have the lower y
-				// coordinates.
+                // how the positions of each label section are
+                // computed. Remember, because we are sorted by
+                // label_f_c, we are going counter clockwise on the
+                // circle, drawing label for the feature with higher
+                // bp first. label_f_c has the lower x and y
+                // coordinates of each section.
 				if (section == 0 || section == 1) {
 					// upper right, higher bp at bottom
 					xy1.y -= y_shift;
@@ -716,11 +731,11 @@
 				}
 				else if (section == 4 || section == 5) {
 					// lower left, higher bp on top
-					xy1.y = xy1.y - sec_labels*label_height + y_shift;
+					xy1.y = xy1.y - sec_labels*label_letter_height + y_shift;
 				}
 				else if (section == 6 || section == 7) {
 					// upper left, high bp on top
-					xy1.y = xy1.y - sec_labels*label_height + y_shift;
+					xy1.y = xy1.y - sec_labels*label_letter_height + y_shift;
 				}
 
 				// Draw the line to the label position
@@ -731,10 +746,7 @@
 								 "opacity": 0.5 });
 
 				// Enzymes show their cut sites in the label
-				var label_name = _this.name();
-				if (_this.type() == ft.enzyme) {
-					label_name += " (" + _this.cut() + ")";
-				}
+				var label_name = _this.label_name();
 				var label = paper.text(xy1.x, xy1.y, label_name);
 
                 if (section > 3) {
@@ -767,7 +779,7 @@
 
 			_this.hide = function () {
 				if (_visible) {
-					_feature_set.hide();
+                    if (_feature_set) { _feature_set.hide(); }
 					_visible = false;
 					_labeled = false;
 				}
@@ -775,33 +787,36 @@
 
 			_this.show = function () {
 				if (!_visible) {
-					_feature_set.show();
-					if (!_labeled)
-						_label_set.hide();
+					if (_feature_set) { _feature_set.show(); }
+					if (!_labeled) {
+                        if (_label_set) { _label_set.hide(); }
+                    }
 					_visible = true;
 				}
 			}; // END CircularFeature::show()
 
 			_this.hide_label = function () {
 				if (_labeled) {
-					_label_set.hide();
+                    if (_label_set) { _label_set.hide(); }
 					_labeled = false;
 				}
 			}; // END CircularFeature::hide_label()
 
 			_this.show_label = function () {
 				if (!_labeled) {
-					_label_set.show();
+                    if (_label_set) { _label_set.show(); }
 					_labeled = true;
 				}
 			}; // END CircularFeature::show_label()
 
 			_this.clear_label = function () {
 				if (_label_drawn) {
-					_label_set.unclick(_click);
-					_label_set.unhover(_mouse_over, _mouse_up);
-					_label_set.remove();
-					_label_set = paper.set();
+                    if (_label_set) {
+					    _label_set.unclick(_click);
+					    _label_set.unhover(_mouse_over, _mouse_up);
+					    _label_set.remove();
+					    _label_set = paper.set();
+                    }
 					_labeled = false;
 					_label_drawn = false;
 				}
@@ -987,124 +1002,57 @@
 		// minimize the number of lines that intersect.
 		var label_f_c = new Array(8);
 		var label_list_pos = new Array(8);
-		function draw_labels(label_radius) {
 
-			// Keeps track of feature centers for each label list, we need
-			// this to compute exactly where a label should be within a
-			// label list, so to minimize intersecting lines.
+        function set_label_lists() {
+            // Global: keeps track of feature centers for each label
+            // list, we need this to compute exactly where a label
+            // should be within a label list, so to minimize
+            // intersecting lines.
 			label_f_c = [[], [], [], [], [], [], [], []];
-
-			// y starting position for each label list
-			label_list_pos = [[0,0], [0,0], [0,0], [0,0],
-							  [0,0], [0,0], [0,0], [0,0]];
-		
-			// Iterate counterclockwise, first get counts
 			for (var fx = features.length - 1; fx >= 0; fx--) {
 				features[fx].set_label_list();
 			}
+        }
 
+		function draw_labels(label_radius) {
+
+            // lower x, y starting position for each label list
+            label_list_pos = [[0,0], [0,0], [0,0], [0,0],
+							  [0,0], [0,0], [0,0], [0,0]];
+		
+			// Iterate counterclockwise, first get counts
 			// Sort feature center list for each label list, and also
 			// figure out where each label list should start
 			for (var i=0; i<label_f_c.length; i++) {
 				label_f_c[i].sort(function(a,b){return (a[0]-b[0])})
-				var section_angle = plasmid_start-label_section_degree/2.0-i*label_section_degree;
-                // get lower y coordinate and x coordinate of the
-                // label list
+				var section_angle = label_list_section_angle(i);
 				var xy1 = convert.polar_to_rect(label_radius, section_angle);
+
                 // for each section, we also shift the x coordinate to
                 // be further away from the circle, so that as much as
                 // possible, the angle between a) line from the label
                 // to the feature and b) the label is more than 90
                 // degrees (i.e. visually, you don't have lines going
                 // "backward").
+                //
+                // we also compute the lower y coordinate of each
+                // label list below.
 				if (i == 0 || i == 1) {
-					// upper right, higher bp at bottom
 					xy1.x += 60;
 				}
 				else if (i == 2 || i == 3) {
-					// lower right, higher bp at bottom
-					xy1.y += label_f_c[i].length*label_height;
+					xy1.y += label_f_c[i].length*label_letter_height;
 					xy1.x += 60;
 				}
 				else if (i == 4 || i == 5) {
-					// lower left, higher bp on top
-					xy1.y += label_f_c[i].length*label_height;
+					xy1.y += label_f_c[i].length*label_letter_height;
 					xy1.x -= 60;
 				}
 				else if (i == 6 || i == 7) {
-					// upper left, high bp on top
 					xy1.x -= 60;
 				}
 				label_list_pos[i][0] = xy1.x;
 				label_list_pos[i][1] = xy1.y;
-			}
-			// We want to adjust label sections 1 and 2, and sections 5
-			// and 6, so that the labels appear next to the features,
-			// rather than on top or below. Note that how we adjust is
-			// based on what we think will look best on screen, not some
-			// rule for optimization.
-			//
-			// for label list 1, see if we can move label list down; see
-			// if we can put the highest-y label next to the highest-y
-			// feature.
-			if (label_f_c[1].length) {
-				section_1_high_bp_feature_y = label_f_c[1][0][1].y;
-				// make sure won't conflict with section 2 label list
-				if (label_list_pos[2][1]-label_f_c[2].length*label_height <
-					section_1_high_bp_feature_y+label_height) {
-				  section_1_high_bp_feature_y =
-					label_list_pos[2][1]-label_f_c[2].length*label_height
-					-label_height;
-				}
-				if (section_1_high_bp_feature_y > label_list_pos[1][1]) {
-					// can move down
-					label_list_pos[1][1] = section_1_high_bp_feature_y-label_height;
-				}
-			}
-			// for label list 2, see if we can move label list up,
-			// checking against the adjusted y position of label list 1.
-			if (label_f_c[2].length) {
-				section_2_low_bp_feature_y =
-					label_f_c[2][label_f_c[2].length-1][1].y;
-				// make sure won't conflict with section 1 label list
-				if (section_2_low_bp_feature_y <
-					label_list_pos[1][1]+label_height) {
-				  section_2_low_bp_feature_y = label_list_pos[1][1]+label_height;
-				}
-				if (section_2_low_bp_feature_y <
-					label_list_pos[2][1]-label_f_c[2].length*label_height) {
-					// can move up
-					label_list_pos[2][1] =
-					  section_2_low_bp_feature_y+label_f_c[2].length*label_height;
-				}
-			}
-			// for label list 5, see if we can move label list up; see if
-			// we can put the lowest-y label next to the lowest-y feature.
-			if (label_f_c[5].length) {
-				section_5_high_bp_feature_y = label_f_c[5][0][1].y;
-				// at this point, since we've not moved section 6 list
-				// down, we know we won't conflict with section 6 yet.
-				if (section_5_high_bp_feature_y <
-					label_list_pos[5][1]-label_f_c[5].length*label_height) {
-					// can move up
-					label_list_pos[5][1] =
-					  section_5_high_bp_feature_y+label_f_c[5].length*label_height;
-				}
-			}
-			// for label list 6, see if we can move label list down,
-			// checking against the adjusted y position of label list 5.
-			if (label_f_c[6].length) {
-				section_6_low_bp_feature_y =
-					label_f_c[6][label_f_c[6].length-1][1].y;
-				// make sure won't conflict with section 5 label list
-				if (section_6_low_bp_feature_y >
-					label_list_pos[5][1]-label_height) {
-				  section_6_low_bp_feature_y = label_list_pos[5][1]-label_height;
-				}
-				if (section_6_low_bp_feature_y > label_list_pos[6][1]) {
-					// can move down
-					label_list_pos[6][1] = section_6_low_bp_feature_y;
-				}
 			}
 	 
 			// Finally draw labels
@@ -1119,29 +1067,95 @@
 			}
 		}
 
-		function initialize() {
-			paper = ScaleRaphael(map_dom_id, map_width, map_height); // global
-
-			// draw a text and erase it, but use this to figure out text
-			// height
-			var label = paper.text(0,0,'label');
-			label.attr({"font-size": label_font_size});
-			label_height = label.getBBox().height; // global
-
-			//// These things are only done once
-			// Extend the basic features
-			extend_features(); 
-		}
-
-		function draw() {
-			paper.clear();
-			draw_plasmid();
-
-			//// These things may need to be redone
+		function draw() { // Draw the circular map
+            // Extend basic features to get list of circular features
+			extend_features();
+            // Hide the right cutters
+            show_hide_cutters();
+            // Resolve conflicts on the circle, push some overlapping
+            // features to other radii
 			var max_radius = resolve_conflicts();
 			var label_radius = max_radius + label_radius_offset; 
+            // Determine which labels are in which lists
+            set_label_lists();
+
+            // Figure out outter edge of label lists
+            //
+            // Just an educated guess based on 13pt font. we will use
+            // this to compute height of label lists. These are
+            // conservative.
+            label_letter_height = 15;
+            label_letter_width = 12;
+          
+            var min_x = map_width/2;
+            var max_x = map_width/2;
+            var min_y = map_width/2;
+            var max_y = map_width/2;
+			var label_radius = max_radius + label_radius_offset; 
+            for (var section=0; section<label_f_c.length; section++) {
+                var list_max_letters = 0;
+                for (var i=0; i<label_f_c[section].length; i++) {
+                    if (label_f_c[section][i][1].length > list_max_letters) {
+                        list_max_letters = label_f_c[section][i][1].length;
+                    }
+                }
+                // +1 - i am not sure why we need it, but otherwise it
+                // crops the last label
+                var list_height = (label_f_c[section].length+1)*label_letter_height;
+                var list_width = list_max_letters*label_letter_width;
+				var section_angle = label_list_section_angle(section);
+				var xy = convert.polar_to_rect(label_radius,section_angle);
+
+				if (section == 0 || section == 1) {
+                    // upper right
+                    if (min_y > xy.y-list_height) { min_y = xy.y-list_height; }
+                    if (max_x < xy.x+list_width) { max_x = xy.x+list_width; }
+				}
+				else if (section == 2 || section == 3) {
+					// lower right
+                    if (max_y < xy.y+list_height) { max_y = xy.y+list_height; }
+                    if (max_x < xy.x+list_width) { max_x = xy.x+list_width; }
+				}
+				else if (section == 4 || section == 5) {
+					// lower left
+                    if (max_y < xy.y+list_height) { max_y = xy.y+list_height; }
+                    if (min_x > xy.x-list_width) { min_x = xy.x-list_width; }
+				}
+				else if (section == 6 || section == 7) {
+					// upper left
+                    if (min_y > xy.y-list_height) { min_y = xy.y-list_height; }
+                    if (min_x > xy.x-list_width) { min_x = xy.x-list_width; }
+                }
+            }
+
+            // Now we have a new bounding box: min_x,min_y to max_x,max_y
+
+            var right_x_extend = max_x-cx;
+            var left_x_extend = cx-min_x;
+            var top_y_extend = cy-min_y;
+            var bot_y_extend = max_y-cy;
+            var bb_width = max_x-min_x;
+            var bb_height = max_y-min_y;
+
+		    map_width = bb_width;
+		    map_height = bb_height;
+            cx = left_x_extend;
+            cy = top_y_extend;
+
+			paper = ScaleRaphael(map_dom_id, map_width, map_height); // global
+            for (var fx in features) {
+                features[fx].initialize();
+            }
+
+            // figure out the real height of labels
+			var label = paper.text(0,0,'M');
+			label.attr({"font-size": label_font_size});
+			label_letter_height = label.getBBox().height; // global
+			label_letter_width = label.getBBox().width; // global
+			paper.clear();
+
+			draw_plasmid();
 			draw_features(); // Draw all the features initially
-			show_hide_cutters(); // Hide the right cutters
 			draw_labels(label_radius); // Draw only the necessary labels
 
 			// Rescale
@@ -1155,7 +1169,6 @@
 
 		///////////////////////////////////////////////////////////////////
 		// Main entry point.
-		initialize();
 		draw();
 
 		return paper;

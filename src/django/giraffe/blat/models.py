@@ -19,6 +19,12 @@ class Giraffe_Mappable_Model(models.Model):
     sequence_giraffe_id = models.CharField(max_length=64,null=True,blank=True)
     sequence_giraffe_time = models.DateTimeField(null=True,blank=True)
 
+    def sequence_giraffe_unixtime(self):
+        """Useful for using the unixtime as a timestamp in URL, to
+        help with caching."""
+        import time
+        return int(time.mktime(self.sequence_giraffe_time.timetuple()))
+
     @staticmethod
     def detect_features(sequence,db_name):
         import frags.features
