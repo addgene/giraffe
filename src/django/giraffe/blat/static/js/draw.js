@@ -199,8 +199,8 @@
 
 
 	///////////////////////////////////////////////////////////////////
-	// Circular Map Drawing
-	gd.draw_circular_map = function(options) {
+	// Circular Map Drawing Class
+	gd.CircularMap = function(options) {
 
 		// Map-specific canvas element
 		var paper;
@@ -1171,7 +1171,10 @@
 		// Main entry point.
 		draw();
 
-		return paper;
+		// Export the main properties as part of the CircularMap object
+		this.paper = paper;
+		this.draw = draw;
+		this.features = features;
 	}
 
 	///////////////////////////////////////////////////////////////////
