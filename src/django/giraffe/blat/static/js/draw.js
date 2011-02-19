@@ -141,6 +141,8 @@
 		// returns - 1 if not enzyme		
 		this.cut = function() { return _type == ft.enzyme ? _cut : -1 }; 
 
+		this.crosses_boundary = function () { return _end < _start };
+
 		// Enzyme-only data access methods
 		// gives 0 if not enzyme
 		this.cut_count = function() { return _other_cutters.length; };
@@ -450,13 +452,23 @@
 						 // Just give its typical end position
 					ed = convert.pos_to_angle(_this.end());
 				}
+
+				// For boundaries that cross the 0 point, ensure that they return
+				// a number in the same range as everyone else
+				if (_this.crosses_boundary()) 
+					ed += 360;
+
 				return ed;
 			};
 
 			_this.size_degrees = function() {
 				var szd; // size in degrees
 				// Normal definition of size
-				szd = convert.seq_length_to_angle(_this.end() - _this.start() + 1);
+				if (_this.crosses_boundary()) 
+					// Start and end are flipped here: non-intuitive
+					szd = convert.seq_length_to_angle(seq_length - _this.start() + _this.end() + 1);
+				else
+					szd = convert.seq_length_to_angle(_this.end() - _this.start() + 1);
 
 				// Head size: return this if it's bigger
 				if (_draw_head) {
@@ -595,7 +607,7 @@
 				}
 
 				// Arc drawing
-				if (a1 < a0 && _this.type() != ft.enzyme) { 
+				if ((_this.crosses_boundary() || a1 < a0) && _this.type() != ft.enzyme) { 
 					// Compensating for the head may have "taken up" all
 					// the room on the plasmid, in which case no arc needs
 					// to be drawn
@@ -909,9 +921,12 @@
 
 				var biggest_size = 0;
 				var biggest_feature;
-				var furthest_point = plasmid_start; // Start at the top of the circle
-				for (var fx in features) {
-					var f = features[fx];
+				var furthest_point = plasmid_start; // Start at a complete lower bound
+
+				// Go through the feature list twice, to make sure that features
+				// that cross the boundary are resolved
+				for (var fx = 0; fx < 2 * features.length; fx++) {
+					var f = features[fx % features.length];
 					if (f.radius == rad && f.type() != ft.enzyme) { 
 						var new_size = f.size_degrees();
 						var overlap = -(furthest_point - f.start_degrees());
@@ -921,7 +936,11 @@
 							biggest_size = new_size;
 							biggest_feature = f;
 							furthest_point = f.end_degrees();
-						} else if (biggest_size > min_overlap_feature_size &&
+						// since we go around twice, it is now possible
+						// for a feature to "conflict with itself," so we
+						// explicitly prevent this
+						} else if ( !(biggest_feature === f) && 
+								   biggest_size > min_overlap_feature_size &&
 								   new_size > min_overlap_feature_size &&
 								  (overlap <= 0 || 
 								  (overlap/biggest_size > min_overlap_pct &&
@@ -954,7 +973,6 @@
 				// Move on to the next radius
 				rad = new_rad;
 				rx++;
-
 				
 			} while (conflicts > 0); // Keep adding levels of resolution
 
