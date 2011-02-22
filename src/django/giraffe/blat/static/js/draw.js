@@ -51,7 +51,7 @@
 //  plasmid_name: if given, show this name together with size of
 //  sequence in the middle of the plasmid. Default is "".
 //
-//  label_radius_offset: how far from the outter feature should we
+//  label_offset: how far from the outter feature should we
 //  start drawing labels. Default is "10".
 //
 //  cutters: which kinds of restriction enzymes to show, if any. This
@@ -112,6 +112,18 @@
 			return plist[0] + plist.slice(1).join(' ');
 		}
 	};
+
+	// Feature Colors
+	var colors = {
+		bg_text: "#aaa",
+		plasmid: "#000",
+		feature: "#f00",
+		primer:  "#090",
+		origin:  "#333",
+		enzyme:  "#00c",
+		orf:     "#00c8c8",
+	};
+
 
 	///////////////////////////////////////////////////////////////////
 	// Basic Feature class (private, internal class)
@@ -240,8 +252,8 @@
 		var inner_radius = plasmid_radius - radius_spacing; 
 		var outer_radius = plasmid_radius + radius_spacing;
 		var label_radius_offset = 10;
-		if ('label_radius_offset' in options) {
-			label_radius_offset = parseInt(options['label_radius_offset']);
+		if ('label_offset' in options) {
+			label_radius_offset = parseInt(options['label_offset']);
 		}
 
 		// Feature visual properties
@@ -299,21 +311,6 @@
 		// coded in a few places, so don't change this unless you figure
 		// out how to change the number of label lists.
 		var label_section_degree = 45;
-
-		// Table display
-		var hide_enzyme_rows = true; // Hide rows for cutter types not shown
-
-		// Colors
-		var colors = {
-			bg_text: "#aaa",
-			plasmid: "#000",
-			feature: "#f00",
-			primer: "#090",
-			origin: "#333",
-			enzyme: "#00c",
-            orf: "#00c8c8",
-		};
-
 
 		///////////////////////////////////////////////////////////////////
 		// Internals start here
@@ -1191,11 +1188,220 @@
 		this.paper = paper;
 		this.draw = draw;
 		this.features = features;
-	}
+	}; // End CircularMap()
 
 	///////////////////////////////////////////////////////////////////
-	// Linear map drawing
-	this.draw_linear_map = function () {};
+	// Linear Map Drawing Class
+	this.LinearMap = function (options) {
+	
+		// Map-specific canvas element
+		var paper;
+
+		// Map-specific feature list
+		var features = [];
+
+		// Paper setup - not the final width, but how we will draw the
+		// map, we will scale later on
+		var map_width = 800;
+		var map_height = 800;
+		var cx = map_width/2;
+		var cy = map_height/2;
+
+		var plasmid_y = cy;
+		var plasmid_width = map_width * 0.9;
+		var plasmid_left = (map_width - plasmid_width) / 2;
+		var plasmid_right = plasmid_left + plasmid_width;
+
+		// Where to draw the map
+		var map_dom_id = 'giraffe-draw-map';
+		if ('map_dom_id' in options) {
+			map_dom_id = options['map_dom_id'];
+		}
+
+		// Final size
+		var final_map_width = 640;
+		var final_map_height = 640;
+		if ('map_width' in options) {
+			final_map_width = parseInt(options['map_width'])
+		}
+		if ('map_height' in options) {
+			final_map_height = parseInt(options['map_height'])
+		}
+
+		// Heights of levels
+		var y_spacing = 20; // spacing
+		var label_y_offset = 10;
+		if ('label_offset' in options) {
+			label_y_offset = parseInt(options['label_offset']);
+		}
+
+		// Feature visual properties
+		var feature_width = 15;
+		var enzyme_width = 25;
+		var enzyme_weight = 1; // Restriction enzymes are drawn differently
+							   // This controls their "thickness" on the map
+		var enzyme_bold_weight = 3; // How thick when highlighted
+		var feature_opacity = 0.7;
+		var enzyme_opacity = 0.7;
+		if ('opacity' in options) {
+			feature_opacity = parseFloat(options['opacity']);
+			enzyme_opacity = parseFloat(options['opacity']);
+		}
+		var bold_opacity = 1.0;
+		var head_width = 25;
+		var head_length = 7;
+
+		// Cutters to show
+		var cutters_to_show = [1];
+		if ('cutters' in options) {
+			cutters_to_show = options['cutters'];
+		}
+
+		// Animation properties
+		var fade_time = 0;
+		if ('fade_time' in options) {
+			fade_time = parseInt(options['fade_time'])
+		}
+
+		// Overlaps
+		var min_overlap_cutoff = -0.1;// in degrees
+		var min_overlap_pct = 0.01;
+		var min_overlap_feature_size = 0.5; // in degrees
+		
+		// Tic marks
+		var tic_mark_length = 15;
+		var tic_mark_y = plasmid_y + y_spacing;
+		var tic_label_y = tic_mark_y + 1.5*tic_mark_length;
+
+		// Title
+		var title_y = 3 * y_spacing;
+
+		// Labels and other text
+		var label_line_weight = 1;
+		var label_line_bold_weight = 1.5 * label_line_weight;
+		var label_font_size = '13pt';
+		var plasmid_font_size = '16pt';
+		var plasmid_name = '';
+		if ('plasmid_name' in options) {
+			plasmid_name = options['plasmid_name'];
+		}
+
+        var label_letter_height = 0;
+        var label_letter_width = 0;
+
+		var convert = {
+			pos_to_x: function (p) {
+				return plasmid_left + (p/seq_length) * plasmid_width;
+			}
+		};
+
+		function draw_plasmid() {
+			function draw_tic_mark(p) {
+				var x = convert.pos_to_x(p);
+				var y0 = tic_mark_y - tic_mark_length/2;
+				var y1 = tic_mark_y + tic_mark_length/2;
+				var tic = paper.path(svg.move(x, y0) +
+									 svg.line(x, y1));
+				tic.attr({"stroke": colors.bg_text});
+
+				var label = paper.text(x, tic_label_y, String(p));
+				label.attr({"fill": colors.bg_text});
+			}
+
+			var plasmid = paper.path(svg.move(plasmid_left,  plasmid_y) +
+									 svg.line(plasmid_right, plasmid_y));
+
+			plasmid.attr("stroke", colors.plasmid);
+			var title = seq_length + ' bp';
+			if (plasmid_name != "") {
+				title = plasmid_name + "\n\n" + title;
+			}
+			var plasmid_label = paper.text(cx, title_y, title);
+			plasmid_label.attr({"fill":      colors.plasmid,
+								"font-size": plasmid_font_size, });
+
+			// Set the scale to be the order of magnitude of seq_length
+			// i.e. 100, 1000, 10, etc.
+			var scale = Math.pow(10, Math.floor(Math.log(seq_length)/Math.log(10)))
+			for (var xx = scale; xx <= seq_length; xx += scale) {
+				draw_tic_mark(xx);
+			}
+
+		}
+
+		function draw() { // Draw the linear map
+            // Extend basic features to get list of linear features
+			extend_features();
+            // Hide the right cutters
+            show_hide_cutters();
+            // Resolve conflicts on the line, push some overlapping
+            // features to other radii
+			var max_height = resolve_conflicts();
+			var label_height = max_height + label_height_offset; 
+
+            // Figure out outter edge of label lists
+            //
+            // Just an educated guess based on 13pt font. we will use
+            // this to compute height of label lists. These are
+            // conservative.
+            label_letter_height = 15;
+            label_letter_width = 12;
+          
+            var min_x = map_width/2;
+            var max_x = map_width/2;
+            var min_y = map_width/2;
+            var max_y = map_width/2;
+
+            // Now we have a new bounding box: min_x,min_y to max_x,max_y
+
+            var right_x_extend = max_x-cx;
+            var left_x_extend = cx-min_x;
+            var top_y_extend = cy-min_y;
+            var bot_y_extend = max_y-cy;
+            var bb_width = max_x-min_x;
+            var bb_height = max_y-min_y;
+
+		    map_width = bb_width;
+		    map_height = bb_height;
+            cx = left_x_extend;
+            cy = top_y_extend;
+
+			paper = ScaleRaphael(map_dom_id, map_width, map_height); // global
+            for (var fx in features) {
+                features[fx].initialize();
+            }
+
+            // figure out the real height of labels
+			var label = paper.text(0,0,'M');
+			label.attr({"font-size": label_font_size});
+			label_letter_height = label.getBBox().height; // global
+			label_letter_width = label.getBBox().width; // global
+			paper.clear();
+
+			draw_plasmid();
+			draw_features(); // Draw all the features initially
+			draw_labels(label_radius); // Draw only the necessary labels
+
+			// Rescale
+			if (final_map_width != map_width ||
+				final_map_height != map_height) {
+				// "center" parameter just adds unnecessary CSS to the container
+				// object to give it an absolute position: not what we need
+				paper.changeSize(final_map_width,final_map_height,false,false)
+			}
+		}
+		///////////////////////////////////////////////////////////////////
+		// Main entry point.
+		//draw();
+		var paper = ScaleRaphael(map_dom_id, map_width, map_height); // global
+		draw_plasmid();
+		paper.changeSize(640, 640 ,false,false)
+
+		// Export the main properties as part of the LinearMap object
+		this.paper = paper;
+		this.draw = draw;
+		this.features = features;
+	}; // End LinearMap()
 
 	return this;
 }})();
