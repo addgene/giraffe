@@ -129,6 +129,11 @@
 	// Basic Feature class (private, internal class)
 	function Feature(feat) {
 
+		// XXX Defaults
+		// TODO fix this by making the defaults all exist in the right places
+		var feature_width = 15;
+		var enzyme_width = 25;
+
 		// Private data members, from the properties of the feature argument
 		// since hash tables and objects are one and the same in js
 		var _name = feat.feature;
@@ -142,6 +147,32 @@
 		var _clockwise = feat.clockwise;
 		var _cut = parseInt(feat.cut); // only for enzymes;
 		var _other_cutters = []; // only for enzymes;
+
+		// Type-based property selection
+		var _color = colors.feature;
+		var _width = feature_width;
+		var _draw_head = false;
+		switch(_type) {
+			case ft.promoter:
+			case ft.primer:
+				_draw_head = true; // Promotors and primers are the only primer-colored
+			case ft.terminator:   // features with heads
+				_color = colors.primer;
+				break;
+			case ft.regulatory:
+			case ft.origin:
+				_color = colors.origin;
+				break;
+			case ft.enzyme:
+				_color = colors.enzyme;
+				_width = enzyme_width;
+				break;
+			case ft.orf:
+				_color = colors.orf;
+			case ft.gene:
+				_draw_head = true;
+				break;
+		}
 
 		// Accessors for private properties set at creation
 		this.name = function() { return _name; };
@@ -166,7 +197,115 @@
 				_other_cutters = c;
 		}
 
+		this.color = function () { return _color; };
+		this.width = function () { return _width; };
+		this.draw_head = function () { return _draw_head; };
+
+
 	}; // END Basic Feature Class
+
+	///////////////////////////////////////////////////////////////////
+	// Basic Map class (private, internal class)
+	function Map() {
+		// Map-specific canvas element
+		this.paper {};
+
+		// Map-specific feature list
+		this.features = [];
+
+		// Paper setup - not the final width, but how we will draw the
+		// map, we will scale later on
+		var map_width = 800;
+		var map_height = 800;
+		var cx = map_width/2;
+		var cy = map_height/2;
+
+		// Where to draw the map
+		var map_dom_id = 'giraffe-draw-map';
+		if ('map_dom_id' in options) {
+			map_dom_id = options['map_dom_id'];
+		}
+
+		// Final size
+		var final_map_width = 640;
+		var final_map_height = 640;
+		if ('map_width' in options) {
+			final_map_width = parseInt(options['map_width'])
+		}
+		if ('map_height' in options) {
+			final_map_height = parseInt(options['map_height'])
+		}
+
+		// Global plasmid info
+		var plasmid_start = 90; // degrees
+
+		// Loop radii
+		var radius_spacing = 20; // spacing
+		var plasmid_radius = 200;
+		var inner_radius = plasmid_radius - radius_spacing; 
+		var outer_radius = plasmid_radius + radius_spacing;
+		var label_radius_offset = 10;
+		if ('label_offset' in options) {
+			label_radius_offset = parseInt(options['label_offset']);
+		}
+
+		// Feature visual properties
+		var enzyme_weight = 1; // Restriction enzymes are drawn differently
+							   // This controls their "thickness" on the map
+		var enzyme_bold_weight = 3; // How thick when highlighted
+		var feature_opacity = 0.7;
+		var enzyme_opacity = 0.7;
+		if ('opacity' in options) {
+			feature_opacity = parseFloat(options['opacity']);
+			enzyme_opacity = parseFloat(options['opacity']);
+		}
+		var bold_opacity = 1.0;
+		var head_width = 25;
+		var head_length = 7;
+
+		// Cutters to show
+		var cutters_to_show = [1];
+		if ('cutters' in options) {
+			cutters_to_show = options['cutters'];
+		}
+
+		// Animation properties
+		var fade_time = 0;
+		if ('fade_time' in options) {
+			fade_time = parseInt(options['fade_time'])
+		}
+
+		// Overlaps
+		var min_overlap_cutoff = -0.1;// in degrees
+		var min_overlap_pct = 0.01;
+		var min_overlap_feature_size = 0.5; // in degrees
+		
+		// Tic marks
+		var tic_mark_length = 15;
+		var tic_mark_radius = inner_radius - tic_mark_length/2;
+		var tic_label_radius = tic_mark_radius - 1.5*tic_mark_length;
+
+		// Labels and other text
+		var label_line_weight = 1;
+		var label_line_bold_weight = 1.5 * label_line_weight;
+		var label_font_size = '13pt';
+		var plasmid_font_size = '16pt';
+		var plasmid_name = '';
+		if ('plasmid_name' in options) {
+			plasmid_name = options['plasmid_name'];
+		}
+
+        var label_letter_height = 0;
+        var label_letter_width = 0;
+
+		// This is based on using 8 label lists, which is pretty much hard
+		// coded in a few places, so don't change this unless you figure
+		// out how to change the number of label lists.
+		var label_section_degree = 45;
+
+
+	}; // END Basic Feature Class
+
 
 	///////////////////////////////////////////////////////////////////
 	// JSON Parsing
@@ -214,6 +353,13 @@
 	// Circular Map Drawing Class
 	this.CircularMap = function(options) {
 
+		// Clone the basic feature, to extend it later
+		function Clone() {}; // empty function to use as a hanger for prototype
+		Clone.prototype = new Map();
+		var _this = new Clone(); // Make a new "this" pointer to return at
+								 // the end
+		// The result of this function will be a CircularMap object
+
 		// Map-specific canvas element
 		var paper;
 
@@ -257,8 +403,6 @@
 		}
 
 		// Feature visual properties
-		var feature_width = 15;
-		var enzyme_width = 25;
 		var enzyme_weight = 1; // Restriction enzymes are drawn differently
 							   // This controls their "thickness" on the map
 		var enzyme_bold_weight = 3; // How thick when highlighted
@@ -367,31 +511,11 @@
 			var _labeled = true;
 
 			// Type-based property selection
-			var _color = colors.feature;
-			var _width = feature_width;
-			var _draw_head = false;
 			var _opacity = feature_opacity;
 			var _opaque = false; // holds opacity for clicks
 			switch(_this.type()) {
-				case ft.promoter:
-				case ft.primer:
-					_draw_head = true; // Promotors and primers are the only primer-colored
-				case ft.terminator:   // features with heads
-					_color = colors.primer;
-					break;
-				case ft.regulatory:
-				case ft.origin:
-					_color = colors.origin;
-					break;
 				case ft.enzyme:
-					_color = colors.enzyme;
-					_width = enzyme_width;
 					_opacity = enzyme_opacity;
-					break;
-                case ft.orf:
-                    _color = colors.orf;
-				case ft.gene:
-					_draw_head = true;
 					break;
 			}
 
@@ -429,7 +553,7 @@
 				// Take the minimum head size into account. Only need to do this 
 				// when the head is drawn and pointing clockwise, to
 				// "push the start back."
-				if (_draw_head && _this.clockwise()) { 
+				if (_this.draw_head() && _this.clockwise()) { 
 					sd = convert.pos_to_angle(_this.end()) + _this.size_degrees();
 				} else { // Headless feature, or head is pointing the wrong way.
 						 // Just give its typical start position
@@ -443,7 +567,7 @@
 				// Take the minimum head size into account. Only need to do this 
 				// when the head is drawn and pointing counterclockwise, to 
 				// "push the end forward."
-				if (_draw_head && !_this.clockwise()) { // Take the minimum head size into account
+				if (_this.draw_head() && !_this.clockwise()) { // Take the minimum head size into account
 					ed = convert.pos_to_angle(_this.start()) - _this.size_degrees();
 				} else { // Headless feature, or head is pointing the wrong way.
 						 // Just give its typical end position
@@ -468,7 +592,7 @@
 					szd = convert.seq_length_to_angle(_this.end() - _this.start() + 1);
 
 				// Head size: return this if it's bigger
-				if (_draw_head) {
+				if (_this.draw_head() ) {
 					// Convert the head length into degrees, just as you do
 					// in the draw() method. Must recalcualte every time, as
 					// radius may have changed
@@ -560,11 +684,8 @@
 				var a0 = convert.pos_to_angle(_this.start());
 				var a1 = convert.pos_to_angle(_this.end());
 
-				// Create the draw feature, a set which will have the head 
-				// and arc pushed onto it as necessary.
-				
 				// Arrowhead drawing, if needed
-				if (_draw_head) {
+				if (_this.draw_head() ) {
 
 					// Arrow tip point lines up with a0 or a1 and it points
 					// tangent to the circle.
@@ -599,7 +720,7 @@
 										  svg.line(xy_t.x, xy_t.y) + 
 										  svg.close());
 					head.attr({"stroke-width": 0,
-							   "fill":         _color});
+							   "fill":         _this.color()});
 					_arrow_set.push(head);
 				}
 
@@ -619,14 +740,14 @@
 					// The arc has no fill-color: it's just a thick line
 					var arc = paper.path(svg.move(xy0.x, xy0.y) +
 										 svg.arc(_this.radius, xy1.x, xy1.y));
-					arc.attr({"stroke-width": _width});
+					arc.attr({"stroke-width": _this.width()});
 
 					_arrow_set.push(arc);
 				} else if (_this.type() == ft.enzyme) { 
 					// Restriction enzymes get drawn on their own
-					var xy0 = convert.polar_to_rect(_this.radius - enzyme_width/2.0, 
+					var xy0 = convert.polar_to_rect(_this.radius - _this.width()/2.0, 
 							(a0+a1)/2.0);
-					var xy1 = convert.polar_to_rect(_this.radius + enzyme_width/2.0, 
+					var xy1 = convert.polar_to_rect(_this.radius + _this.width()/2.0, 
 							(a0+a1)/2.0);
 					// Not really an arc, just a line, but left this way
 					// for consistency
@@ -644,7 +765,7 @@
 				_feature_set.push(_arrow_set);
 
 				// Apply the feature-wide properties to the whole feature
-				_feature_set.attr({"stroke":         _color,
+				_feature_set.attr({"stroke":         _this.color(),
 								   "stroke-linecap": "butt",
 								   "opacity":        _opacity,
 								   "title":          _this.name()});
@@ -765,7 +886,7 @@
 					label.attr({"text-anchor": "start"});
 				}
 
-				label.attr({"fill": _color,
+				label.attr({"fill": _this.color(),
 							"font-size": label_font_size,
 							"opacity": 1.0 });
 
@@ -976,6 +1097,7 @@
 			return max_rad;
 		}
 
+		// XXX copy-and-pasted: eliminate redundancy
 		function draw_features() {
 			for (var fx in features) {
 				features[fx].draw();
@@ -1085,6 +1207,7 @@
 			extend_features();
             // Hide the right cutters
             show_hide_cutters();
+
             // Resolve conflicts on the circle, push some overlapping
             // features to other radii
 			var max_radius = resolve_conflicts();
@@ -1185,9 +1308,9 @@
 		draw();
 
 		// Export the main properties as part of the CircularMap object
-		this.paper = paper;
-		this.draw = draw;
-		this.features = features;
+		_this.draw = draw;
+
+		return _this;
 	}; // End CircularMap()
 
 	///////////////////////////////////////////////////////////////////
@@ -1236,8 +1359,6 @@
 		}
 
 		// Feature visual properties
-		var feature_width = 15;
-		var enzyme_width = 25;
 		var enzyme_weight = 1; // Restriction enzymes are drawn differently
 							   // This controls their "thickness" on the map
 		var enzyme_bold_weight = 3; // How thick when highlighted
@@ -1295,6 +1416,119 @@
 			}
 		};
 
+		// TODO: MAJOR CODE REORGANIZATION: MERGE COMMON ELEMENTS INTO ONE CLASS
+		function LinearFeature(basic_feature) {
+			// Clone the basic feature, to extend it later
+			function Clone() {}; // empty function to use as a hanger for prototype
+			Clone.prototype = basic_feature;
+			var _this = new Clone(); // Make a new "this" pointer to return at
+			                         // the end
+			// The result of this function will be a LinearFeature object
+
+			// The visual object to modify when accessing the feature.
+			var _feature_set;
+			var _arrow_set;
+			var _label_set;
+			var _label_drawn = false;
+
+			// Visual properties
+			var _visible = true;
+			var _labeled = true;
+
+			// Type-based property selection
+			var _opacity = feature_opacity;
+			var _opaque = false; // holds opacity for clicks
+			switch(_this.type()) {
+				case ft.enzyme:
+					_opacity = enzyme_opacity;
+					break;
+			}
+
+			_this.y = plasmid_y; // default to plasmid height
+
+			// Check to see if label has been drawn yet
+			_this.label_drawn = function() { return _label_drawn; };
+			_this.feature_set = function() { return _feature_set };
+			_this.label_set = function() { return _label_set };
+
+            _this.initialize = function() {
+			    _feature_set = paper.set();
+			    _arrow_set = paper.set();
+			    _label_set = paper.set();
+            }
+
+			_this.draw = function () {
+				// Don't draw features that cross the boundary, as this is not
+				// a circular plasmid
+                if (!_visible || _this.crosses_boundary()) { return; }
+
+				// Convert from sequence positions to x-coords
+				var x0 = convert.pos_to_x(_this.start());
+				var x1 = convert.pos_to_x(_this.end());
+
+				// Arrowhead drawing, if needed
+				if (_this.draw_head()) {
+					var hx_tip, hx_back;
+					if (_this.clockwise()) {
+						hx_tip = x1;
+						x1 -= head_length;
+						hx_back = x1;
+					} else {
+						hx_tip = x0;
+						x0 += head_length;
+						hx_back = x0;
+					}
+
+					// Unlike the body, the head is traced with a line, and
+					// then created entirely with the fill color
+					var head = paper.path(svg.move(hx_tip, _this.y) +
+					                 svg.line(hx_back, _this.y - head_width/2.0) +
+					                 svg.line(hx_back, _this.y + head_width/2.0) +
+					                 svg.close());
+					head.attr({"stroke-width": 0,
+							   "fill":         _this.color()});
+					_arrow_set.push(head);
+				}
+
+				// Body drawing
+				if (x0 < x1 && _this.type() != ft.enzyme) { 
+					// Compensating for the head may have "taken up" all
+					// the room on the plasmid, in which case no arc needs
+					// to be drawn
+
+					// The body has no fill-color: it's just a thick line
+					var body = paper.path(svg.move(x0, _this.y) +
+						  				  svg.line(x1, _this.y));
+					body.attr({"stroke-width": _this.width()});
+
+					_arrow_set.push(body);
+				} else if (_this.type() == ft.enzyme) { 
+					// Restriction enzymes get drawn on their own
+					var x_m = (x0 + x1)/2;
+
+					var body = paper.path(svg.move(x_m, _this.y - _this.width()/2.0) +
+					                      svg.line(x_m, _this.y + _this.width()/2.0));
+					body.attr({"stroke-width": enzyme_weight});
+					body.toBack();
+
+					_arrow_set.push(body);
+				}
+
+				//_arrow_set.click(_click);
+				//_arrow_set.hover(_mouse_over, _mouse_up);
+
+				_feature_set.push(_arrow_set);
+
+				// Apply the feature-wide properties to the whole feature
+				_feature_set.attr({"stroke":         _this.color(),
+								   "stroke-linecap": "butt",
+								   "opacity":        _opacity,
+								   "title":          _this.name()});
+
+			} // END LinearFeature::draw()
+			return _this;
+		}; // END LinearFeature Class
+
 		function draw_plasmid() {
 			function draw_tic_mark(p) {
 				var x = convert.pos_to_x(p);
@@ -1329,58 +1563,37 @@
 
 		}
 
+		function extend_features() {
+			for (var bfx = 0; bfx < basic_features.length; bfx++) {
+				features.push(new LinearFeature(basic_features[bfx]));
+			}
+		}
+
+		// XXX copy-and-pasted: eliminate redundancy
+		function draw_features() {
+			for (var fx in features) {
+				features[fx].draw();
+			}
+		}
+
 		function draw() { // Draw the linear map
             // Extend basic features to get list of linear features
 			extend_features();
             // Hide the right cutters
-            show_hide_cutters();
+            //show_hide_cutters();
             // Resolve conflicts on the line, push some overlapping
             // features to other radii
 			var max_height = resolve_conflicts();
-			var label_height = max_height + label_height_offset; 
-
-            // Figure out outter edge of label lists
-            //
-            // Just an educated guess based on 13pt font. we will use
-            // this to compute height of label lists. These are
-            // conservative.
-            label_letter_height = 15;
-            label_letter_width = 12;
-          
-            var min_x = map_width/2;
-            var max_x = map_width/2;
-            var min_y = map_width/2;
-            var max_y = map_width/2;
-
-            // Now we have a new bounding box: min_x,min_y to max_x,max_y
-
-            var right_x_extend = max_x-cx;
-            var left_x_extend = cx-min_x;
-            var top_y_extend = cy-min_y;
-            var bot_y_extend = max_y-cy;
-            var bb_width = max_x-min_x;
-            var bb_height = max_y-min_y;
-
-		    map_width = bb_width;
-		    map_height = bb_height;
-            cx = left_x_extend;
-            cy = top_y_extend;
-
+			//var label_height = max_height + label_height_offset; 
+        
 			paper = ScaleRaphael(map_dom_id, map_width, map_height); // global
             for (var fx in features) {
                 features[fx].initialize();
             }
 
-            // figure out the real height of labels
-			var label = paper.text(0,0,'M');
-			label.attr({"font-size": label_font_size});
-			label_letter_height = label.getBBox().height; // global
-			label_letter_width = label.getBBox().width; // global
-			paper.clear();
-
 			draw_plasmid();
 			draw_features(); // Draw all the features initially
-			draw_labels(label_radius); // Draw only the necessary labels
+			//draw_labels(label_height); // Draw only the necessary labels
 
 			// Rescale
 			if (final_map_width != map_width ||
@@ -1392,10 +1605,7 @@
 		}
 		///////////////////////////////////////////////////////////////////
 		// Main entry point.
-		//draw();
-		var paper = ScaleRaphael(map_dom_id, map_width, map_height); // global
-		draw_plasmid();
-		paper.changeSize(640, 640 ,false,false)
+		draw();
 
 		// Export the main properties as part of the LinearMap object
 		this.paper = paper;
