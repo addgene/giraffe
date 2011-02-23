@@ -18,6 +18,8 @@ urlpatterns = patterns('',
 
 if settings.DEBUG:
     urlpatterns += patterns('',
+        (r'^static/blat/(?P<path>.*)$', 'django.views.static.serve',
+         {'document_root': settings.STATIC_BLAT_ROOT}),
         (r'^static/(?P<path>.*)$', 'django.views.static.serve',
          {'document_root': settings.STATIC_ROOT}),
     )

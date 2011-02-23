@@ -102,6 +102,7 @@ INSTALLED_APPS = (
 
 # set this to where you want your static files to db
 STATIC_ROOT = '../../../files'
+STATIC_BLAT_ROOT = 'blat/static'
 
 SESSION_COOKIE_NAME = 'giraffe'
 
