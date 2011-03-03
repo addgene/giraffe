@@ -80,7 +80,7 @@
 
 	///////////////////////////////////////////////////////////////////
 	// Package-scope variables
-	var _debug = false;
+	var _debug = true;
 	var basic_features = [];
 	var seq_length;
 
@@ -898,7 +898,7 @@
 					if (pf.start_degrees() - winner.end_degrees() <= min_overlap_cutoff ||
 						winner.start_degrees() - pf.end_degrees() <= min_overlap_cutoff) {
 						if (_debug)
-							console.warn(pf.name() + "unpushed, because " 
+							console.warn(pf.name() + " unpushed, because " 
 								+ loser.name() + " pushed by " + winner.name());
 						pf.radius = rad;
 					}
@@ -1264,9 +1264,9 @@
 		}
 
 		// Overlaps
-		var min_overlap_cutoff = -0.1;// in degrees
-		var min_overlap_pct = 0.01;
-		var min_overlap_feature_size = 0.5; // in degrees
+		var min_overlap_cutoff = -0.01;// in pixels
+		var min_overlap_pct = 0;
+		var min_overlap_feature_size = 0; // in pixels
 		
 		// Tic marks
 		var tic_mark_length = 15;
@@ -1359,6 +1359,51 @@
 			    _arrow_set = paper.set();
 			    _label_set = paper.set();
             }
+
+			// Degree conversion, for overlap calculation:
+			// for these functions, the sequence starts at 90 degrees and goes down.
+			_this.real_start = function() {
+				var rs;
+				// Take the minimum head size into account. Only need to do this 
+				// when the head is drawn and pointing clockwise, to
+				// "push the start back."
+				if (_draw_head && this.clockwise()) { 
+					rs = convert.pos_to_x(this.end()) - this.real_size();
+				} else { // Headless feature, or head is pointing the wrong way.
+						 // Just give its typical start position
+					rs = convert.pos_to_x(this.start());
+				}
+				return rs;
+			};
+
+			_this.real_end = function() {
+				var re;
+				// Take the minimum head size into account. Only need to do this 
+				// when the head is drawn and pointing counterclockwise, to 
+				// "push the end forward."
+				if (_draw_head && !this.clockwise()) { // Take the minimum head size into account
+					re = convert.pos_to_x(this.start()) + this.real_size();
+				} else { // Headless feature, or head is pointing the wrong way.
+						 // Just give its typical end position
+					re = convert.pos_to_x(this.end());
+				}
+
+				return re;
+			};
+
+			_this.real_size = function() {
+				var rsz; 
+				// Normal definition of size
+				rsz = convert.pos_to_x(_this.end()) -
+				      convert.pos_to_x(_this.start());
+
+				// Head size: return this if it's bigger
+				if (_draw_head && head_length > rsz)
+						rsz = head_length;
+
+				return rsz;
+			};
+
 
 			_this.draw = function () {
 				// Don't draw features that cross the boundary, as this is not
@@ -1466,6 +1511,106 @@
 
 		}
 
+		function resolve_conflicts() {
+			var conflicts;
+			var y = plasmid_y; // current radius
+			var yx = 1;               // radius counter
+			var max_y = plasmid_y;
+
+			function push(winner, loser) {
+				// Record that the push happened
+				winner.pushed_features.push(loser); 
+				conflicts++;
+
+				// Do it
+				loser.y = new_y; 
+
+				if (_debug) console.warn(loser.name() + " pushed by " + winner.name());
+				
+				// Since loser was pushed, un-push all the 
+				// features it caused to be pushed, as long as
+				// those features were not in conflict with the winner
+				for (var pfx in loser.pushed_features) {
+					var pf = loser.pushed_features[pfx];
+					// Check for conflict with other the winner feature itself.
+					// If there's no conflict, we can pushh it back safely.
+					if (pf.real_start() - winner.real_end() <= min_overlap_cutoff ||
+						winner.real_start() - pf.real_end() <= min_overlap_cutoff) {
+						if (_debug)
+							console.warn(pf.name() + " unpushed, because " 
+								+ loser.name() + " pushed by " + winner.name());
+						pf.y = y;
+					}
+				}
+			}
+
+			do {
+				// Keep alternating between inside and outside the plasmid.
+				var new_y = y + Math.pow(-1, yx) * yx * y_spacing;
+
+				conflicts = 0; // Assume you have no conflicts until you find some
+
+				// Clear the record of who pushed whom
+				for (var fx in features) {
+					features[fx].pushed_features = [];
+				}
+
+				var biggest_size = 0;
+				var biggest_feature;
+				var furthest_point = plasmid_left; // Start at a complete lower bound
+
+				for (var fx = 0; fx < features.length; fx++) {
+					var f = features[fx];
+					if (f.y == y && f.type() != ft.enzyme) { 
+						var new_size = f.real_size();
+						var overlap = furthest_point - f.real_start();
+						if (overlap <= min_overlap_cutoff) { 
+							// We've cleared all potential conflicts: reset
+							// the indicators
+							biggest_size = new_size;
+							biggest_feature = f;
+							furthest_point = f.real_end();
+						// explicitly prevent conflicts with self
+						} else if ( !(biggest_feature === f) && 
+								   biggest_size > min_overlap_feature_size &&
+								   new_size > min_overlap_feature_size &&
+								  (overlap <= 0 || 
+								  (overlap/biggest_size > min_overlap_pct &&
+								   overlap/new_size > min_overlap_pct))) {
+							// Overlap: conflict!
+							if (new_size > biggest_size) { // This feature is top dog,
+														   // move the original to the
+														   // new height
+								push(f, biggest_feature);
+
+								// Update the new top dog
+								biggest_size = new_size;
+								biggest_feature = f;
+								furthest_point = f.real_end();
+
+							} else { // The original feature is top dog. move the new
+									 // feature to the new height
+
+								push(biggest_feature, f);
+							}
+
+						}
+					}
+				}
+
+				// Keep track of the biggest height reached
+				if (Math.abs(y - plasmid_y) > max_y - plasmid_y)
+					max_y = Math.abs(y);
+
+				// Move on to the next radius
+				y = new_y;
+				yx++;
+				
+			} while (conflicts > 0); // Keep adding levels of resolution
+
+			return max_y;
+		}
+
 		function extend_features() {
 			for (var bfx = 0; bfx < basic_features.length; bfx++) {
 				features.push(new LinearFeature(basic_features[bfx]));
@@ -1483,10 +1628,10 @@
             // Extend basic features to get list of linear features
 			extend_features();
             // Hide the right cutters
-            //show_hide_cutters();
+            show_hide_cutters();
             // Resolve conflicts on the line, push some overlapping
             // features to other radii
-			//var max_height = resolve_conflicts();
+			var max_height = resolve_conflicts();
 			//var label_height = max_height + label_height_offset; 
         
 			paper = ScaleRaphael(map_dom_id, map_width, map_height); // global
