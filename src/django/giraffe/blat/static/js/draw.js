@@ -1545,6 +1545,62 @@
 
 			} // END LinearFeature::draw()
 
+			// Should we draw the label?
+			_this.should_draw_label = function () {
+				// Don't bother unless we need to
+				if (!_visible || !_labeled) 
+					return false;
+				return true;
+			} // END CircularFeature::should_draw_label()
+
+            // What label should we draw?
+            _this.label_name = function () {
+				var label_name = _this.name();
+				if (_this.type() == ft.enzyme) {
+					label_name += " (" + _this.cut() + ")";
+				}
+                return label_name;
+            } // END LinearFeature::label_name()
+
+			_this.draw_label = function (height) {
+				if (!this.should_draw_label()) { return; }
+
+				if (_label_drawn)
+					this.clear_label();
+
+				// Figure out the center of the feature
+				var x_c = (this.real_start() + this.real_end())/2.0;
+
+				// Draw the line to the label position
+				var label_line = paper.path(svg.move(x_c, this.y) +
+											svg.line(x_c, height));
+				label_line.attr({"stroke": colors.bg_text,
+				                 "stroke-width": label_line_weight,
+								 "opacity": 0.5 });
+
+				// Enzymes show their cut sites in the label
+				var label_name = _this.label_name();
+				var label = paper.text(x_c, height, label_name);
+
+				label.attr({"fill": _color,
+							"font-size": label_font_size,
+							"opacity": 1.0 });
+
+				_label_set.push(label_line);
+				_label_set.push(label);
+
+				// Handlers
+				_label_set.click(_click);
+				_label_set.hover(_mouse_over, _mouse_up);
+
+                // Only push label_line, so when we fade in and out,
+                // we don't also fade the label.
+				_feature_set.push(label_line);
+
+				_labeled = true;
+				_label_drawn = true;
+			} // END LinearFeature::draw_label()
+
 			_this.hide = function () {
 				if (_visible) {
                     if (_feature_set) { _feature_set.hide(); }
@@ -1766,6 +1822,12 @@
 			}
 		}
 
+		function draw_labels(height) {
+            for (var fx in features) {
+                features[fx].draw_label(height);
+            }
+		}
+
 		function draw() { // Draw the linear map
             // Extend basic features to get list of linear features
 			extend_features();
@@ -1774,7 +1836,7 @@
             // Resolve conflicts on the line, push some overlapping
             // features to other radii
 			var max_height = resolve_conflicts();
-			//var label_height = max_height + label_height_offset; 
+			var label_height = max_height + label_y_offset; 
         
 			paper = ScaleRaphael(map_dom_id, map_width, map_height); // global
             for (var fx in features) {
@@ -1783,7 +1845,7 @@
 
 			draw_plasmid();
 			draw_features(); // Draw all the features initially
-			//draw_labels(label_height); // Draw only the necessary labels
+			draw_labels(label_height); // Draw only the necessary labels
 
 			// Rescale
 			if (final_map_width != map_width ||
