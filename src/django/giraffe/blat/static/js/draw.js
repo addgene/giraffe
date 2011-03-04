@@ -1249,7 +1249,7 @@
 		}
 		var bold_opacity = 1.0;
 		var head_width = 25;
-		var head_length = 7;
+		var head_length = 5;
 
 		// Cutters to show
 		var cutters_to_show = [1];
