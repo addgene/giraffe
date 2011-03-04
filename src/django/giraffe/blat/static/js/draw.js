@@ -1264,7 +1264,7 @@
 		}
 
 		// Overlaps
-		var min_overlap_cutoff = -0.01;// in pixels
+		var min_overlap_cutoff = -1;// in pixels
 		var min_overlap_pct = 0;
 		var min_overlap_feature_size = 0; // in pixels
 		
@@ -1534,8 +1534,8 @@
 					var pf = loser.pushed_features[pfx];
 					// Check for conflict with other the winner feature itself.
 					// If there's no conflict, we can pushh it back safely.
-					if (pf.real_start() - winner.real_end() <= min_overlap_cutoff ||
-						winner.real_start() - pf.real_end() <= min_overlap_cutoff) {
+					if (winner.real_end() - pf.real_start() <= min_overlap_cutoff ||
+						pf.real_end() - winner.real_start() <= min_overlap_cutoff) {
 						if (_debug)
 							console.warn(pf.name() + " unpushed, because " 
 								+ loser.name() + " pushed by " + winner.name());
@@ -1628,7 +1628,7 @@
             // Extend basic features to get list of linear features
 			extend_features();
             // Hide the right cutters
-            show_hide_cutters();
+            //show_hide_cutters();
             // Resolve conflicts on the line, push some overlapping
             // features to other radii
 			var max_height = resolve_conflicts();
