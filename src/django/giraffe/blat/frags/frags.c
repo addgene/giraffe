@@ -232,9 +232,10 @@ get_frags (char *file, FILE *fp)
     else if (c == ' ' || c == '\n')
       continue;
     else if (toupper (c) != 'A' && toupper (c) != 'G' &&
-	     toupper (c) != 'C' && toupper (c) != 'T') {
-      fprintf (stderr, "%s cut off at pos %d (%d)\n", file, n, c);
-      break;
+	         toupper (c) != 'C' && toupper (c) != 'T') {
+      c = 'A';
+      // fprintf (stderr, "%s cut off at pos %d (%d)\n", file, n, c);
+      // break;
     }
     s[n] = toupper (c); 
     n++;
