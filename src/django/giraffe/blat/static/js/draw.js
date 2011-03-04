@@ -1404,6 +1404,76 @@
 				return rsz;
 			};
 
+			// Actions for interactivity
+			// Generic fading animation/property setting mechanism
+			var _fade = function (props, line_props) {
+				var sets = paper.set();
+				var lines = paper.set();
+				sets.push(_feature_set);
+				lines.push(_label_set[0]); // label line
+
+                // Cutters: highlight other examples of this enzyme if
+                // it's a multi-cutter
+                if (_this.type() == ft.enzyme) {
+					for (var fx in _this.other_cutters()) {
+						var f = features[_this.other_cutters()[fx]];
+						sets.push(f.feature_set());
+						lines.push(f.label_set()[0]);
+					}
+				}
+
+				if (fade_time) { 
+					sets.animate(props, fade_time); 
+					lines.animateWith(sets, line_props, fade_time); 
+				} else { 
+					sets.attr(props);
+					lines.attr(line_props); 
+				}
+			}
+
+			var _bolder = function () {
+				var props = {"opacity": bold_opacity,
+                             "font-weight": "bold" };
+                if (_this.type() == ft.enzyme) {
+				    props["stroke-width"] = enzyme_bold_weight;
+                }
+				var line_props = {"stroke": colors.plasmid, 
+				                  "stroke-width": label_line_bold_weight};
+				_fade(props, line_props);
+			}
+
+			var _lighter = function () {
+				var props = {"opacity": _opacity,
+                             "font-weight":"normal"};
+                if (_this.type() == ft.enzyme) {
+				    props["stroke-width"] = enzyme_weight;
+                }
+				var line_props = {"stroke": colors.bg_text,
+				                  "stroke-width": label_line_weight};
+				_fade(props, line_props);
+			}
+
+			// Toggle solid/light upon click
+			var _click = function (event) {
+				if (_opaque) {
+					_lighter();
+					_opaque = false;
+				} else {
+					_bolder();
+					_opaque = true;
+				}
+			};
+
+			// Hovering: solid/light upon mouseover
+			var _mouse_over = function (event) {
+				if (!_opaque)
+					_bolder();
+			};
+			var _mouse_up = function (event) {
+				if (!_opaque)
+					_lighter();
+			};
+
 
 			_this.draw = function () {
 				// Don't draw features that cross the boundary, as this is not
@@ -1462,8 +1532,8 @@
 					_arrow_set.push(body);
 				}
 
-				//_arrow_set.click(_click);
-				//_arrow_set.hover(_mouse_over, _mouse_up);
+				_arrow_set.click(_click);
+				_arrow_set.hover(_mouse_over, _mouse_up);
 
 				_feature_set.push(_arrow_set);
 
@@ -1474,6 +1544,52 @@
 								   "title":          _this.name()});
 
 			} // END LinearFeature::draw()
+
+			_this.hide = function () {
+				if (_visible) {
+                    if (_feature_set) { _feature_set.hide(); }
+					_visible = false;
+					_labeled = false;
+				}
+			}; // END LinearFeature::hide()
+
+			_this.show = function () {
+				if (!_visible) {
+					if (_feature_set) { _feature_set.show(); }
+					if (!_labeled) {
+                        if (_label_set) { _label_set.hide(); }
+                    }
+					_visible = true;
+				}
+			}; // END LinearFeature::show()
+
+			_this.hide_label = function () {
+				if (_labeled) {
+                    if (_label_set) { _label_set.hide(); }
+					_labeled = false;
+				}
+			}; // END LinearFeature::hide_label()
+
+			_this.show_label = function () {
+				if (!_labeled) {
+                    if (_label_set) { _label_set.show(); }
+					_labeled = true;
+				}
+			}; // END LinearFeature::show_label()
+
+			_this.clear_label = function () {
+				if (_label_drawn) {
+                    if (_label_set) {
+					    _label_set.unclick(_click);
+					    _label_set.unhover(_mouse_over, _mouse_up);
+					    _label_set.remove();
+					    _label_set = paper.set();
+                    }
+					_labeled = false;
+					_label_drawn = false;
+				}
+			}; // END LinearFeature::clear_label()
+
 			return _this;
 		}; // END LinearFeature Class
 
@@ -1624,11 +1740,37 @@
 			}
 		}
 
+		// Make sure that the appropriate cutters are shown
+		function show_hide_cutters() {
+			for (var fx in features) {
+				var f = features[fx];
+                if (f.default_show_feature()) {
+                    // Only draw enzymes if they are in the list of
+                    // cutters to show - i.e. 1 cutter, 2 cutters,
+                    // etc.
+                    if (f.type() == ft.enzyme) {
+					    if (cutters_to_show.indexOf(f.cut_count()) < 0) {
+						    f.hide();
+						    f.clear_label();
+					    } else {
+						    f.show();
+						    f.show_label();
+					    }
+				    }
+                } else {
+                    // If the enzyme is not set to be shown by
+                    // default, don't show it
+                    f.hide();
+                    f.clear_label();
+                }
+			}
+		}
+
 		function draw() { // Draw the linear map
             // Extend basic features to get list of linear features
 			extend_features();
             // Hide the right cutters
-            //show_hide_cutters();
+            show_hide_cutters();
             // Resolve conflicts on the line, push some overlapping
             // features to other radii
 			var max_height = resolve_conflicts();
