@@ -1270,7 +1270,7 @@
 		
 		// Tic marks
 		var tic_mark_length = 15;
-		var tic_mark_y = plasmid_y + y_spacing;
+		var tic_mark_y = plasmid_y + 2* y_spacing;
 		var tic_label_y = tic_mark_y + 1.5*tic_mark_length;
 
 		// Title
