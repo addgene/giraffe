@@ -1360,6 +1360,10 @@
 			    _label_set = paper.set();
             }
 
+			_this.real_center = function() {
+				return (this.real_start() + this.real_end()) / 2.0;
+			}
+
 			// Degree conversion, for overlap calculation:
 			// for these functions, the sequence starts at 90 degrees and goes down.
 			_this.real_start = function() {
@@ -1562,6 +1566,15 @@
                 return label_name;
             } // END LinearFeature::label_name()
 
+			_this.label_size = function() {
+				var fake_label = paper.text(0, 0, this.label_name());
+				var w = fake_label.getBBox().width;
+				var h = fake_label.getBBox().height;
+				fake_label.remove();
+				
+				return { width: w, height: h };
+			}
+
 			_this.draw_label = function (height) {
 				if (!this.should_draw_label()) { return; }
 
@@ -1569,14 +1582,7 @@
 					this.clear_label();
 
 				// Figure out the center of the feature
-				var x_c = (this.real_start() + this.real_end())/2.0;
-
-				// Draw the line to the label position
-				var label_line = paper.path(svg.move(x_c, this.y) +
-											svg.line(x_c, height));
-				label_line.attr({"stroke": colors.bg_text,
-				                 "stroke-width": label_line_weight,
-								 "opacity": 0.5 });
+				var x_c = this.real_center();
 
 				// Enzymes show their cut sites in the label
 				var label_name = _this.label_name();
@@ -1585,6 +1591,21 @@
 				label.attr({"fill": _color,
 							"font-size": label_font_size,
 							"opacity": 1.0 });
+
+				// Calculate the end of the line
+				var label_spacing = 3; // px
+				var sign = (height > plasmid_y) ? 1 : -1;
+				var line_end = label.getBBox().y + 
+					(sign < 0) * label.getBBox().height - // Want bottom edge for
+					                                      // labels above the plasmid
+					sign * label_spacing;
+
+				// Draw the line to the label position
+				var label_line = paper.path(svg.move(x_c, this.y) +
+											svg.line(x_c, line_end));
+				label_line.attr({"stroke": colors.bg_text,
+				                 "stroke-width": label_line_weight,
+								 "opacity": 0.5 });
 
 				_label_set.push(label_line);
 				_label_set.push(label);
@@ -1599,6 +1620,8 @@
 
 				_labeled = true;
 				_label_drawn = true;
+
+				return label.getBBox();
 			} // END LinearFeature::draw_label()
 
 			_this.hide = function () {
@@ -1687,7 +1710,7 @@
 			var conflicts;
 			var y = plasmid_y; // current radius
 			var yx = 1;               // radius counter
-			var max_y = plasmid_y;
+			var max_dist = 0;
 
 			function push(winner, loser) {
 				// Record that the push happened
@@ -1770,9 +1793,11 @@
 					}
 				}
 
-				// Keep track of the biggest height reached
-				if (Math.abs(y - plasmid_y) > max_y - plasmid_y)
-					max_y = Math.abs(y);
+				// Keep track of the biggest distance from the plasmid 
+				// reached
+				var new_dist = Math.abs(y - plasmid_y);
+				if (new_dist > max_dist)
+					max_dist = new_dist;
 
 				// Move on to the next radius
 				y = new_y;
@@ -1780,7 +1805,7 @@
 				
 			} while (conflicts > 0); // Keep adding levels of resolution
 
-			return max_y;
+			return max_dist;
 		}
 
 		function extend_features() {
@@ -1823,8 +1848,30 @@
 		}
 
 		function draw_labels(height) {
+			var label_overlap_cutoff = -1; // pixel
+			var furthest_right = {};
             for (var fx in features) {
-                features[fx].draw_label(height);
+				var f = features[fx];
+				var curr_height;
+				var overlap;
+				var conflicts = 0;
+
+				// Resolve label conflicts in a simpler way
+				do {
+					curr_height = plasmid_y + (height + conflicts * y_spacing) *
+						Math.pow(-1, conflicts);
+					if (! curr_height in furthest_right) {
+						furthest_right[curr_height] = plasmid_left;
+					}
+					var left = f.real_center() - f.label_size().width / 2.0;
+					
+					overlap = furthest_right[curr_height] - left;
+					conflicts++;
+				} while (overlap > label_overlap_cutoff); 
+
+				var bbox = f.draw_label(curr_height);
+				if (bbox != undefined)
+					furthest_right[curr_height] = bbox.x + bbox.width;
             }
 		}
 
