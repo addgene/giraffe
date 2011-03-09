@@ -1841,13 +1841,14 @@
 			}
 		}
 
-		function draw_labels(height) {
+		var label_pos, label_lists;
+		function assign_label_lists() {
 			var label_overlap_cutoff = -1; // pixel
 
 			var nlists = 4;
 			//                   top                bottom
-            var label_pos    = [ new Array(nlists), new Array(nlists)];
-            var label_lists  = [ new Array(nlists), new Array(nlists)];
+            label_pos    = [ new Array(nlists), new Array(nlists)];
+            label_lists  = [ new Array(nlists), new Array(nlists)];
                                 
 			// Calculate positions of label lists
 			var list_spread = plasmid_width / (nlists + 1);
@@ -1860,9 +1861,6 @@
 					label_lists[lx][ix] = [];
 				}
 			}
-
-			// Calculate the height of a label
-			var label_height = features[0].label_size().height;
 
 			// Figure out which list each feature goes in
             for (var fx in features) {
@@ -1887,8 +1885,14 @@
 				}
             }
 
+		}
+
+		function draw_labels(height) {
+			// Calculate the height of a label
+			var label_height = features[0].label_size().height;
+
 			// Finally, draw all the features
-            for (var sx = 0; sx < nlists; sx++) {
+            for (var sx = 0; sx < label_pos[0].length; sx++) {
 				for (var lx = 0; lx < 2; lx++) {
 					// Iterate over every label in the list
 					var ll = label_lists[lx][sx];
@@ -1935,6 +1939,8 @@
 				paper.changeSize(final_map_width,final_map_height,false,false)
 			}
 		}
+		
+		
 		///////////////////////////////////////////////////////////////////
 		// Main entry point.
 		draw();
