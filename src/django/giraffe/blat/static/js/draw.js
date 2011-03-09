@@ -1851,17 +1851,14 @@
                                 
 			// Calculate positions of label lists
 			var list_spread = plasmid_width / (nlists + 1);
-			var offset_frac_top = 0.2;
-			var offset_frac_bot = 0.4;
+			//                 top  bottom
+			var offset_frac = [0.2, 0.4];
 			for (var ix = 0; ix < nlists; ix++) {
-				// Top: offset to the right by offset_frac
-				label_pos[0][ix] = (ix + 1 + offset_frac_top) * list_spread;
-
-				// Bottom: offset to the left by offset_frac
-				label_pos[1][ix] = (ix + 1 + offset_frac_bot) * list_spread;
-
-				label_lists[0][ix] = [];
-				label_lists[1][ix] = [];
+				for (var lx = 0; lx < 2; lx++) {
+					// offset to the right by offset_frac
+					label_pos[lx][ix] = (ix + 1 + offset_frac[lx]) * list_spread;
+					label_lists[lx][ix] = [];
+				}
 			}
 
 			// Calculate the height of a label
