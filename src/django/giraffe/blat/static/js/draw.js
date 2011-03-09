@@ -1230,7 +1230,7 @@
 
 		// Heights of levels
 		var y_spacing = 20; // spacing
-		var label_y_offset = 10;
+		var label_y_offset = 50;
 		if ('label_offset' in options) {
 			label_y_offset = parseInt(options['label_offset']);
 		}
@@ -1552,10 +1552,10 @@
 			// Should we draw the label?
 			_this.should_draw_label = function () {
 				// Don't bother unless we need to
-				if (!_visible || !_labeled) 
+				if (!_visible || !_labeled || this.crosses_boundary()) 
 					return false;
 				return true;
-			} // END CircularFeature::should_draw_label()
+			} // END LinearFeature::should_draw_label()
 
             // What label should we draw?
             _this.label_name = function () {
@@ -1575,7 +1575,7 @@
 				return { width: w, height: h };
 			}
 
-			_this.draw_label = function (height) {
+			_this.draw_label = function (height, pos) {
 				if (!this.should_draw_label()) { return; }
 
 				if (_label_drawn)
@@ -1586,23 +1586,18 @@
 
 				// Enzymes show their cut sites in the label
 				var label_name = _this.label_name();
-				var label = paper.text(x_c, height, label_name);
-
+				var label = paper.text(pos, height, label_name);
+				
+				// Below, right-justify. Above, left-justify.
+				var anchor = (height > plasmid_y) ? "end" : "start";
 				label.attr({"fill": _color,
+							"text-anchor": anchor,
 							"font-size": label_font_size,
 							"opacity": 1.0 });
 
-				// Calculate the end of the line
-				var label_spacing = 3; // px
-				var sign = (height > plasmid_y) ? 1 : -1;
-				var line_end = label.getBBox().y + 
-					(sign < 0) * label.getBBox().height - // Want bottom edge for
-					                                      // labels above the plasmid
-					sign * label_spacing;
-
 				// Draw the line to the label position
 				var label_line = paper.path(svg.move(x_c, this.y) +
-											svg.line(x_c, line_end));
+											svg.line(pos, height));
 				label_line.attr({"stroke": colors.bg_text,
 				                 "stroke-width": label_line_weight,
 								 "opacity": 0.5 });
@@ -1849,30 +1844,71 @@
 
 		function draw_labels(height) {
 			var label_overlap_cutoff = -1; // pixel
-			var furthest_right = {};
+
+			var nlists = 4;
+			//                   top                bottom
+            var label_pos    = [ new Array(nlists), new Array(nlists)];
+            var label_lists  = [ new Array(nlists), new Array(nlists)];
+                                
+			// Calculate positions of label lists
+			var list_spread = plasmid_width / (nlists + 1);
+			var offset_frac = 0.2;
+			for (var ix = 0; ix < nlists; ix++) {
+				// Top: offset to the right by offset_frac
+				label_pos[0][ix] = (ix + 1 + offset_frac) * list_spread;
+
+				// Top: offset to the left by offset_frac
+				label_pos[1][ix] = (ix + 1 - offset_frac) * list_spread;
+
+				label_lists[0][ix] = [];
+				label_lists[1][ix] = [];
+			}
+
+			// Calculate the height of a label
+			var label_height = features[0].label_size().height;
+
+			// Figure out which list each feature goes in
             for (var fx in features) {
 				var f = features[fx];
-				var curr_height;
-				var overlap;
-				var conflicts = 0;
 
-				// Resolve label conflicts in a simpler way
-				do {
-					curr_height = plasmid_y + (height + conflicts * y_spacing) *
-						Math.pow(-1, conflicts);
-					if (! curr_height in furthest_right) {
-						furthest_right[curr_height] = plasmid_left;
-					}
-					var left = f.real_center() - f.label_size().width / 2.0;
-					
-					overlap = furthest_right[curr_height] - left;
-					conflicts++;
-				} while (overlap > label_overlap_cutoff); 
+				// Which quarter of the plasmid is the feature in?
+				var section = Math.floor(nlists*(f.real_center() - plasmid_left)/
+				                                 plasmid_width);
+				// Is it in the top or bottom?
+				var bottom = 0;
+				if (f.y > plasmid_y) {
+					bottom = 1;
+				} else if (f.y == plasmid_y) {
+					// If the bottom list is shorter, this will be 1; else, 0
+					bottom = (label_lists[1][section].length <
+					          label_lists[0][section].length) + 0;
+				}
 
-				var bbox = f.draw_label(curr_height);
-				if (bbox != undefined)
-					furthest_right[curr_height] = bbox.x + bbox.width;
+				if (f.should_draw_label()) {
+					// push it on the appropriate list
+					label_lists[bottom][section].push(f);
+				}
             }
+
+			// Finally, draw all the features
+            for (var sx = 0; sx < nlists; sx++) {
+				for (var lx = 0; lx < 2; lx++) {
+					// Iterate over every label in the list
+					var ll = label_lists[lx][sx];
+					var num_labels = ll.length;
+					for (var ix = 0; ix < num_labels; ix++) {
+						var curr_height;
+						if (lx) { // Bottom list: top to bottom
+							curr_height = plasmid_y + height + 
+								ix * label_height;
+						} else { // Top list: bottom to top
+							curr_height = plasmid_y - height - 
+								(num_labels - 1 - ix) * label_height;
+						}
+						ll[ix].draw_label(curr_height, label_pos[lx][sx]);
+					}
+				}
+			}
 		}
 
 		function draw() { // Draw the linear map
