@@ -1589,9 +1589,8 @@
 				var label = paper.text(pos, height, label_name);
 				
 				// Below, right-justify. Above, left-justify.
-				var anchor = (height > plasmid_y) ? "end" : "start";
 				label.attr({"fill": _color,
-							"text-anchor": anchor,
+							"text-anchor": "start",
 							"font-size": label_font_size,
 							"opacity": 1.0 });
 
@@ -1852,13 +1851,14 @@
                                 
 			// Calculate positions of label lists
 			var list_spread = plasmid_width / (nlists + 1);
-			var offset_frac = 0.2;
+			var offset_frac_top = 0.2;
+			var offset_frac_bot = 0.4;
 			for (var ix = 0; ix < nlists; ix++) {
 				// Top: offset to the right by offset_frac
-				label_pos[0][ix] = (ix + 1 + offset_frac) * list_spread;
+				label_pos[0][ix] = (ix + 1 + offset_frac_top) * list_spread;
 
-				// Top: offset to the left by offset_frac
-				label_pos[1][ix] = (ix + 1 - offset_frac) * list_spread;
+				// Bottom: offset to the left by offset_frac
+				label_pos[1][ix] = (ix + 1 + offset_frac_bot) * list_spread;
 
 				label_lists[0][ix] = [];
 				label_lists[1][ix] = [];
@@ -1900,7 +1900,7 @@
 						var curr_height;
 						if (lx) { // Bottom list: top to bottom
 							curr_height = plasmid_y + height + 
-								ix * label_height;
+								(num_labels - 1 - ix) * label_height;
 						} else { // Top list: bottom to top
 							curr_height = plasmid_y - height - 
 								(num_labels - 1 - ix) * label_height;
