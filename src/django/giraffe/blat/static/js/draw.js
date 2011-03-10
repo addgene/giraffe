@@ -158,14 +158,14 @@
 
 	///////////////////////////////////////////////////////////////////
 	// JSON Parsing
-	gd.read = function (features_json) {
+	gd.read = function(json) {
 		basic_features = []; // package scope
-		seq_length = features_json[0]; // package scope
-
+		seq_length = json[0]; // package scope
+        features_json = json[1];
+        if (json.length > 2) { gd.sequence = json[2]; }
 		for (var ix = 1; ix < features_json.length; ix++) {
 			basic_features.push(new Feature(features_json[ix]));
 		}
-
 		// Now that the features are parsed, calculate how many instances
 		// of each cutter type there are.
 		cut_counts(); 

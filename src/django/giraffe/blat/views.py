@@ -76,7 +76,11 @@ def get(request,hash,db_name):
 
     res.sort(cmp=lambda x,y:cmp(int(x['start']),int(y['start'])))
 
-    res = [len(sequence.sequence),]+res
+    res = [len(sequence.sequence),res]
+
+    if 'sequence' in request.GET:
+        # also asked for sequence
+        res.append(sequence.sequence)
 
     j = json.JSONEncoder().encode(res)
 

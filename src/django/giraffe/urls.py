@@ -13,6 +13,7 @@ urlpatterns = patterns('',
     (r'^blat/', include('giraffe.blat.urls')),
 
     (r'^test/(\w+)/(\w+)/draw/?$', views.test_draw),
+    (r'^test/(\w+)/(\w+)/analyze/?$', views.test_analyze),
     (r'^test/$', direct_to_template, { 'template' : 'test/post.html' }),
 )
 
@@ -20,6 +21,8 @@ if settings.DEBUG:
     urlpatterns += patterns('',
         (r'^static/blat/(?P<path>.*)$', 'django.views.static.serve',
          {'document_root': settings.STATIC_BLAT_ROOT}),
+        (r'^static/analyze/(?P<path>.*)$', 'django.views.static.serve',
+         {'document_root': settings.STATIC_ANALYZE_ROOT}),
         (r'^static/(?P<path>.*)$', 'django.views.static.serve',
          {'document_root': settings.STATIC_ROOT}),
     )

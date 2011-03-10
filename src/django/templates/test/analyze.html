@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %} Analyze Sequence Test {% endblock %}
+{% block body %}
+<div id="giraffe-analyze"></div>
+{% endblock %}
+
+{% block pagejs %}
+
+<script type="text/javascript" src="/static/js/raphael-min.js"></script>
+<script type="text/javascript" src="/static/js/scale.raphael.js"></script>
+<script type="text/javascript" src="/static/analyze/js/analyze.js"></script>
+<script type="text/javascript" src="/static/blat/js/draw.js"></script>
+
+<script type="text/javascript">var gd = GiraffeDraw();</script>
+<script type="text/javascript" src="/blat/{{hash}}/default?sequence=1&jsonp=gd.read&mtime={{mtime}}"></script>
+<script type="text/javascript">
+jQuery(document).ready(function($){ 
+    GiraffeAnalyze($,gd,{
+        'dom_id':'giraffe-analyze',
+        'name':'pBabe-Test'
+    });
+})
+</script>
+
+{% endblock %}
+
+{% block pagecss %}
+<link rel="stylesheet" href="/static/analyze/css/analyze.css" type="text/css"/>
+{% endblock %}
+
