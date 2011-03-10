@@ -1342,7 +1342,7 @@
 			_this.visible = function() { return _visible; };
 			_this.labeled = function() { return _labeled; };
 
-			_this.y = plasmid_y; // default to plasmid height
+			_this.y = 0; // default to plasmid height (y is an offset)
 
 			// Check to see if label has been drawn yet
 			_this.label_drawn = function() { return _label_drawn; };
@@ -1498,9 +1498,9 @@
 
 					// Unlike the body, the head is traced with a line, and
 					// then created entirely with the fill color
-					var head = paper.path(svg.move(hx_tip, _this.y) +
-					                 svg.line(hx_back, _this.y - head_width/2.0) +
-					                 svg.line(hx_back, _this.y + head_width/2.0) +
+					var head = paper.path(svg.move(hx_tip, plasmid_y + _this.y) +
+					                 svg.line(hx_back, plasmid_y + _this.y - head_width/2.0) +
+					                 svg.line(hx_back, plasmid_y + _this.y + head_width/2.0) +
 					                 svg.close());
 					head.attr({"stroke-width": 0,
 							   "fill":         _color});
@@ -1514,8 +1514,8 @@
 					// to be drawn
 
 					// The body has no fill-color: it's just a thick line
-					var body = paper.path(svg.move(x0, _this.y) +
-						  				  svg.line(x1, _this.y));
+					var body = paper.path(svg.move(x0, plasmid_y + _this.y) +
+						  				  svg.line(x1, plasmid_y + _this.y));
 					body.attr({"stroke-width": _width});
 
 					_arrow_set.push(body);
@@ -1523,8 +1523,8 @@
 					// Restriction enzymes get drawn on their own
 					var x_m = (x0 + x1)/2;
 
-					var body = paper.path(svg.move(x_m, _this.y - _width/2.0) +
-					                      svg.line(x_m, _this.y + _width/2.0));
+					var body = paper.path(svg.move(x_m, plasmid_y + _this.y - _width/2.0) +
+					                      svg.line(x_m, plasmid_y + _this.y + _width/2.0));
 					body.attr({"stroke-width": enzyme_weight});
 					body.toBack();
 
@@ -1590,7 +1590,7 @@
 							"opacity": 1.0 });
 
 				// Draw the line to the label position
-				var label_line = paper.path(svg.move(x_c, this.y) +
+				var label_line = paper.path(svg.move(x_c, plasmid_y + this.y) +
 											svg.line(pos, height));
 				label_line.attr({"stroke": colors.bg_text,
 				                 "stroke-width": label_line_weight,
@@ -1703,7 +1703,7 @@
 
 		function resolve_conflicts() {
 			var conflicts;
-			var y = plasmid_y; // current radius
+			var y = 0; // current radius
 			var yx = 1;               // radius counter
 			var max_dist = 0;
 
@@ -1790,7 +1790,7 @@
 
 				// Keep track of the biggest distance from the plasmid 
 				// reached
-				var new_dist = Math.abs(y - plasmid_y);
+				var new_dist = Math.abs(y);
 				if (new_dist > max_dist)
 					max_dist = new_dist;
 
@@ -1872,9 +1872,9 @@
 				                                 plasmid_width);
 				// Is it in the top or bottom?
 				var bottom = 0;
-				if (f.y > plasmid_y) {
+				if (f.y > 0) {
 					bottom = 1;
-				} else if (f.y == plasmid_y) {
+				} else if (f.y == 0) {
 					// If the bottom list is shorter, this will be 1; else, 0
 					bottom = (label_lists[1][section].length <
 					          label_lists[0][section].length) + 0;
@@ -1944,24 +1944,6 @@
 
 		    map_height = bb_height;
 
-			/*
-			 * Shift all the features up to compensate. This needs to happen
-			 * this way for a complicated reason. In the circular case, the
-			 * radius is independent of the cx and cy of the map. But in the
-			 * linear case, this is not so. This means that in order to do
-			 * "resolve conflicts," we need to assign all the features some
-			 * initial y. For a sane default, we use the naive plasmid_y. But
-			 * this of course means, that, once we've changed the center, we
-			 * need to adjust the y property of all the features to reflect
-			 * this.
-			 *
-			 * TODO: Later, rewrite linear features to have an offset, which
-			 * is adjusted by "resolve conflicts", and a "center", which is
-			 * always plasmid_y.
-			 */
-			for (var fx in features)
-				features[fx].y -= plasmid_y - top_y_extend;
-			
             cy = top_y_extend;
 			plasmid_y = cy;
 		}
