@@ -80,7 +80,7 @@
 
 	///////////////////////////////////////////////////////////////////
 	// Package-scope variables
-	var _debug = true;
+	var _debug = false;
 	var basic_features = [];
 	var seq_length;
 
