@@ -1268,9 +1268,6 @@
 		var min_overlap_pct = 0;
 		var min_overlap_feature_size = 0; // in pixels
 		
-		// Title
-		var title_y = 3 * y_spacing;
-
 		// Labels and other text
 		var label_line_weight = 1;
 		var label_line_bold_weight = 1.5 * label_line_weight;
@@ -1663,6 +1660,9 @@
 
 		function draw_plasmid() {
 
+			// Title
+			var title_y = 1.5 * y_spacing;
+
 			// Tic marks
 			var tic_mark_length = 15;
 			var tic_mark_y = plasmid_y + 2* y_spacing;
@@ -1686,7 +1686,7 @@
 			plasmid.attr("stroke", colors.plasmid);
 			var title = seq_length + ' bp';
 			if (plasmid_name != "") {
-				title = plasmid_name + "\n\n" + title;
+				title = plasmid_name + ": " + title;
 			}
 			var plasmid_label = paper.text(cx, title_y, title);
 			plasmid_label.attr({"fill":      colors.plasmid,
