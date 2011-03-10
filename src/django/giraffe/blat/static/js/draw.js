@@ -1853,15 +1853,9 @@
             label_pos    = [ new Array(nlists), new Array(nlists)];
             label_lists  = [ new Array(nlists), new Array(nlists)];
                                 
-			// Calculate positions of label lists
-			var list_spread = plasmid_width / (nlists + 1);
-			//                 top  bottom
-			var offset_frac = [1, -1];
+			// Initialize
 			for (var ix = 0; ix < nlists; ix++) {
 				for (var lx = 0; lx < 2; lx++) {
-					// offset to the right or left by offset_frac
-					// depending on if it's above or below
-					label_pos[lx][ix] = (ix + 1 + offset_frac[lx]) * list_spread;
 					label_lists[lx][ix] = [];
 				}
 			}
@@ -1882,6 +1876,23 @@
 				}
             }
 
+			// Calculate positions of label lists
+			//                 top  bottom
+			var list_offset = [20, -20];
+			for (var ix = 0; ix < nlists; ix++) {
+				if (ix % 2 == 0) {
+					// Top label: just to the right of the last feature
+					label_pos[0][ix] = 
+						label_lists[0][ix][label_lists[0][ix].length - 1].real_end() +
+						list_offset[0];
+				} else {
+					// Bottom label: just to the left of the first feature
+					label_pos[1][ix] = 
+						label_lists[1][ix][0].real_start() +
+						list_offset[1];
+				}
+			}
+
 		}
 
 		function draw_labels(height) {
@@ -1895,7 +1906,7 @@
 					var ll = label_lists[lx][sx];
 
 					// Sort the list by center position
-					var comp_factor = 0.75;
+					var comp_factor = 0.55;
 					ll.sort(function (a,b) {
 						// Make some compensation for height as well
 						function key(feat) {
