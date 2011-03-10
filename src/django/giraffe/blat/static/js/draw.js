@@ -1470,7 +1470,6 @@
 					_lighter();
 			};
 
-
 			_this.draw = function () {
 				// Don't draw features that cross the boundary, as this is not
 				// a circular plasmid
@@ -1479,6 +1478,8 @@
 				// Convert from sequence positions to x-coords
 				var x0 = convert.pos_to_x(_this.start());
 				var x1 = convert.pos_to_x(_this.end());
+
+				var y = plasmid_y + _this.y;
 
 				// Arrowhead drawing, if needed
 				if (_draw_head) {
@@ -1495,9 +1496,9 @@
 
 					// Unlike the body, the head is traced with a line, and
 					// then created entirely with the fill color
-					var head = paper.path(svg.move(hx_tip, plasmid_y + _this.y) +
-					                 svg.line(hx_back, plasmid_y + _this.y - head_width/2.0) +
-					                 svg.line(hx_back, plasmid_y + _this.y + head_width/2.0) +
+					var head = paper.path(svg.move(hx_tip, y) +
+					                 svg.line(hx_back, y - head_width/2.0) +
+					                 svg.line(hx_back, y + head_width/2.0) +
 					                 svg.close());
 					head.attr({"stroke-width": 0,
 							   "fill":         _color});
@@ -1511,8 +1512,8 @@
 					// to be drawn
 
 					// The body has no fill-color: it's just a thick line
-					var body = paper.path(svg.move(x0, plasmid_y + _this.y) +
-						  				  svg.line(x1, plasmid_y + _this.y));
+					var body = paper.path(svg.move(x0, y) +
+						  				  svg.line(x1, y));
 					body.attr({"stroke-width": _width});
 
 					_arrow_set.push(body);
@@ -1520,8 +1521,8 @@
 					// Restriction enzymes get drawn on their own
 					var x_m = (x0 + x1)/2;
 
-					var body = paper.path(svg.move(x_m, plasmid_y + _this.y - _width/2.0) +
-					                      svg.line(x_m, plasmid_y + _this.y + _width/2.0));
+					var body = paper.path(svg.move(x_m, y - _width/2.0) +
+					                      svg.line(x_m, y + _width/2.0));
 					body.attr({"stroke-width": enzyme_weight});
 					body.toBack();
 
