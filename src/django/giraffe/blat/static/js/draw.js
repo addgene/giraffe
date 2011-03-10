@@ -1897,9 +1897,22 @@
 			// Finally, draw all the features
             for (var sx = 0; sx < label_pos[0].length; sx++) {
 				for (var lx = 0; lx < 2; lx++) {
-					// Iterate over every label in the list
 					var ll = label_lists[lx][sx];
+
+					// Sort the list by center position
+					var comp_factor = 0.3;
+					ll.sort(function (a,b) {
+						// Make some compensation for height as well
+						function key(feat) {
+							return feat.real_center() - 
+								comp_factor * Math.abs(feat.y);
+						}
+						return key(a) - key(b);
+					})
+
 					var num_labels = ll.length;
+
+					// Iterate over every label in the list
 					for (var ix = 0; ix < num_labels; ix++) {
 						var curr_height;
 						if (lx) { // Bottom list: top to bottom
