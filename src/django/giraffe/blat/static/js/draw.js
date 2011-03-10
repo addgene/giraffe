@@ -1268,11 +1268,6 @@
 		var min_overlap_pct = 0;
 		var min_overlap_feature_size = 0; // in pixels
 		
-		// Tic marks
-		var tic_mark_length = 15;
-		var tic_mark_y = plasmid_y + 2* y_spacing;
-		var tic_label_y = tic_mark_y + 1.5*tic_mark_length;
-
 		// Title
 		var title_y = 3 * y_spacing;
 
@@ -1667,6 +1662,12 @@
 		}; // END LinearFeature Class
 
 		function draw_plasmid() {
+
+			// Tic marks
+			var tic_mark_length = 15;
+			var tic_mark_y = plasmid_y + 2* y_spacing;
+			var tic_label_y = tic_mark_y + 1.5*tic_mark_length;
+
 			function draw_tic_mark(p) {
 				var x = convert.pos_to_x(p);
 				var y0 = tic_mark_y - tic_mark_length/2;
@@ -1912,15 +1913,72 @@
 			}
 		}
 
+		function set_bounding_box(height) {
+            // Figure out outer edge of label lists
+            //
+            // Just an educated guess based on 13pt font. we will use
+            // this to compute height of label lists. These are
+            // conservative.
+            label_letter_height = 15;
+          
+            var min_y = map_height/2;
+            var max_y = map_height/2;
+
+			// Iterate over every list in a level
+            for (var sx = 0; sx < label_pos[0].length; sx++) {
+				var list_top = plasmid_y - height - 
+					label_letter_height * label_lists[0][sx].length;
+				if (list_top < min_y)
+					min_y = list_top;
+
+				var list_bot = plasmid_y + height + 
+					label_letter_height * label_lists[1][sx].length;
+				if (list_bot > max_y)
+					max_y = list_bot;
+			}
+
+            // Now we have a new bounding box (height only): min_y to max_y
+
+            var top_y_extend = cy-min_y;
+            var bb_height = max_y-min_y;
+
+		    map_height = bb_height;
+
+			/*
+			 * Shift all the features up to compensate. This needs to happen
+			 * this way for a complicated reason. In the circular case, the
+			 * radius is independent of the cx and cy of the map. But in the
+			 * linear case, this is not so. This means that in order to do
+			 * "resolve conflicts," we need to assign all the features some
+			 * initial y. For a sane default, we use the naive plasmid_y. But
+			 * this of course means, that, once we've changed the center, we
+			 * need to adjust the y property of all the features to reflect
+			 * this.
+			 *
+			 * TODO: Later, rewrite linear features to have an offset, which
+			 * is adjusted by "resolve conflicts", and a "center", which is
+			 * always plasmid_y.
+			 */
+			for (var fx in features)
+				features[fx].y -= plasmid_y - top_y_extend;
+			
+            cy = top_y_extend;
+			plasmid_y = cy;
+		}
+
 		function draw() { // Draw the linear map
             // Extend basic features to get list of linear features
 			extend_features();
+
             // Hide the right cutters
             show_hide_cutters();
             // Resolve conflicts on the line, push some overlapping
             // features to other radii
 			var max_height = resolve_conflicts();
 			var label_height = max_height + label_y_offset; 
+
+			assign_label_lists();
+			set_bounding_box(label_height);
         
 			paper = ScaleRaphael(map_dom_id, map_width, map_height); // global
             for (var fx in features) {
@@ -1934,6 +1992,11 @@
 			// Rescale
 			if (final_map_width != map_width ||
 				final_map_height != map_height) {
+				
+				// Make sure not to add additional height to the map, once we've
+				// trimmed it off
+				final_map_height = final_map_width * (map_height/map_width);
+
 				// "center" parameter just adds unnecessary CSS to the container
 				// object to give it an absolute position: not what we need
 				paper.changeSize(final_map_width,final_map_height,false,false)
