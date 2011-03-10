@@ -711,7 +711,7 @@
 				var xy1 = {}
 				xy1.x = label_list_pos[section][0]
 				xy1.y = label_list_pos[section][1]
-
+                
 				// We want to minimize the number of label lines that
 				// cross. Which means depends on which section we are in,
 				// we draw labels in different orders. See draw_labels on
@@ -1150,8 +1150,12 @@
             // figure out the real height of labels
 			var label = paper.text(0,0,'M');
 			label.attr({"font-size": label_font_size});
-			label_letter_height = label.getBBox().height; // global
-			label_letter_width = label.getBBox().width; // global
+            // if dom is not visible, then getBBox().height may be 0,
+            // so then, just use the guessed value
+            if (label.getBBox().height != 0) {
+			    label_letter_height = label.getBBox().height; // global
+			    label_letter_width = label.getBBox().width; // global
+            }
 			paper.clear();
 
 			draw_plasmid();
