@@ -1848,7 +1848,7 @@
 		function assign_label_lists() {
 			var label_overlap_cutoff = -1; // pixel
 
-			var nlists = 4;
+			var nlists = 6;
 			//                   top                bottom
             label_pos    = [ new Array(nlists), new Array(nlists)];
             label_lists  = [ new Array(nlists), new Array(nlists)];
@@ -1856,7 +1856,7 @@
 			// Calculate positions of label lists
 			var list_spread = plasmid_width / (nlists + 1);
 			//                 top  bottom
-			var offset_frac = [1.0, -1.0];
+			var offset_frac = [0.7, -0.7];
 			for (var ix = 0; ix < nlists; ix++) {
 				for (var lx = 0; lx < 2; lx++) {
 					// offset to the right or left by offset_frac
