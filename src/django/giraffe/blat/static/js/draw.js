@@ -1856,7 +1856,7 @@
 			// Calculate positions of label lists
 			var list_spread = plasmid_width / (nlists + 1);
 			//                 top  bottom
-			var offset_frac = [0.7, -0.7];
+			var offset_frac = [1, -1];
 			for (var ix = 0; ix < nlists; ix++) {
 				for (var lx = 0; lx < 2; lx++) {
 					// offset to the right or left by offset_frac
@@ -1932,33 +1932,74 @@
             // Just an educated guess based on 13pt font. we will use
             // this to compute height of label lists. These are
             // conservative.
-            label_letter_height = 17.5;
+            label_letter_height = 15;
+            label_letter_width = 8;
           
             var min_y = map_height/2;
             var max_y = map_height/2;
+			// By default, plasmid will scale to width of map, so unless we
+			// actually have lists that go off the page, no reason to adjust
+			// them. i.e., never make them smaller than they orignially were,
+			// because there is never a need to "zoom in."
+            var min_x = 0;
+            var max_x = map_width;
 
 			// Iterate over every list in a level
             for (var sx = 0; sx < label_pos[0].length; sx++) {
-				var list_top = plasmid_y - height - 
-					label_letter_height * label_lists[0][sx].length;
-				if (list_top < min_y)
-					min_y = list_top;
+				for (var lx = 0; lx < 2; lx++) {
+					var ll = label_lists[lx][sx];
 
-				var list_bot = plasmid_y + height + 
-					label_letter_height * label_lists[1][sx].length;
-				if (list_bot > max_y)
-					max_y = list_bot;
+					var list_max_letters = 0;
+					for (var ix = 0; ix < ll.length; ix++) {
+						var num_letts = ll[ix].label_name().length; 
+						if (num_letts > list_max_letters) {
+							list_max_letters = num_letts;
+						}
+					}
+
+					if (lx == 0) { // Top lists: move top and right
+						var list_top = plasmid_y - height - 
+							label_letter_height * (ll.length + 1);
+						if (list_top < min_y)
+							min_y = list_top;
+						var list_right =  label_pos[lx][sx] + 
+							label_letter_width * list_max_letters;
+						if (list_right > max_x)
+							max_x = list_right;
+
+					} else if (lx == 1) { // Bot lists: move bot and left
+						var list_bot = plasmid_y + height + 
+							label_letter_height * (ll.length + 1);
+						if (list_bot > max_y)
+							max_y = list_bot;
+						var list_left =  label_pos[lx][sx] - 
+							label_letter_width * list_max_letters;
+						if (list_left < min_x)
+							min_x = list_left;
+					}
+				}
 			}
 
             // Now we have a new bounding box (height only): min_y to max_y
+			
+			// Extend or compress the box dimensions to encompas this new size
+		    map_width = max_x - min_x;
+		    map_height = max_y - min_y;
 
-            var top_y_extend = cy-min_y;
-            var bb_height = max_y-min_y;
-
-		    map_height = bb_height;
-
-            cy = top_y_extend;
+			// Shift all the reference points to compensate for the re-zooming
+            cy -= min_y;
+            cx -= min_x;
 			plasmid_y = cy;
+			plasmid_left -= min_x;
+			plasmid_right -= min_x;
+
+			// Shift the label positions as well, to compensate
+			for (var lx = 0; lx < label_pos.length; lx++) {
+				for (var ix = 0; ix < label_pos[lx].length; ix++) {
+					label_pos[lx][ix] -= min_x;
+				}
+			}
+
 		}
 
 		function draw() { // Draw the linear map
@@ -1994,7 +2035,7 @@
 
 				// "center" parameter just adds unnecessary CSS to the container
 				// object to give it an absolute position: not what we need
-				paper.changeSize(final_map_width,final_map_height,false,false)
+				paper.changeSize(final_map_width,final_map_height,false,true)
 			}
 		}
 		
