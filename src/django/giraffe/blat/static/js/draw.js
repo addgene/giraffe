@@ -1582,8 +1582,9 @@
 				var label = paper.text(pos, height, label_name);
 				
 				// Below, right-justify. Above, left-justify.
+				var anchor = (height >= plasmid_y) ? "end" : "start";
 				label.attr({"fill": _color,
-							"text-anchor": "start",
+							"text-anchor": anchor,
 							"font-size": label_font_size,
 							"opacity": 1.0 });
 
@@ -1855,10 +1856,11 @@
 			// Calculate positions of label lists
 			var list_spread = plasmid_width / (nlists + 1);
 			//                 top  bottom
-			var offset_frac = [0.2, 0.4];
+			var offset_frac = [1.0, -1.0];
 			for (var ix = 0; ix < nlists; ix++) {
 				for (var lx = 0; lx < 2; lx++) {
-					// offset to the right by offset_frac
+					// offset to the right or left by offset_frac
+					// depending on if it's above or below
 					label_pos[lx][ix] = (ix + 1 + offset_frac[lx]) * list_spread;
 					label_lists[lx][ix] = [];
 				}
@@ -1872,14 +1874,7 @@
 				var section = Math.floor(nlists*(f.real_center() - plasmid_left)/
 				                                 plasmid_width);
 				// Is it in the top or bottom?
-				var bottom = 0;
-				if (f.y > 0) {
-					bottom = 1;
-				} else if (f.y == 0) {
-					// If the bottom list is shorter, this will be 1; else, 0
-					bottom = (label_lists[1][section].length <
-					          label_lists[0][section].length) + 0;
-				}
+				var bottom = section % 2;
 
 				if (f.should_draw_label()) {
 					// push it on the appropriate list
@@ -1900,12 +1895,15 @@
 					var ll = label_lists[lx][sx];
 
 					// Sort the list by center position
-					var comp_factor = 0.3;
+					var comp_factor = 0.75;
 					ll.sort(function (a,b) {
 						// Make some compensation for height as well
 						function key(feat) {
-							return feat.real_center() - 
-								comp_factor * Math.abs(feat.y);
+							// On top, heigts closer to you are 
+							// negative, so we flip the sign depending on
+							// whether or not lx is 0 (top) or 1 (bottom)
+							return feat.real_center() + 
+								comp_factor * feat.y;
 						}
 						return key(a) - key(b);
 					})
@@ -1917,7 +1915,7 @@
 						var curr_height;
 						if (lx) { // Bottom list: top to bottom
 							curr_height = plasmid_y + height + 
-								(num_labels - 1 - ix) * label_height;
+								(ix) * label_height;
 						} else { // Top list: bottom to top
 							curr_height = plasmid_y - height - 
 								(num_labels - 1 - ix) * label_height;
@@ -1934,7 +1932,7 @@
             // Just an educated guess based on 13pt font. we will use
             // this to compute height of label lists. These are
             // conservative.
-            label_letter_height = 15;
+            label_letter_height = 17.5;
           
             var min_y = map_height/2;
             var max_y = map_height/2;
