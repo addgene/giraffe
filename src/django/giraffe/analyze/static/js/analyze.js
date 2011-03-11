@@ -1,3 +1,7 @@
+// XXX discuss
+//   Feature now exposed here, so draw.js better not change the API
+
+
 // Requires: jquery-ui, jquery, giraffe/blat/draw.js
 //
 // Call:
@@ -17,6 +21,7 @@
     var name = 'Sequence';
     if ('name' in options) { name = options['name']; }
     var sequence = new BioJS.DNASequence(gd.sequence);
+    var cutters = new Cutter_List(gd.enzyme_features);
 
     function Switch_Panes(panes) {
         var divs = [];
@@ -57,6 +62,79 @@
         }
     }
 
+    // Abstraction for handling cutters
+
+    function Cutter_List(enzymes_feature_list) {
+        this.enzymes = enzymes_feature_list;
+    }
+
+    function __cutter_sorter(a,b) {
+        if (a.name() < b.name()) { return -1; }
+        if (a.name() > b.name()) { return 1; }
+        return 0;
+    }
+
+    Cutter_List.prototype.unique=function(){
+        if (this.__unique) { return this.__unique; }
+        this.__unique = [];
+        for (var i in this.enzymes) {
+            if (this.enzymes[i].cut_count() == 1) {
+                this.__unique.push(this.enzymes[i]);
+            }
+        }
+        this.__unique.sort(__cutter_sorter);
+        return this.__unique;
+    }
+
+    Cutter_List.prototype.all=function(){
+        if (this.__all) { return this.__all; }
+        this.__all = [];
+        var check = new Array();
+        for (var i in this.enzymes) {
+            if (this.enzymes[i].name() in check) { }
+            else {
+                this.__all.push(this.enzymes[i]);
+                check[this.enzymes[i].name()] = 1;
+            }
+        }
+        this.__all.sort(__cutter_sorter);
+        return this.__all; 
+    }
+
+    Cutter_List.prototype.non=function(){
+        if (this.__non) { return this.__non; }
+        var all_cutters = [
+            'AatII', 'Acc65I', 'AccI', 'AclI', 'AfeI', 'AflII',
+            'AgeI', 'ApaI', 'ApaLI', 'ApoI', 'AscI', 'AseI',
+            'AsiSI', 'AvrII', 'BamHI', 'BclI', 'BglII', 'Bme1580I',
+            'BmtI', 'BsaHI', 'BsiEI', 'BsiWI', 'BspEI', 'BspHI',
+            'BsrGI', 'BssHII', 'BstBI', 'BstZ17I', 'BtgI', 'ClaI',
+            'DraI', 'EaeI', 'EagI', 'EcoRI', 'EcoRV', 'FseI',
+            'FspI', 'HaeII', 'HincII', 'HindIII', 'HpaI', 'KasI',
+            'KpnI', 'MfeI', 'MluI', 'MscI', 'MspA1I', 'NaeI',
+            'NarI', 'NcoI', 'NdeI', 'NgoMIV', 'NheI', 'NotI',
+            'NruI', 'NsiI', 'NspI', 'PacI', 'PciI', 'PmeI',
+            'PmlI', 'PsiI', 'PspOMI', 'PstI', 'PvuI', 'PvuII',
+            'SacI', 'SacII', 'SalI', 'SbfI', 'ScaI', 'SfcI',
+            'SfoI', 'SgrAI', 'SmaI', 'SmlI', 'SnaBI', 'SpeI',
+            'SphI', 'SspI', 'StuI', 'SwaI', 'XbaI', 'XhoI',
+            'XmaI'
+        ];
+        var all_cutters_hash = new Array();
+        for (var i in all_cutters) {
+            all_cutters_hash[all_cutters[i]] = 1;
+        }
+        var have_these = this.all();
+        for (var i in have_these) {
+            delete all_cutters_hash[have_these[i].name()];
+        }
+        this.__non = [];
+        for (var i in all_cutters_hash) {
+            this.__non.push(i);
+        }
+        return this.__non;
+    }
+
     function sequence_tab(dom) {
         panes = Switch_Panes(['Viewer', 'Fasta', 'GenBank', 'Reverse Complement']);
 
@@ -86,6 +164,55 @@
             'fade_time' : 300,
             'cutters': [1]
         });
+    }
+
+    function digest_tab(dom) {
+        panes = Switch_Panes(
+            ['All Cutters',
+             'Unique Cutters',
+             'Non-Cutters']
+        );
+
+        $(dom).append(panes.links)
+              .append(panes.panes);
+
+        var all = cutters.all();
+        var list = $('<ul></ul>').addClass('giraffe-enzyme-list');
+        for (var i in all) {
+            var name = $('<label></label>').append(all[i].name());
+            var cuts = [];
+            var all_of_this = all[i].other_cutters();
+            for (var c in all_of_this) {
+                cuts.push(gd.basic_features[all_of_this[c]].cut());
+            }
+            var s = $('<p>Cuts after '+cuts.join(', ')+'</p>');
+            var item = $('<li></li>').append(name).append(s);
+            $(list).append(item);
+        }
+        $(panes.pane(0)).append(list);
+
+        var unique = cutters.unique();
+        var list = $('<ul></ul>').addClass('giraffe-enzyme-list');
+        for (var i in unique) {
+            var name = $('<label></label>').append(unique[i].name());
+            var s = $('<p>Cuts after '+unique[i].cut()+'</p>');
+            var item = $('<li></li>').append(name).append(s);
+            $(list).append(item);
+        }
+        $(panes.pane(1)).append(list);
+
+        var non = cutters.non();
+        var list = $('<ul></ul>').addClass('giraffe-enzyme-list');
+        for (var i in non) {
+            var name = $('<label></label>').append(non[i]);
+            var item = $('<li></li>').append(name);
+            $(list).append(item);
+        }
+        $(panes.pane(2))
+            .append('<p>The following cutters do not cut this sequence.</p>')
+            .append(list);
+         
+        panes.show(0);
     }
 
     function translate_tab(dom) {
@@ -271,6 +398,7 @@
 
         map_tab(dom_tab_map);
         sequence_tab(dom_tab_sequence);
+        digest_tab(dom_tab_digest);
         translate_tab(dom_tab_translate);
         blast_tab(dom_tab_blast);
         align_tab(dom_tab_align);
