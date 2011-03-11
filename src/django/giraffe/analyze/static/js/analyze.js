@@ -1,6 +1,5 @@
 // XXX discuss
 //   Feature now exposed here, so draw.js better not change the API
-//   Can we guarantee other-cutters orders?
 
 
 // Requires: jquery-ui, jquery, giraffe/blat/draw.js
