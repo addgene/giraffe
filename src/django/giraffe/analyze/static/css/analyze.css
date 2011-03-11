@@ -9,6 +9,6 @@
 
 .giraffe-enzyme-list { list-style-type:none; margin:0px; padding:0px; }
 .giraffe-enzyme-list li label { float:left; width:100px; margin-right:15px; font-weight:bold; }
-.giraffe-enzyme-list li p { margin:0px padding-left:115px; }
+.giraffe-enzyme-list li p { margin:15px 0px; padding-left:115px; }
 .giraffe-enzyme-list li { clear:left; }
 

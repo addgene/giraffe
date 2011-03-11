@@ -1,5 +1,6 @@
 // XXX discuss
 //   Feature now exposed here, so draw.js better not change the API
+//   Can we guarantee other-cutters orders?
 
 
 // Requires: jquery-ui, jquery, giraffe/blat/draw.js
@@ -20,6 +21,7 @@
     if ('dom_id' in options) { dom_id = options['dom_id']; }
     var name = 'Sequence';
     if ('name' in options) { name = options['name']; }
+    var seqlen = gd.sequence.length;
     var sequence = new BioJS.DNASequence(gd.sequence);
     var cutters = new Cutter_List(gd.enzyme_features);
 
@@ -170,7 +172,9 @@
         panes = Switch_Panes(
             ['All Cutters',
              'Unique Cutters',
-             'Non-Cutters']
+             'Non-Cutters',
+             'Circular Digest',
+             'Linear Digest']
         );
 
         $(dom).append(panes.links)
@@ -211,7 +215,51 @@
         $(panes.pane(2))
             .append('<p>The following cutters do not cut this sequence.</p>')
             .append(list);
-         
+
+        function __digest(circular) {
+            var all = cutters.all();
+            var list = $('<ul></ul>').addClass('giraffe-enzyme-list');
+            for (var i in all) {
+                var name = $('<label></label>').append(all[i].name());
+                var cuts = [];
+                var all_of_this = all[i].other_cutters();
+                all_of_this.sort(function(a,b){
+                    return gd.basic_features[a].start() -
+                        gd.basic_features[b].start();
+                });
+                for (var c in all_of_this) {
+                    cuts.push(gd.basic_features[all_of_this[c]].cut());
+                }
+                var digests = []
+                for (var j=0; j<cuts.length; j++) {
+                    if (j == 0 && !circular) {
+                        digests.push('1-'+(cuts[j])+' ('+cuts[j]+' bp)');
+                    }
+                    if (j+1 == cuts.length) {
+                        if (circular) {
+                            digests.push((cuts[j]+1)+'-'+cuts[0]+' ('+
+                                         (seqlen-(cuts[j]+1)+1+cuts[0])+' bp)');
+                        }
+                        else {
+                            digests.push((cuts[j]+1)+'-'+seqlen+' ('+
+                                         (seqlen-(cuts[j]+1)+1)+' bp)');
+                        }
+                    }
+                    else {
+                        digests.push(cuts[j]+1+'-'+(cuts[j+1])+' ('+
+                                     (cuts[j+1]-(cuts[j]+1)+1)+' bp)');
+                    }
+                }
+                var s = $('<p>'+digests.join(', ')+'</p>');
+                var item = $('<li></li>').append(name).append(s);
+                $(list).append(item);
+            }
+            return list;
+        }
+
+        $(panes.pane(3)).append(__digest(true));
+        $(panes.pane(4)).append(__digest(false));
+
         panes.show(0);
     }
 
