@@ -1,6 +1,8 @@
 .giraffe-analyze-circular-map {}
-
 .giraffe-link-on { text-decoration:none; }
-
 .giraffe-seq { font-family:courier; }
+.giraffe-blast2 textarea { display:block; margin:10px 0px; width:600px; height:200px; }
+.giraffe-clear { clear:both; }
+.giraffe-left { float:left; margin-right:10px; }
+.giraffe-left-last { margin-right:0px; }
 

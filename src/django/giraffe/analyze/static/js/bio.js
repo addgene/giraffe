@@ -179,7 +179,8 @@ window.BioJS = function(){
         if (!html) { sp = " "; delim = "\n"; tab = "\t"; }
 
         s =
-            'LOCUS'+__repeat(sp,7)+name+tab+seq_object.length+' bp '+tab+'DNA'+tab+'SYN'+delim+
+            'LOCUS'+__repeat(sp,7)+name+tab+seq_object.length()+' bp '+
+                    tab+'DNA'+tab+'SYN'+delim+
             'DEFINITION'+__repeat(sp,2)+name+delim+
             'ACCESSION'+__repeat(sp,3)+delim+
             'KEYWORDS'+__repeat(sp,4)+delim+
@@ -206,12 +207,82 @@ window.BioJS = function(){
         return s;
     }
 
+    function NCBI_blastn_form(seq_object) {
+        var form =
+            '<form action="http://www.ncbi.nlm.nih.gov/BLAST/Blast.cgi"'+
+            ' method="post" target="_blank">'+
+            '<input type="hidden" name="DATABASE" value="nr" />'+
+            '<input type="hidden" name="PAGE" value="Nucleotides" />'+
+            '<input type="hidden" name="PROGRAM" value="blastn" />'+
+            '<input type="hidden" name="SERVICE" value="plain" />'+
+            '<input type="hidden" name="GET_SEQUENCE" value="yes" />'+
+            '<input type="hidden" name="QUERY" value="'+seq_object.sequence()+'">'+
+            '<input type="submit" value="BLASTN">'+
+            '</form>';
+        return form;
+    }
+
+    function NCBI_blastx_form(seq_object) {
+        var form =
+            '<form action="http://www.ncbi.nlm.nih.gov/BLAST/Blast.cgi"'+
+            ' method="post" target="_blank">'+
+            '<input type="hidden" name="DATABASE" value="nr" />'+
+            '<input type="hidden" name="PAGE" value="Nucleotides" />'+
+            '<input type="hidden" name="PROGRAM" value="blastx" />'+
+            '<input type="hidden" name="SERVICE" value="plain" />'+
+            '<input type="hidden" name="GET_SEQUENCE" value="yes" />'+
+            '<input type="hidden" name="QUERY" value="'+seq_object.sequence()+'" />'+
+            '<input type="submit" value="BLASTX" />'+
+            '</form>';
+        return form;
+    }
+
+    function NCBI_blast2_form(seq_object) {
+        var form =
+            '<form action="http://blast.ncbi.nlm.nih.gov/Blast.cgi"'+
+            ' method="post" target="_blank">'+
+            '<input type="hidden" name="PAGE" value=blastn />'+
+            '<input type="hidden" name="PROGRAM" value=blastn />'+
+            '<input type="hidden" name="BLAST_PROGRAMS" value=blastn />'+
+            '<input type="hidden" name="PAGE_TYPE" value=BlastSearch />'+
+            '<input type="hidden" name="BLAST_SPEC" value=blast2seq />'+
+            '<input type="hidden" name="QUERY" value="'+seq_object.sequence()+'" />'+
+            '<textarea name="SUBJECTS"></textarea>'+
+            '<input type="submit" value="BLAST2" />'+
+            '</form>';
+        return form;
+    }
+
+    function NCBI_blastp_form(seq_object) {
+        var form =
+            '<form action="http://www.ncbi.nlm.nih.gov/BLAST/Blast.cgi"'+
+            ' method="post" target="_blank">'+
+            '<input type="hidden" name="DATABASE" value="nr" />'+
+            '<input type="hidden" name="PAGE" value="Protein" />'+
+            '<input type="hidden" name="PROGRAM" value="blastp" />'+
+            '<input type="hidden" name="SERVICE" value="plain" />'+
+            '<input type="hidden" name="GET_SEQUENCE" value="yes" />'+
+            '<input type="hidden" name="QUERY" value="'+seq_object.sequence()+'" />'+
+            '<input type="submit" value="BLASTP" />'+
+            '</form>';
+        return form;
+    }
+
+    function NCBI_recent_results_link() {
+        return '<a href="http://www.ncbi.nlm.nih.gov/BLAST/Blast.cgi?CMD=GetSaved&RECENT_RESULTS=on" target="_blank"></a>';
+    }
+
     return {
         'fasta' : fasta,
         'genbank' : genbank,
         'wrap' : wrap,
         'DNASequence' : DNASequence,
-        'ProteinSequence' : ProteinSequence
+        'ProteinSequence' : ProteinSequence,
+        'NCBI_blastn_form' : NCBI_blastn_form,
+        'NCBI_blastx_form' : NCBI_blastx_form,
+        'NCBI_blast2_form' : NCBI_blast2_form,
+        'NCBI_blastp_form' : NCBI_blastp_form,
+        'NCBI_recent_results_link' : NCBI_recent_results_link
     }
 }();
 
