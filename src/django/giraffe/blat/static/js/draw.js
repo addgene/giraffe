@@ -85,6 +85,11 @@
 	var _debug = false;
 	var basic_features = [];
 	var seq_length;
+    var full_sequence = '';
+
+    // Helpers to keep track of frequently used features
+    var orf_features = [];
+    var enzyme_features = [];
 
 	// Feature Types
 	var ft = { 
@@ -128,7 +133,9 @@
         var _default_show_feature = 1;
         // Not all features have this option, e.g. annotated ones we
         // have to show the feature.
-        if ('show_feature' in feat) { _default_show_feature = parseInt(feat.show_feature); }
+        if ('show_feature' in feat) {
+            _default_show_feature = parseInt(feat.show_feature);
+        }
 		var _clockwise = feat.clockwise;
 		var _cut = parseInt(feat.cut); // only for enzymes;
 		var _other_cutters = []; // only for enzymes;
@@ -143,6 +150,9 @@
 		// returns - 1 if not enzyme		
 		this.cut = function() { return _type == ft.enzyme ? _cut : -1 }; 
 
+        this.is_enzyme = function() { return _type == ft.enzyme; }
+        this.is_orf = function() { return _type == ft.orf; }
+
 		// Enzyme-only data access methods
 		// gives 0 if not enzyme
 		this.cut_count = function() { return _other_cutters.length; };
@@ -154,6 +164,20 @@
 				_other_cutters = c;
 		}
 
+        this.clockwise_sequence = function() {
+            if (full_sequence.length < this.start() ||
+                full_sequence.length < this.end()) { return ''; }
+            var s = '';
+            // positions we read from JSON are 1-based
+            if (this.end() >= this.start()) {
+                s = full_sequence.substring(this.start()-1,this.end()-1+1);
+            }
+            else {
+                s = full_sequence.substring(this.start()-1)+
+                    full_sequence.substring(0,this.end()-1+1);
+            }
+            return s;
+        }
 	}; // END Basic Feature Class
 
 	///////////////////////////////////////////////////////////////////
@@ -162,13 +186,22 @@
 		basic_features = []; // package scope
 		seq_length = json[0]; // package scope
         features_json = json[1];
-        if (json.length > 2) { gd.sequence = json[2]; }
+        if (json.length > 2) { gd.sequence = full_sequence = json[2]; }
 		for (var ix = 1; ix < features_json.length; ix++) {
-			basic_features.push(new Feature(features_json[ix]));
+            var f = new Feature(features_json[ix]);
+			basic_features.push(f);
+            if (f.is_enzyme()) { enzyme_features.push(f); }
+            if (f.is_orf()) { orf_features.push(f); }
 		}
+
+        // These stuff are only available if we read the feature list
+        gd.basic_features = basic_features;
+        gd.enzyme_features = enzyme_features;
+        gd.orf_features = orf_features;
+
 		// Now that the features are parsed, calculate how many instances
 		// of each cutter type there are.
-		cut_counts(); 
+		cut_counts();
 	}
 
 	// Private function

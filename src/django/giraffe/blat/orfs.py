@@ -5,7 +5,7 @@ import math
 import tags
 
 trans_table = 1 # standard translation table
-min_protein_len = 200
+min_protein_len = 100
 
 def detect_orfs(sequence_object):
     sequence_object.clear_orf_features()

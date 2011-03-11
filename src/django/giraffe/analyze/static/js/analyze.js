@@ -1,4 +1,4 @@
-// Requires: jquery-ui, jquery
+// Requires: jquery-ui, jquery, giraffe/blat/draw.js
 //
 // Call:
 //    GiraffeAnalyze(jQuery,gd,{...});
@@ -102,10 +102,41 @@
         $(dom).append(panes.links)
               .append(panes.panes);
 
+        for (var i in gd.orf_features) {
+            var f = gd.orf_features[i];
+            var s = f.clockwise_sequence();
+            var t = 'ORF ';
+            if (f.clockwise()) { t += f.start()+' - '+f.end(); }
+            else { t += f.end()+' - '+f.start()+' antisense'; }
+            t += ' ('+s.length/3+' aa)';
+            var title = $('<p></p>').append(t);
+
+            var p;
+            if (f.clockwise()) {
+                p = new BioJS.DNASequence(s).translate();
+            }
+            else {
+                p = new BioJS.DNASequence(s).reverse_complement().translate();
+            }
+
+            $(panes.pane(0))
+                .append(title)
+                .append($('<div></div>').addClass('giraffe-seq')
+                                        .addClass('giraffe-left')
+                                        .addClass('giraffe-protein')
+                                        .append(p.format_html())
+            ).append(
+                $(BioJS.NCBI_blastp_form(p))
+                    .addClass('giraffe-left')
+                    .addClass('giraffe-left-last')
+            ).append($('<div></div>').addClass('giraffe-clear'));
+        }
+
         var p = sequence.translate();
         $(panes.pane(1)).append(
             $('<div></div>').addClass('giraffe-seq')
                             .addClass('giraffe-left')
+                            .addClass('giraffe-protein')
                             .append(p.format_html())
         ).append(
             $(BioJS.NCBI_blastp_form(p))
@@ -117,6 +148,7 @@
         $(panes.pane(2)).append(
             $('<div></div>').addClass('giraffe-seq')
                             .addClass('giraffe-left')
+                            .addClass('giraffe-protein')
                             .append(p.format_html())
         ).append(
             $(BioJS.NCBI_blastp_form(p))
@@ -128,6 +160,7 @@
         $(panes.pane(3)).append(
             $('<div></div>').addClass('giraffe-seq')
                             .addClass('giraffe-left')
+                            .addClass('giraffe-protein')
                             .append(p.format_html())
         ).append(
             $(BioJS.NCBI_blastp_form(p))
@@ -139,6 +172,7 @@
         $(panes.pane(4)).append(
             $('<div></div>').addClass('giraffe-seq')
                             .addClass('giraffe-left')
+                            .addClass('giraffe-protein')
                             .append(p.format_html())
         ).append(
             $(BioJS.NCBI_blastp_form(p))
@@ -150,6 +184,7 @@
         $(panes.pane(5)).append(
             $('<div></div>').addClass('giraffe-seq')
                             .addClass('giraffe-left')
+                            .addClass('giraffe-protein')
                             .append(p.format_html())
         ).append(
             $(BioJS.NCBI_blastp_form(p))
@@ -161,6 +196,7 @@
         $(panes.pane(6)).append(
             $('<div></div>').addClass('giraffe-seq')
                             .addClass('giraffe-left')
+                            .addClass('giraffe-protein')
                             .append(p.format_html())
         ).append(
             $(BioJS.NCBI_blastp_form(p))
