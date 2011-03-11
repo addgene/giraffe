@@ -102,7 +102,9 @@
         $(dom).append(panes.links)
               .append(panes.panes);
 
+        var starts_with = 1;
         for (var i in gd.orf_features) {
+            starts_with = 0;
             var f = gd.orf_features[i];
             var s = f.clockwise_sequence();
             var t = 'ORF ';
@@ -205,7 +207,7 @@
         );
 
         panes.hide_all();
-        panes.show(1);
+        panes.show(starts_with);
     }
 
     function blast_tab(dom) {

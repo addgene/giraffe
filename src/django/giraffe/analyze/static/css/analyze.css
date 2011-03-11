@@ -5,4 +5,4 @@
 .giraffe-clear { clear:both; }
 .giraffe-left { float:left; margin-right:10px; }
 .giraffe-left-last { margin-right:0px; }
-
+.giraffe-tag { color:red !important; }

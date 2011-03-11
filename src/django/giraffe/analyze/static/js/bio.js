@@ -35,6 +35,21 @@ window.BioJS = function(){
    	    else { return this.ncbiString[base1*16+base2*4+base3]; }
     }
 
+    var PROTEIN_TAGS = [
+        ["FLAG","DYKDDDDK"],
+        ["FLAG","DYKDHDI"],
+        ["FLAG","DYKDHDG"],
+        ["HA","YPYDVPDYA"],
+        ["6xHIS","HHHHHH"],
+        ["Myc","EQKLISEEDL"],
+        ["TEV","ENLYFQG"],
+        ["Myr","MGSNKSKPKDASQRR"],
+        ["Myr","MGSSKSKPKDPSQRA"],
+        ["V5","GKPIPNPLLGLDST"],
+        ["S15","KETAAAKFERQHMDS"],
+        ["Strep Tag","WSHPQFEK"]
+    ];
+
     function __repeat(s,n) {
         var r=""; for (var a=0;a<n;a++) r+=s; return r;
     }
@@ -141,15 +156,48 @@ window.BioJS = function(){
     ProteinSequence.prototype.sequence=function() { return this.__sequence; }
     ProteinSequence.prototype.length=function() { return this.__sequence.length; }
 
-    // Format HTML 80 chars wide
+    // Format HTML 80 chars wide, also highlight tags with giraffe-tag
+    // CSS class.
     ProteinSequence.prototype.format_html=function() {
         if (this.__html) { return this.__html; }
-        var lines_80 = wrap(this.__sequence,80);
-        s = '';
-        for (var i=0; i<lines_80.length; i++) {
-            s += lines_80[i]+'<br/>';
+        if (this.__sequence === undefined) { return ""; }
+
+        var res = '';
+        var in_tag = false;
+        var tag_length = 0;
+        var line = 0;
+        for (var i=0; i<this.__sequence.length; i++) {
+            if (!in_tag) {
+                for (var j in PROTEIN_TAGS) {
+                    var l = PROTEIN_TAGS[j][1].length;
+                    if (this.__sequence.substr(i,l).toLowerCase() ==
+                        PROTEIN_TAGS[j][1].toLowerCase()) {
+                        in_tag = true;
+                        tag_length = l;
+                        res += '<span class="giraffe-tag" title="'+PROTEIN_TAGS[j][0]+'">';
+                    }
+                }
+            }
+            res += this.__sequence[i];
+            line++;
+            if (in_tag) { // found a new tag or was already in new tag
+                tag_length--; 
+                if (tag_length == 0) {
+                    in_tag = false;
+                    res += '</span>';
+                }
+            }
+            if (line == 80) {
+                res += '<br/>';
+                line = 0;
+            }
         }
-        this.__html = s;
+
+        // just to be sure, but we really should never be here...
+        if (in_tag) { res += '</span>'; }
+        if (line > 0) { res += '<br/>'; }
+
+        this.__html = res;
         return this.__html;
     }
 
