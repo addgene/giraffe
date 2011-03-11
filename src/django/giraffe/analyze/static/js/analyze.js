@@ -64,7 +64,7 @@
             .append(genbank)
             .append(rc);
 
-        $(fasta).append(gd.sequence);
+        $(fasta).addClass('giraffe-seq').append(BioJS.fasta_html(gd.sequence,name));
 
         hide_all();
         $(link_fasta).addClass('giraffe-link-on');
