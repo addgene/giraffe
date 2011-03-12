@@ -300,11 +300,14 @@
                                         .addClass('giraffe-left')
                                         .addClass('giraffe-protein')
                                         .append(p.format_html())
-            ).append(
-                $(BioJS.NCBI_blastp_form(p))
-                    .addClass('giraffe-left')
-                    .addClass('giraffe-left-last')
-            ).append($('<div></div>').addClass('giraffe-clear'));
+                )
+                .append(
+                    $(BioJS.NCBI_blastp_form(p))
+                        .addClass('giraffe-ncbi-button')
+                        .addClass('giraffe-left')
+                        .addClass('giraffe-left-last')
+                )
+                .append($('<div>&nbsp;</div>').addClass('giraffe-clear'));
         }
 
         var p = sequence.translate();

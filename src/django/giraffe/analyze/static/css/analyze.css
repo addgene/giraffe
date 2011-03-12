@@ -4,14 +4,15 @@
 }
 
 /* Generic */
-.giraffe-clear { clear:both; }
+.giraffe-clear { clear:both; margin:15px; }
 .giraffe-left { float:left; margin-right:10px; }
 .giraffe-left-last { margin-right:0px; }
-.giraffe-link-on { text-decoration:none; }
+.giraffe-link-on { text-decoration:none; font-weight:bold; }
 .giraffe-seq { font-family:courier; }
 
 /* Specific to tabs */
 .giraffe-analyze-circular-map {}
+.giraffe-ncbi-button { margin:0px; }
 .giraffe-blast2 textarea {
     display:block; margin:10px 0px; width:600px; height:200px;
 }
