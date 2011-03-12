@@ -12,6 +12,8 @@
 //
 // Options:
 //    dom_id: dom ID to attach the analyzer window
+//    map_width: map width
+//    map_height: map height
 // 
 
 (function(){window.GiraffeAnalyze = function ($,gd,options) {
@@ -19,6 +21,10 @@
     if ('dom_id' in options) { dom_id = options['dom_id']; }
     var name = 'Sequence';
     if ('name' in options) { name = options['name']; }
+    var map_width = 640;
+    if ('map_width' in options) { map_width = options['map_width']; }
+    var map_height = 640;
+    if ('map_height' in options) { map_height = options['map_height']; }
     var seqlen = gd.sequence.length;
     var sequence = new BioJS.DNASequence(gd.sequence);
     var cutters = new Cutter_List(gd.enzyme_features);
@@ -161,7 +167,9 @@
         gd.draw_circular_map({
             'map_dom_id' : dom_id_c,
             'plasmid_name' : name,
-            'cutters': [1]
+            'cutters': [1],
+            'map_width' : map_width,
+            'map_height' : map_height
         });
     }
 
