@@ -1,7 +1,6 @@
 // XXX discuss
 //   Feature now exposed here, so draw.js better not change the API
 
-
 // Requires: jquery-ui, jquery, giraffe/blat/draw.js
 //
 // Call:
@@ -440,7 +439,11 @@
          .append(dom_tab_translate)
          .append($('<div></div>').addClass('giraffe-clear'));
 
-        $('#'+dom_id).append(dom_tabs);
+        var title = $('<h3>Analyze Sequence: '+name+'</h3>');
+
+        $('#'+dom_id).addClass('giraffe-main')
+            .append(title)
+            .append(dom_tabs);
         $(dom_tabs).tabs();
 
         map_tab(dom_tab_map);
