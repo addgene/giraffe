@@ -384,7 +384,7 @@
     }
 
     function blast_tab(dom) {
-        $(dom).append('<h3>BLAST</h3>'+
+        $(dom).append('<b>BLAST</b>'+
             '<p>BLAST finds regions of similarity between biological sequences. Click on the buttons below to BLAST your sequence. Results will appear in a new window.</p>');
         var blastn = $(BioJS.NCBI_blastn_form(sequence));
         var blastx = $(BioJS.NCBI_blastx_form(sequence));
@@ -398,7 +398,7 @@
     }
 
     function align_tab(dom) {
-        $(dom).append('<h3>Align Sequence with BLAST2</h3>'+
+        $(dom).append('<b>Align Sequence with BLAST2</b>'+
             "<p>NCBI's BLAST2 program aligns two sequences. Enter a new sequence to align against your sequence. Results will appear in a new window.</p>");
         var blast2 = $(BioJS.NCBI_blast2_form(sequence)).addClass('giraffe-blast2');
         $(dom).append(blast2);
