@@ -161,7 +161,6 @@
         gd.draw_circular_map({
             'map_dom_id' : dom_id_c,
             'plasmid_name' : name,
-            'fade_time' : 300,
             'cutters': [1]
         });
     }
