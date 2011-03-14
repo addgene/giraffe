@@ -1,5 +1,6 @@
 // XXX discuss
-//   Feature now exposed here, so draw.js better not change the API
+//   Feature object now exposed here, so draw.js better not change the
+//   API
 
 // Requires: jquery-ui, jquery, giraffe/blat/draw.js
 // Restriction: can only have one instance of this per DOM
@@ -176,7 +177,8 @@
             'plasmid_name' : name,
             'cutters': [1],
             'map_width' : map_width,
-            'map_height' : map_height
+            'map_height' : map_height,
+            'feature_click_callback' : map_feature_click_callback
         });
     }
 
@@ -554,119 +556,127 @@
             $(this).addClass('giraffe-bp-click-source');
 
             evt.preventDefault();
-            sequence_viewer_clear_highlight();
 
             var bpstr = $(this).attr('bp');
             var bp = bpstr.split(',');
-            if (bp.length > 0) {
-                for (var i in bp) { bp[i] = parseInt(bp[i]); }
-                // find start bp position for the first td
-                var first_td = Math.floor((bp[0]-1)/10)*10+1;
-                // find start bp position of the last td
-                var last_td = first_td;
-                if (bp.length > 1) {
-                    last_td = Math.floor((bp[1]-1)/10)*10+1;
-                }
-                else { bp[1] = bp[0]; }
-
-                // draw first
-                var first_td_dom = $('#giraffe-bp-'+first_td);
-                var t = $(first_td_dom).text();
-                t = t.replace(/\s/g,'');
-                
-                if (first_td == last_td && bp[0]>bp[1]) {
-                    // yikes... difficult, need to draw two spans
-                    var span0_starts_at = 0;
-                    var span0_ends_before = bp[1]+1-first_td;
-                    var span1_starts_at = bp[0]-first_td;
-                    var span1_ends_before = 10;
-                    var new_t = '';
-                    for (var i=0; i<t.length; i++) {
-                        if (i == span0_starts_at || i == span1_starts_at) {
-                            new_t += '<span class="giraffe-seq-highlight">';
-                        }
-                        new_t += t[i];
-                        if (i == span0_ends_before-1 || i == span1_ends_before-1) {
-                            new_t += '</span>';
-                        }
-                    }
-                    $(first_td_dom).html(new_t);
-                    global_has_span_td.push(first_td_dom);
-                }
-                else {
-                    var span_starts_at = bp[0]-first_td;
-                    var span_ends_before = 10;
-                    if (last_td == first_td && bp[0] <= bp[1]) {
-                        span_ends_before = bp[1]+1-first_td;
-                    }
-                    var new_t = '';
-                    for (var i=0; i<t.length; i++) {
-                        if (i == span_starts_at) {
-                            new_t += '<span class="giraffe-seq-highlight">';
-                        }
-                        new_t += t[i];
-                        if (i == span_ends_before-1) {
-                        new_t += '</span>';
-                        }
-                    }
-                    $(first_td_dom).html(new_t);
-                    global_has_span_td.push(first_td_dom);
-                }
-
-                // draw everything in between
-                if (first_td <= last_td && bp[0] <= bp[1]) {
-                    for (var td=first_td+10; td<last_td; td+=10) {
-                        $('#giraffe-bp-'+td).addClass('giraffe-seq-highlight');
-                    }
-                }
-                else {
-                    var end_td = Math.floor((seqlen-1)/10)*10+1;
-                    for (var td=first_td+10; td<=end_td; td+= 10) {
-                        $('#giraffe-bp-'+td).addClass('giraffe-seq-highlight');
-                    }
-                    for (var td=1; td<last_td; td+=10) {
-                        $('#giraffe-bp-'+td).addClass('giraffe-seq-highlight');
-                    }
-                }
-
-                // draw last
-                if (first_td != last_td) {
-                    if (bp[1] == last_td+10-1) {
-                        $('#giraffe-bp-'+last_td).addClass('giraffe-seq-highlight');
-                    }
-                    else {
-                        var last_td_dom = $('#giraffe-bp-'+last_td);
-                        var t = $(last_td_dom).text();
-                        t = t.replace(/\s/g,'');
-                        var span_starts_at = 0;
-                        var span_ends_before = bp[1]-last_td+1;
-                        var new_t = '';
-                        for (var i=0; i<t.length; i++) {
-                            if (i == span_starts_at) {
-                                new_t += '<span class="giraffe-seq-highlight">';
-                            }
-                            new_t += t[i];
-                            if (i == span_ends_before-1) {
-                                new_t += '</span>';
-                            }
-                        }
-                        $(last_td_dom).html(new_t);
-                        global_has_span_td.push(last_td_dom);
-                    }
-                }
-
-                // for best visual, we want to scroll to the first td
-
-                var first_td_line = Math.floor(first_td/(viewer_seqs_per_line*10));
-                // we want the line to scroll to to not be the first
-                // line on screen, but a few lines down
-                if (first_td_line > 3) { first_td_line -= 3; }
-                var total_lines = Math.floor(seqlen/(viewer_seqs_per_line*10))+1;
-                var table = $('.giraffe-seq-viewer table');
-                var scroll = Math.floor((first_td_line/total_lines)*$(table).height());
-                $('.giraffe-seq-viewer').scrollTop(scroll);
-            }
+            if (bp.length > 0) { sequence_viewer_bp_event_highlight(bp); }
         });
+    }
+
+    function sequence_viewer_bp_event_highlight(bp) {
+        sequence_viewer_clear_highlight();
+
+        for (var i in bp) { bp[i] = parseInt(bp[i]); }
+        // find start bp position for the first td
+        var first_td = Math.floor((bp[0]-1)/10)*10+1;
+        // find start bp position of the last td
+        var last_td = first_td;
+        if (bp.length > 1) {
+            last_td = Math.floor((bp[1]-1)/10)*10+1;
+        }
+        else { bp[1] = bp[0]; }
+
+        // draw first
+        var first_td_dom = $('#giraffe-bp-'+first_td);
+        var t = $(first_td_dom).text();
+        t = t.replace(/\s/g,'');
+        
+        if (first_td == last_td && bp[0]>bp[1]) {
+            // yikes... difficult, need to draw two spans
+            var span0_starts_at = 0;
+            var span0_ends_before = bp[1]+1-first_td;
+            var span1_starts_at = bp[0]-first_td;
+            var span1_ends_before = 10;
+            var new_t = '';
+            for (var i=0; i<t.length; i++) {
+                if (i == span0_starts_at || i == span1_starts_at) {
+                    new_t += '<span class="giraffe-seq-highlight">';
+                }
+                new_t += t[i];
+                if (i == span0_ends_before-1 || i == span1_ends_before-1) {
+                    new_t += '</span>';
+                }
+            }
+            $(first_td_dom).html(new_t);
+            global_has_span_td.push(first_td_dom);
+        }
+        else {
+            var span_starts_at = bp[0]-first_td;
+            var span_ends_before = 10;
+            if (last_td == first_td && bp[0] <= bp[1]) {
+                span_ends_before = bp[1]+1-first_td;
+            }
+            var new_t = '';
+            for (var i=0; i<t.length; i++) {
+                if (i == span_starts_at) {
+                    new_t += '<span class="giraffe-seq-highlight">';
+                }
+                new_t += t[i];
+                if (i == span_ends_before-1) {
+                    new_t += '</span>';
+                }
+            }
+            $(first_td_dom).html(new_t);
+            global_has_span_td.push(first_td_dom);
+        }
+
+        // draw everything in between
+        if (first_td <= last_td && bp[0] <= bp[1]) {
+            for (var td=first_td+10; td<last_td; td+=10) {
+                $('#giraffe-bp-'+td).addClass('giraffe-seq-highlight');
+            }
+        }
+        else {
+            var end_td = Math.floor((seqlen-1)/10)*10+1;
+            for (var td=first_td+10; td<=end_td; td+= 10) {
+                $('#giraffe-bp-'+td).addClass('giraffe-seq-highlight');
+            }
+            for (var td=1; td<last_td; td+=10) {
+                $('#giraffe-bp-'+td).addClass('giraffe-seq-highlight');
+            }
+        }
+
+        // draw last
+        if (first_td != last_td) {
+            if (bp[1] == last_td+10-1) {
+                $('#giraffe-bp-'+last_td).addClass('giraffe-seq-highlight');
+            }
+            else {
+                var last_td_dom = $('#giraffe-bp-'+last_td);
+                var t = $(last_td_dom).text();
+                t = t.replace(/\s/g,'');
+                var span_starts_at = 0;
+                var span_ends_before = bp[1]-last_td+1;
+                var new_t = '';
+                for (var i=0; i<t.length; i++) {
+                    if (i == span_starts_at) {
+                        new_t += '<span class="giraffe-seq-highlight">';
+                    }
+                    new_t += t[i];
+                    if (i == span_ends_before-1) {
+                        new_t += '</span>';
+                    }
+                }
+                $(last_td_dom).html(new_t);
+                global_has_span_td.push(last_td_dom);
+            }
+        }
+
+        // for best visual, we want to scroll to the first td
+
+        var first_td_line = Math.floor(first_td/(viewer_seqs_per_line*10));
+        // we want the line to scroll to to not be the first line on
+        // screen, but a few lines down
+        if (first_td_line > 3) { first_td_line -= 3; }
+        var total_lines = Math.floor(seqlen/(viewer_seqs_per_line*10))+1;
+        var table = $('.giraffe-seq-viewer table');
+        var scroll = Math.floor((first_td_line/total_lines)*$(table).height());
+        $('.giraffe-seq-viewer').scrollTop(scroll);
+    }
+
+    function map_feature_click_callback(feature) {
+        var bp = [feature.start(),feature.end()];
+        sequence_viewer_bp_event_highlight(bp);
     }
 
     function full_widget() {
