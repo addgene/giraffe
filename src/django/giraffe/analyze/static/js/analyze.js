@@ -174,7 +174,7 @@
         $(dom)
             .append('<p class="giraffe-help">Click on a feature label or feature to see corresponding DNA sequence.</p>')
             .append(dom_map)
-        gd.draw_circular_map({
+        gd.CircularMap({
             'map_dom_id' : dom_id_c,
             'plasmid_name' : name,
             'cutters': [1],
