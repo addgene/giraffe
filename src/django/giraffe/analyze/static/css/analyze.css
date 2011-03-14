@@ -1,14 +1,59 @@
-.giraffe-analyze-circular-map {}
-.giraffe-link-on { text-decoration:none; }
-.giraffe-seq { font-family:courier; }
-.giraffe-blast2 textarea { display:block; margin:10px 0px; width:600px; height:200px; }
-.giraffe-clear { clear:both; }
+.giraffe-main {
+    font-size:13px; width:inherit;
+    font-family:helvetica, arial, sans-serif;
+    overflow-x:auto;
+}
+
+svg text tspan { cursor:pointer; }
+svg path { cursor:pointer; }
+
+/* overriding jquery */
+.giraffe-main .giraffe-tab a { color:#06c; text-decoration:underline; }
+
+.giraffe-main td { vertical-align:top; }
+/* We want -viewer and -tabs to line up, and -seq-viewer should be
+ * contained within -viewer */
+.giraffe-viewer { height:700px; overflow:auto; }
+.giraffe-seq-viewer { height:660px; overflow:auto; }
+.giraffe-tabs { height:700px; overflow:auto; }
+
+/* Generic */
+.giraffe-clear { clear:both; margin:15px; }
 .giraffe-left { float:left; margin-right:10px; }
 .giraffe-left-last { margin-right:0px; }
+.giraffe-link-on { text-decoration:none; font-weight:bold; }
+.giraffe-seq { font-family:courier; }
+
+/* Specific to panes/tabs */
+
+.giraffe-viewer { padding:4px; border:1px solid #ddd; }
+.giraffe-viewer-topbar { margin:0px 0px 10px 0px; padding-left:5px; }
+.giraffe-viewer-topbar div { display:inline-block; margin-right:4px; }
+.giraffe-seq-viewer table { font-family:courier; }
+.giraffe-seq-viewer .giraffe-bp-marker { color:#777; }
+.giraffe-seq-viewer .giraffe-bp-marker-left { text-align:right; }
+.giraffe-seq-viewer .giraffe-bp-marker-right { text-align:left; }
+
+.giraffe-seq-highlight,
+#giraffe-viewer-topbar-highlight { background-color:#aa3333; color:#fff; }
+/* -mouseover comes after -highlight, so takes precedence */
+.giraffe-seq-mouseover,
+#giraffe-viewer-topbar-mouseover { background-color:yellow; color:black; }
+
+/* this should match -highlight */
+.giraffe-bp-click-source { background-color:#aa3333; color:#fff !important; }
+
+.giraffe-analyze-circular-map {}
+.giraffe-ncbi-button { margin:0px; }
+.giraffe-blast2 textarea {
+    display:block; margin:10px 0px; width:600px; height:200px;
+}
 .giraffe-tag { color:red !important; }
 
 .giraffe-enzyme-list { list-style-type:none; margin:0px; padding:0px; }
-.giraffe-enzyme-list li label { float:left; width:100px; margin-right:15px; font-weight:bold; }
+.giraffe-enzyme-list li label {
+    float:left; width:100px; margin-right:15px; font-weight:bold;
+}
 .giraffe-enzyme-list li p { margin:15px 0px; padding-left:115px; }
 .giraffe-enzyme-list li { clear:left; }
 

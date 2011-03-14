@@ -1,8 +1,9 @@
 // XXX discuss
-//   Feature now exposed here, so draw.js better not change the API
-
+//   Feature object now exposed here, so draw.js better not change the
+//   API
 
 // Requires: jquery-ui, jquery, giraffe/blat/draw.js
+// Restriction: can only have one instance of this per DOM
 //
 // Call:
 //    GiraffeAnalyze(jQuery,gd,{...});
@@ -13,6 +14,9 @@
 //
 // Options:
 //    dom_id: dom ID to attach the analyzer window
+//    map_width: map width
+//    map_height: map height
+//    analyzer_width: main width of the entire analyzer
 // 
 
 (function(){window.GiraffeAnalyze = function ($,gd,options) {
@@ -20,6 +24,15 @@
     if ('dom_id' in options) { dom_id = options['dom_id']; }
     var name = 'Sequence';
     if ('name' in options) { name = options['name']; }
+    var map_width = 640;
+    if ('map_width' in options) { map_width = options['map_width']; }
+    var map_height = 640;
+    if ('map_height' in options) { map_height = options['map_height']; }
+    var analyzer_width = 1340;
+    if ('analyzer_width' in options) { analyzer_width = options['analyzer_width']; }
+
+    var viewer_seqs_per_line = 5;
+
     var seqlen = gd.sequence.length;
     var sequence = new BioJS.DNASequence(gd.sequence);
     var cutters = new Cutter_List(gd.enzyme_features);
@@ -137,33 +150,37 @@
     }
 
     function sequence_tab(dom) {
-        panes = Switch_Panes(['Viewer', 'Fasta', 'GenBank', 'Reverse Complement']);
+        panes = Switch_Panes(['Fasta', 'GenBank', 'Reverse Complement']);
 
         $(dom).append('<p>Current sequence: '+sequence.length()+' base pairs</p>')
               .append(panes.links)
               .append(panes.panes);
 
-        $(panes.pane(1))
+        $(panes.pane(0))
             .addClass('giraffe-seq').append(BioJS.fasta(sequence,name));
-        $(panes.pane(2))
+        $(panes.pane(1))
             .addClass('giraffe-seq').append(BioJS.genbank(sequence,name));
-        $(panes.pane(3))
+        $(panes.pane(2))
             .addClass('giraffe-seq').append(
                 BioJS.fasta(sequence.reverse_complement(),name)
             );
         panes.hide_all();
-        panes.show(1);
+        panes.show(0);
     }
 
     function map_tab(dom) {
         var dom_id_c = 'giraffe-'+Math.floor(Math.random()*100000000);
         var dom_map = $('<div id="'+dom_id_c+'" class="giraffe-analyze-circular-map"></div>');
-        $(dom).append(dom_map)
+        $(dom)
+            .append('<p class="giraffe-help">Click on a feature label or feature to see corresponding DNA sequence.</p>')
+            .append(dom_map)
         gd.draw_circular_map({
             'map_dom_id' : dom_id_c,
             'plasmid_name' : name,
-            'fade_time' : 300,
-            'cutters': [1]
+            'cutters': [1],
+            'map_width' : map_width,
+            'map_height' : map_height,
+            'feature_click_callback' : map_feature_click_callback
         });
     }
 
@@ -176,8 +193,10 @@
              'Linear Digest']
         );
 
-        $(dom).append(panes.links)
-              .append(panes.panes);
+        $(dom)
+            .append('<p class="giraffe-help">Click on a base pair number to see corresponding DNA sequence.</p>')
+            .append(panes.links)
+            .append(panes.panes);
 
         var all = cutters.all();
         var list = $('<ul></ul>').addClass('giraffe-enzyme-list');
@@ -187,6 +206,10 @@
             var all_of_this = all[i].other_cutters();
             for (var c in all_of_this) {
                 cuts.push(gd.basic_features[all_of_this[c]].cut());
+            }
+            for (var c in cuts) {
+                cuts[c] = '<a href="#" title="'+all[i].name()
+                          +'" bp="'+cuts[c]+'" class="giraffe-bp">'+cuts[c]+'</a>';
             }
             var s = $('<p>Cuts after '+cuts.join(', ')+'</p>');
             var item = $('<li></li>').append(name).append(s);
@@ -198,7 +221,10 @@
         var list = $('<ul></ul>').addClass('giraffe-enzyme-list');
         for (var i in unique) {
             var name = $('<label></label>').append(unique[i].name());
-            var s = $('<p>Cuts after '+unique[i].cut()+'</p>');
+            var x = '<a href="#" title="'+unique[i].name()
+                    +'" bp="'+unique[i].cut()+'" class="giraffe-bp">'
+                    +unique[i].cut()+'</a>';
+            var s = $('<p>Cuts after '+x+'</p>');
             var item = $('<li></li>').append(name).append(s);
             $(list).append(item);
         }
@@ -232,20 +258,31 @@
                 var digests = []
                 for (var j=0; j<cuts.length; j++) {
                     if (j == 0 && !circular) {
-                        digests.push('1-'+(cuts[j])+' ('+cuts[j]+' bp)');
+                        var a0 = '<a href="#" class="giraffe-bp" title="Fragment cut by '
+                                 +all[i].name()+'" bp="1,'+cuts[j]+'">';
+                        digests.push(a0+'1-'+(cuts[j])+'</a> ('+cuts[j]+' bp)');
                     }
                     if (j+1 == cuts.length) {
                         if (circular) {
-                            digests.push((cuts[j]+1)+'-'+cuts[0]+' ('+
+                            var a0 = '<a href="#" class="giraffe-bp" title="Fragment cut by '
+                                     +all[i].name()+'" bp="'
+                                     +(cuts[j]+1)+','+cuts[0]+'">';
+                            digests.push(a0+(cuts[j]+1)+'-'+cuts[0]+'</a> ('+
                                          (seqlen-(cuts[j]+1)+1+cuts[0])+' bp)');
                         }
                         else {
-                            digests.push((cuts[j]+1)+'-'+seqlen+' ('+
+                            var a0 = '<a href="#" class="giraffe-bp" title="Fragment cut by '
+                                     +all[i].name()+'" bp="'
+                                     +(cuts[j]+1)+','+seqlen+'">';
+                            digests.push(a0+(cuts[j]+1)+'-'+seqlen+'</a> ('+
                                          (seqlen-(cuts[j]+1)+1)+' bp)');
                         }
                     }
                     else {
-                        digests.push(cuts[j]+1+'-'+(cuts[j+1])+' ('+
+                        var a0 = '<a href="#" class="giraffe-bp" title="Fragment cut by '
+                                 +all[i].name()+'" bp="'
+                                 +(cuts[j]+1)+','+cuts[j+1]+'">';
+                        digests.push(a0+(cuts[j]+1)+'-'+(cuts[j+1])+'</a> ('+
                                      (cuts[j+1]-(cuts[j]+1)+1)+' bp)');
                     }
                 }
@@ -273,18 +310,24 @@
              "3'5' Frame 3"]
         );
 
-        $(dom).append(panes.links)
-              .append(panes.panes);
+        $(dom)
+            .append(panes.links)
+            .append(panes.panes);
+
+
+        $(panes.pane(0))
+            .append('<p class="giraffe-help">Click on base pair numbers to see corresponding DNA sequence.</p>');
 
         var starts_with = 1;
         for (var i in gd.orf_features) {
             starts_with = 0;
             var f = gd.orf_features[i];
             var s = f.clockwise_sequence();
-            var t = 'ORF ';
+            var t = 'ORF <a href="#" class="giraffe-bp" title="ORF" bp="'
+                    +f.start()+','+f.end()+'">';
             if (f.clockwise()) { t += f.start()+' - '+f.end(); }
             else { t += f.end()+' - '+f.start()+' antisense'; }
-            t += ' ('+s.length/3+' aa)';
+            t += '</a> ('+s.length/3+' aa)';
             var title = $('<p></p>').append(t);
 
             var p;
@@ -301,11 +344,14 @@
                                         .addClass('giraffe-left')
                                         .addClass('giraffe-protein')
                                         .append(p.format_html())
-            ).append(
-                $(BioJS.NCBI_blastp_form(p))
-                    .addClass('giraffe-left')
-                    .addClass('giraffe-left-last')
-            ).append($('<div></div>').addClass('giraffe-clear'));
+                )
+                .append(
+                    $(BioJS.NCBI_blastp_form(p))
+                        .addClass('giraffe-ncbi-button')
+                        .addClass('giraffe-left')
+                        .addClass('giraffe-left-last')
+                )
+                .append($('<div>&nbsp;</div>').addClass('giraffe-clear'));
         }
 
         var p = sequence.translate();
@@ -385,7 +431,7 @@
     }
 
     function blast_tab(dom) {
-        $(dom).append('<h3>BLAST</h3>'+
+        $(dom).append('<p><b>BLAST</b></p>'+
             '<p>BLAST finds regions of similarity between biological sequences. Click on the buttons below to BLAST your sequence. Results will appear in a new window.</p>');
         var blastn = $(BioJS.NCBI_blastn_form(sequence));
         var blastx = $(BioJS.NCBI_blastx_form(sequence));
@@ -399,7 +445,7 @@
     }
 
     function align_tab(dom) {
-        $(dom).append('<h3>Align Sequence with BLAST2</h3>'+
+        $(dom).append('<p><b>Align Sequence with BLAST2</b></p>'+
             "<p>NCBI's BLAST2 program aligns two sequences. Enter a new sequence to align against your sequence. Results will appear in a new window.</p>");
         var blast2 = $(BioJS.NCBI_blast2_form(sequence)).addClass('giraffe-blast2');
         $(dom).append(blast2);
@@ -408,39 +454,48 @@
         $(dom).append($('<p></p>').append(recent));
     }
 
-    function full_widget() {
+    // Set of tabs for analyzing the sequence, but does not include
+    // the sequence viewer.
+    function analyzer_tabs(dom) {
         // Create each tab
         var dom_id_sequence = 'giraffe-'+Math.floor(Math.random()*100000000);
-        var dom_tab_sequence = $('<div id="'+dom_id_sequence+'"></div>');
+        var dom_tab_sequence = $('<div id="'+dom_id_sequence+'"></div>')
+            .addClass('giraffe-tab');
         var dom_id_map = 'giraffe-'+Math.floor(Math.random()*100000000);
-        var dom_tab_map = $('<div id="'+dom_id_map+'"></div>');
+        var dom_tab_map = $('<div id="'+dom_id_map+'"></div>')
+            .addClass('giraffe-tab');
         var dom_id_blast = 'giraffe-'+Math.floor(Math.random()*100000000);
-        var dom_tab_blast = $('<div id="'+dom_id_blast+'"></div>');
+        var dom_tab_blast = $('<div id="'+dom_id_blast+'"></div>')
+            .addClass('giraffe-tab');
         var dom_id_align = 'giraffe-'+Math.floor(Math.random()*100000000);
-        var dom_tab_align = $('<div id="'+dom_id_align+'"></div>');
+        var dom_tab_align = $('<div id="'+dom_id_align+'"></div>')
+            .addClass('giraffe-tab');
         var dom_id_digest = 'giraffe-'+Math.floor(Math.random()*100000000);
-        var dom_tab_digest = $('<div id="'+dom_id_digest+'"></div>');
+        var dom_tab_digest = $('<div id="'+dom_id_digest+'"></div>')
+            .addClass('giraffe-tab');
         var dom_id_translate = 'giraffe-'+Math.floor(Math.random()*100000000);
-        var dom_tab_translate = $('<div id="'+dom_id_translate+'"></div>');
+        var dom_tab_translate = $('<div id="'+dom_id_translate+'"></div>')
+            .addClass('giraffe-tab');
         // Main tab bar
         var dom_tabs = $('<div></div>').append(
             '<ul>'+
-            '<li><a href="#'+dom_id_sequence+'">Sequence</a></li>'+
             '<li><a href="#'+dom_id_map+'">Map and Features</a></li>'+
+            '<li><a href="#'+dom_id_sequence+'">Sequence</a></li>'+
             '<li><a href="#'+dom_id_blast+'">Blast</a></li>'+
             '<li><a href="#'+dom_id_align+'">Align</a></li>'+
             '<li><a href="#'+dom_id_digest+'">Digest</a></li>'+
             '<li><a href="#'+dom_id_translate+'">Translate</a></li>'+
             '</ul>'
-        ).append(dom_tab_sequence)
-         .append(dom_tab_map)
+        ).append(dom_tab_map)
+         .append(dom_tab_sequence)
          .append(dom_tab_blast)
          .append(dom_tab_align)
          .append(dom_tab_digest)
          .append(dom_tab_translate)
-         .append($('<div></div>').addClass('giraffe-clear'));
+         .append($('<div></div>').addClass('giraffe-clear'))
+         .addClass('giraffe-tabs');
 
-        $('#'+dom_id).append(dom_tabs);
+        $(dom).append(dom_tabs);
         $(dom_tabs).tabs();
 
         map_tab(dom_tab_map);
@@ -449,6 +504,246 @@
         translate_tab(dom_tab_translate);
         blast_tab(dom_tab_blast);
         align_tab(dom_tab_align);
+    }
+
+    // Sequence viewer
+    var sequence_veiwer_topbar_highlight;
+    var sequence_veiwer_topbar_mouseover;
+    function sequence_viewer(dom) {
+        var viewer = $('<div></div>').addClass('giraffe-viewer');
+        sequence_viewer_topbar_highlight = $('<div></div>')
+            .attr('id', 'giraffe-viewer-topbar-highlight');
+        sequence_viewer_topbar_mouseover = $('<div></div>')
+            .attr('id', 'giraffe-viewer-topbar-mouseover');
+        var topbar = $('<div></div>').addClass('giraffe-viewer-topbar')
+            .append(sequence_viewer_topbar_highlight)
+            .append(sequence_viewer_topbar_mouseover)
+            .append('&nbsp;');
+
+        // Sequence viewer is basically a table, each cell has 10 bps.
+        var seq_viewer = $('<div></div>').addClass('giraffe-seq-viewer');
+        var table = $('<table></table>');
+        $(seq_viewer).append(table);
+
+        var row;
+        var lines_10 = BioJS.wrap(sequence.sequence(),10);
+        for (var i=0,j=0; i<lines_10.length; i++) {
+            if (j == 0) {
+                row = $('<tr></tr>');
+                $(table).append(row);
+                var start = i*10+1;
+                $(row).append
+                    ('<td class="giraffe-bp-marker giraffe-bp-marker-left">'+start+'</td>');
+            }
+            var start = i*10+1;
+            var end = (i+1)*10;
+            var td = $('<td></td>')
+                .attr('id','giraffe-bp-'+start)
+                .attr('start',start)
+                .attr('end',end)
+                .mouseenter(function(){
+                    $(this).addClass('giraffe-seq-mouseover');
+                    var title = $(this).attr('start')+'-'+$(this).attr('end');
+                    $(sequence_viewer_topbar_mouseover).html(title);
+                 })
+                .mouseleave(function(){
+                    $(this).removeClass('giraffe-seq-mouseover');
+                    $(sequence_viewer_topbar_mouseover).html("");
+                 })
+                .append(lines_10[i]);
+            $(row).append(td);
+            j++;
+            if (j == viewer_seqs_per_line) {
+                j = 0;
+                var end = (i+1)*10;
+                $(row).append
+                    ('<td class="giraffe-bp-marker giraffe-bp-marker-right">'+end+'</td>');
+            }
+        }
+
+        $(viewer)
+            .append(topbar)
+            .append(seq_viewer);
+        $(dom).append(viewer);
+    }
+
+    // global list of td's that have span in the middle
+    var global_has_span_td = [];
+
+    function sequence_viewer_clear_highlight() {
+        $(sequence_viewer_topbar_highlight).html("");
+        $('.giraffe-seq-highlight').removeClass('giraffe-seq-highlight');
+        for (var i in global_has_span_td) {
+            var t = $(global_has_span_td[i]).text();
+            t = t.replace(/\s/g,'');
+            $(global_has_span_td[i]).html(t);
+        }
+        global_has_span_td = [];
+    }
+
+    function sequence_viewer_bp_event() {
+        $('.giraffe-bp').click(function(evt){
+            $('.giraffe-bp-click-source')
+                .removeClass('giraffe-bp-click-source');
+            $(this).addClass('giraffe-bp-click-source');
+
+            evt.preventDefault();
+
+            var bpstr = $(this).attr('bp');
+            var title = $(this).attr('title');
+            var bp = bpstr.split(',');
+            if (bp.length > 0) { sequence_viewer_bp_event_highlight(bp,title); }
+        });
+    }
+
+    function sequence_viewer_bp_event_highlight(bp,title) {
+        sequence_viewer_clear_highlight();
+
+        for (var i in bp) { bp[i] = parseInt(bp[i]); }
+        // find start bp position for the first td
+        var first_td = Math.floor((bp[0]-1)/10)*10+1;
+        // find start bp position of the last td
+        var last_td = first_td;
+        if (bp.length > 1) {
+            last_td = Math.floor((bp[1]-1)/10)*10+1;
+        }
+        else { bp[1] = bp[0]; }
+        
+        var desc = bp[0]+'-'+bp[1]+': '+title;
+        $(sequence_viewer_topbar_highlight).html(desc);
+
+        // draw first
+        var first_td_dom = $('#giraffe-bp-'+first_td);
+        var t = $(first_td_dom).text();
+        t = t.replace(/\s/g,'');
+        
+        if (first_td == last_td && bp[0]>bp[1]) {
+            // yikes... difficult, need to draw two spans
+            var span0_starts_at = 0;
+            var span0_ends_before = bp[1]+1-first_td;
+            var span1_starts_at = bp[0]-first_td;
+            var span1_ends_before = 10;
+            var new_t = '';
+            for (var i=0; i<t.length; i++) {
+                if (i == span0_starts_at || i == span1_starts_at) {
+                    new_t += '<span class="giraffe-seq-highlight">';
+                }
+                new_t += t[i];
+                if (i == span0_ends_before-1 || i == span1_ends_before-1) {
+                    new_t += '</span>';
+                }
+            }
+            $(first_td_dom).html(new_t);
+            global_has_span_td.push(first_td_dom);
+        }
+        else {
+            var span_starts_at = bp[0]-first_td;
+            var span_ends_before = 10;
+            if (last_td == first_td && bp[0] <= bp[1]) {
+                span_ends_before = bp[1]+1-first_td;
+            }
+            var new_t = '';
+            for (var i=0; i<t.length; i++) {
+                if (i == span_starts_at) {
+                    new_t += '<span class="giraffe-seq-highlight">';
+                }
+                new_t += t[i];
+                if (i == span_ends_before-1) {
+                    new_t += '</span>';
+                }
+            }
+            $(first_td_dom).html(new_t);
+            global_has_span_td.push(first_td_dom);
+        }
+
+        // draw everything in between
+        if (first_td <= last_td && bp[0] <= bp[1]) {
+            for (var td=first_td+10; td<last_td; td+=10) {
+                $('#giraffe-bp-'+td).addClass('giraffe-seq-highlight');
+            }
+        }
+        else {
+            var end_td = Math.floor((seqlen-1)/10)*10+1;
+            for (var td=first_td+10; td<=end_td; td+= 10) {
+                $('#giraffe-bp-'+td).addClass('giraffe-seq-highlight');
+            }
+            for (var td=1; td<last_td; td+=10) {
+                $('#giraffe-bp-'+td).addClass('giraffe-seq-highlight');
+            }
+        }
+
+        // draw last
+        if (first_td != last_td) {
+            if (bp[1] == last_td+10-1) {
+                $('#giraffe-bp-'+last_td).addClass('giraffe-seq-highlight');
+            }
+            else {
+                var last_td_dom = $('#giraffe-bp-'+last_td);
+                var t = $(last_td_dom).text();
+                t = t.replace(/\s/g,'');
+                var span_starts_at = 0;
+                var span_ends_before = bp[1]-last_td+1;
+                var new_t = '';
+                for (var i=0; i<t.length; i++) {
+                    if (i == span_starts_at) {
+                        new_t += '<span class="giraffe-seq-highlight">';
+                    }
+                    new_t += t[i];
+                    if (i == span_ends_before-1) {
+                        new_t += '</span>';
+                    }
+                }
+                $(last_td_dom).html(new_t);
+                global_has_span_td.push(last_td_dom);
+            }
+        }
+
+        // for best visual, we want to scroll to the first td
+
+        var first_td_line = Math.floor(first_td/(viewer_seqs_per_line*10));
+        // we want the line to scroll to to not be the first line on
+        // screen, but a few lines down
+        if (first_td_line > 3) { first_td_line -= 3; }
+        var total_lines = Math.floor(seqlen/(viewer_seqs_per_line*10))+1;
+        var table = $('.giraffe-seq-viewer table');
+        var scroll = Math.floor((first_td_line/total_lines)*$(table).height());
+        $('.giraffe-seq-viewer').scrollTop(scroll);
+    }
+
+    function map_feature_click_callback(feature) {
+        var bp = [feature.start(),feature.end()];
+        sequence_viewer_bp_event_highlight(bp,feature.name());
+    }
+
+    function full_widget() {
+        var dom_table = $('<table></table>');
+        var dom_row = $('<tr></tr>');
+        $(dom_table).append(dom_row);
+
+        var dom_id_viewer = 'giraffe-'+Math.floor(Math.random()*100000000);
+        var dom_id_tabs = 'giraffe-'+Math.floor(Math.random()*100000000);
+
+        var dom_viewer = $('<td id="'+dom_id_viewer+'"></td>');
+        var dom_tabs = $('<td id="'+dom_id_tabs+'"></td>');
+
+        $(dom_row)
+            .append(dom_viewer)
+            .append(dom_tabs)
+            .append($('<div></div>').addClass('giraffe-clear'));
+
+        var dom_main = $('#'+dom_id);
+        $(dom_main).addClass('giraffe-main')
+            .append(dom_table);
+
+        sequence_viewer(dom_viewer);
+        analyzer_tabs(dom_tabs);
+        sequence_viewer_bp_event(dom_viewer);
+
+        $(dom_main).width(analyzer_width);
+        var viewer_width = 2*analyzer_width/5;
+        var tabs_width = analyzer_width-viewer_width;
+        $(dom_viewer).width(viewer_width);
+        $(dom_tabs).width(tabs_width);
     }
 
     full_widget();

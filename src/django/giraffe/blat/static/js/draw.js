@@ -58,6 +58,8 @@
 //  list of integers is interpreted as follows: [1, 2]: show 1- and 2-
 //  cut restriction enzymes. []: show nothing. etc. Default is [1].
 //
+//  feature_click_callback: a callback that gets called when a feature
+//  is clicked on. Argument to this callback is a Feature object.
 //
 //
 // FRAMEWORK
@@ -303,6 +305,12 @@
 		var bold_opacity = 1.0;
 		var head_width = 25;
 		var head_length = 7;
+
+        // Callback
+        var feature_click_callback = undefined;
+        if ('feature_click_callback' in options) {
+            feature_click_callback = options['feature_click_callback'];
+        }
 
 		// Cutters to show
 		var cutters_to_show = [1];
@@ -583,6 +591,7 @@
 
 			// Toggle solid/light upon click
 			var _click = function (event) {
+                /* BC: for now, only change on mouseover
 				if (_opaque) {
 					_lighter();
 					_opaque = false;
@@ -590,6 +599,10 @@
 					_bolder();
 					_opaque = true;
 				}
+                */
+                if (feature_click_callback) {
+                    feature_click_callback(basic_feature);
+                }
 			};
 
 			// Hovering: solid/light upon mouseover
