@@ -171,7 +171,9 @@
     function map_tab(dom) {
         var dom_id_c = 'giraffe-'+Math.floor(Math.random()*100000000);
         var dom_map = $('<div id="'+dom_id_c+'" class="giraffe-analyze-circular-map"></div>');
-        $(dom).append(dom_map)
+        $(dom)
+            .append('<p class="giraffe-help">Click on a feature label or feature to see corresponding DNA sequence.</p>')
+            .append(dom_map)
         gd.draw_circular_map({
             'map_dom_id' : dom_id_c,
             'plasmid_name' : name,
@@ -191,8 +193,10 @@
              'Linear Digest']
         );
 
-        $(dom).append(panes.links)
-              .append(panes.panes);
+        $(dom)
+            .append('<p class="giraffe-help">Click on a base pair number to see corresponding DNA sequence.</p>')
+            .append(panes.links)
+            .append(panes.panes);
 
         var all = cutters.all();
         var list = $('<ul></ul>').addClass('giraffe-enzyme-list');
@@ -216,7 +220,9 @@
         var list = $('<ul></ul>').addClass('giraffe-enzyme-list');
         for (var i in unique) {
             var name = $('<label></label>').append(unique[i].name());
-            var s = $('<p>Cuts after '+unique[i].cut()+'</p>');
+            var x = '<a href="#" bp="'+unique[i].cut()+'" class="giraffe-bp">'
+                    +unique[i].cut()+'</a>';
+            var s = $('<p>Cuts after '+x+'</p>');
             var item = $('<li></li>').append(name).append(s);
             $(list).append(item);
         }
