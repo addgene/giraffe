@@ -43,7 +43,10 @@ svg path { cursor:pointer; }
 /* this should match -highlight */
 .giraffe-bp-click-source { background-color:#aa3333; color:#fff !important; }
 
+.giraffe-analyze-map {}
 .giraffe-analyze-circular-map {}
+.giraffe-analyze-linear-map {}
+
 .giraffe-ncbi-button { margin:0px; }
 .giraffe-blast2 textarea {
     display:block; margin:10px 0px; width:600px; height:200px;
