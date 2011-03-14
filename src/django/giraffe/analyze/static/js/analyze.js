@@ -304,8 +304,13 @@
              "3'5' Frame 3"]
         );
 
-        $(dom).append(panes.links)
-              .append(panes.panes);
+        $(dom)
+            .append(panes.links)
+            .append(panes.panes);
+
+
+        $(panes.pane(0))
+            .append('<p class="giraffe-help">Click on base pair numbers to see corresponding DNA sequence.</p>');
 
         var starts_with = 1;
         for (var i in gd.orf_features) {
@@ -448,17 +453,23 @@
     function analyzer_tabs(dom) {
         // Create each tab
         var dom_id_sequence = 'giraffe-'+Math.floor(Math.random()*100000000);
-        var dom_tab_sequence = $('<div id="'+dom_id_sequence+'"></div>');
+        var dom_tab_sequence = $('<div id="'+dom_id_sequence+'"></div>')
+            .addClass('giraffe-tab');
         var dom_id_map = 'giraffe-'+Math.floor(Math.random()*100000000);
-        var dom_tab_map = $('<div id="'+dom_id_map+'"></div>');
+        var dom_tab_map = $('<div id="'+dom_id_map+'"></div>')
+            .addClass('giraffe-tab');
         var dom_id_blast = 'giraffe-'+Math.floor(Math.random()*100000000);
-        var dom_tab_blast = $('<div id="'+dom_id_blast+'"></div>');
+        var dom_tab_blast = $('<div id="'+dom_id_blast+'"></div>')
+            .addClass('giraffe-tab');
         var dom_id_align = 'giraffe-'+Math.floor(Math.random()*100000000);
-        var dom_tab_align = $('<div id="'+dom_id_align+'"></div>');
+        var dom_tab_align = $('<div id="'+dom_id_align+'"></div>')
+            .addClass('giraffe-tab');
         var dom_id_digest = 'giraffe-'+Math.floor(Math.random()*100000000);
-        var dom_tab_digest = $('<div id="'+dom_id_digest+'"></div>');
+        var dom_tab_digest = $('<div id="'+dom_id_digest+'"></div>')
+            .addClass('giraffe-tab');
         var dom_id_translate = 'giraffe-'+Math.floor(Math.random()*100000000);
-        var dom_tab_translate = $('<div id="'+dom_id_translate+'"></div>');
+        var dom_tab_translate = $('<div id="'+dom_id_translate+'"></div>')
+            .addClass('giraffe-tab');
         // Main tab bar
         var dom_tabs = $('<div></div>').append(
             '<ul>'+
