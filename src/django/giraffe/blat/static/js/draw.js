@@ -51,7 +51,7 @@
 //  plasmid_name: if given, show this name together with size of
 //  sequence in the middle of the plasmid. Default is "".
 //
-//  label_radius_offset: how far from the outter feature should we
+//  label_offset: how far from the outter feature should we
 //  start drawing labels. Default is "10".
 //
 //  cutters: which kinds of restriction enzymes to show, if any. This
@@ -77,8 +77,6 @@
 
 // Protect scope, but ensure that GiraffeDraw() is global
 (function(){window.GiraffeDraw = function () {
-
-	var gd = {}; // The "export variable" to return as a closure.
 
 	///////////////////////////////////////////////////////////////////
 	// Package-scope variables
@@ -120,6 +118,18 @@
 		}
 	};
 
+	// Feature Colors
+	var colors = {
+		bg_text: "#aaa",
+		plasmid: "#000",
+		feature: "#f00",
+		primer:  "#090",
+		origin:  "#333",
+		enzyme:  "#00c",
+		orf:     "#00c8c8",
+	};
+
+
 	///////////////////////////////////////////////////////////////////
 	// Basic Feature class (private, internal class)
 	function Feature(feat) {
@@ -152,6 +162,7 @@
 
         this.is_enzyme = function() { return _type == ft.enzyme; }
         this.is_orf = function() { return _type == ft.orf; }
+		this.crosses_boundary = function () { return _end < _start };
 
 		// Enzyme-only data access methods
 		// gives 0 if not enzyme
@@ -182,11 +193,11 @@
 
 	///////////////////////////////////////////////////////////////////
 	// JSON Parsing
-	gd.read = function(json) {
+	this.read = function (json) {
 		basic_features = []; // package scope
 		seq_length = json[0]; // package scope
         features_json = json[1];
-        if (json.length > 2) { gd.sequence = full_sequence = json[2]; }
+        if (json.length > 2) { this.sequence = full_sequence = json[2]; }
 		for (var ix = 1; ix < features_json.length; ix++) {
             var f = new Feature(features_json[ix]);
 			basic_features.push(f);
@@ -195,9 +206,9 @@
 		}
 
         // These stuff are only available if we read the feature list
-        gd.basic_features = basic_features;
-        gd.enzyme_features = enzyme_features;
-        gd.orf_features = orf_features;
+        this.basic_features = basic_features;
+        this.enzyme_features = enzyme_features;
+        this.orf_features = orf_features;
 
 		// Now that the features are parsed, calculate how many instances
 		// of each cutter type there are.
@@ -232,8 +243,8 @@
 
 
 	///////////////////////////////////////////////////////////////////
-	// Circular Map Drawing
-	gd.draw_circular_map = function(options) {
+	// Circular Map Drawing Class
+	this.CircularMap = function(options) {
 
 		// Map-specific canvas element
 		var paper;
@@ -273,8 +284,8 @@
 		var inner_radius = plasmid_radius - radius_spacing; 
 		var outer_radius = plasmid_radius + radius_spacing;
 		var label_radius_offset = 10;
-		if ('label_radius_offset' in options) {
-			label_radius_offset = parseInt(options['label_radius_offset']);
+		if ('label_offset' in options) {
+			label_radius_offset = parseInt(options['label_offset']);
 		}
 
 		// Feature visual properties
@@ -332,21 +343,6 @@
 		// coded in a few places, so don't change this unless you figure
 		// out how to change the number of label lists.
 		var label_section_degree = 45;
-
-		// Table display
-		var hide_enzyme_rows = true; // Hide rows for cutter types not shown
-
-		// Colors
-		var colors = {
-			bg_text: "#aaa",
-			plasmid: "#000",
-			feature: "#f00",
-			primer: "#090",
-			origin: "#333",
-			enzyme: "#00c",
-            orf: "#00c8c8",
-		};
-
 
 		///////////////////////////////////////////////////////////////////
 		// Internals start here
@@ -458,6 +454,15 @@
 
 			// Calculated properties
 
+			function normalize(deg) {
+				if (deg < plasmid_start - 360)
+					deg += 360;
+				else if (deg > plasmid_start)
+					deg -= 360;
+
+				return deg;
+			}
+
 			// Degree conversion, for overlap calculation:
 			// for these functions, the sequence starts at 90 degrees and goes down.
 			_this.start_degrees = function() {
@@ -471,7 +476,21 @@
 						 // Just give its typical start position
 					sd = convert.pos_to_angle(_this.start());
 				}
-				return sd;
+
+				return normalize(sd);
+			};
+
+			_this.center_degrees = function() {
+				var cd;
+
+				cd = _this.start_degrees() - _this.size_degrees()/2.0;
+
+				if (cd < plasmid_start - 360)
+					cd += 360;
+				else if (cd > plasmid_start)
+					cd -= 360;
+
+				return normalize(cd);
 			};
 
 			_this.end_degrees = function() {
@@ -485,13 +504,18 @@
 						 // Just give its typical end position
 					ed = convert.pos_to_angle(_this.end());
 				}
-				return ed;
+
+				return normalize(ed);
 			};
 
 			_this.size_degrees = function() {
 				var szd; // size in degrees
 				// Normal definition of size
-				szd = convert.seq_length_to_angle(_this.end() - _this.start() + 1);
+				if (_this.crosses_boundary()) 
+					// Start and end are flipped here: non-intuitive
+					szd = convert.seq_length_to_angle(seq_length - _this.start() + _this.end() + 1);
+				else
+					szd = convert.seq_length_to_angle(_this.end() - _this.start() + 1);
 
 				// Head size: return this if it's bigger
 				if (_draw_head) {
@@ -630,7 +654,7 @@
 				}
 
 				// Arc drawing
-				if (a1 < a0 && _this.type() != ft.enzyme) { 
+				if ((_this.crosses_boundary() || a1 < a0) && _this.type() != ft.enzyme) { 
 					// Compensating for the head may have "taken up" all
 					// the room on the plasmid, in which case no arc needs
 					// to be drawn
@@ -699,7 +723,7 @@
 				if (!_this.should_draw_label()) { return; }
 
 				// Figure out the center of the feature
-				var a_c = (_this.start_degrees()+_this.end_degrees())/2.0;
+				var a_c = _this.center_degrees(); 
 				var adjust_a_c = a_c;
 				if (adjust_a_c < 0) { adjust_a_c += 360; }
 
@@ -720,7 +744,7 @@
 					_this.clear_label();
 
 				// Figure out the center of the feature
-				var a_c = (_this.start_degrees()+_this.end_degrees())/2.0;
+				var a_c = _this.center_degrees();
 				var adjust_a_c = a_c;
 				if (adjust_a_c < 0) { adjust_a_c += 360; }
 
@@ -915,18 +939,34 @@
 				if (_debug) console.warn(loser.name() + " pushed by " + winner.name());
 				
 				// Since loser was pushed, un-push all the 
-				// features it caused to be pushed, as long as
-				// those features were not in conflict with the winner
+				// features that it pushed, as long as
+				// those features are not in conflict with the winner,
+				// or with their own, previously pushed features, which are
+				// now unpushed
 				for (var pfx in loser.pushed_features) {
 					var pf = loser.pushed_features[pfx];
-					// Check for conflict with other the winner feature itself.
-					// If there's no conflict, we can pushh it back safely.
+					// Check for conflict with the winner feature itself
+					// If there's no conflict, we can push it back safely.
 					if (pf.start_degrees() - winner.end_degrees() <= min_overlap_cutoff ||
 						winner.start_degrees() - pf.end_degrees() <= min_overlap_cutoff) {
-						if (_debug)
-							console.warn(pf.name() + "unpushed, because " 
-								+ loser.name() + " pushed by " + winner.name());
-						pf.radius = rad;
+
+						// Check for conflict with previously pushed features
+						// that may have been unpushed
+						var can_push = true;
+						for (var ppfx in pf.pushed_features) {
+							if (pf.pushed_features[ppfx].radius == rad) {
+								can_push = false;
+								break;
+							}
+						}
+
+						// Finally!
+						if (can_push) {
+							if (_debug)
+								console.warn(pf.name() + " unpushed, because " 
+									+ loser.name() + " pushed by " + winner.name());
+							pf.radius = rad;
+						}
 					}
 				}
 			}
@@ -944,19 +984,42 @@
 
 				var biggest_size = 0;
 				var biggest_feature;
-				var furthest_point = plasmid_start; // Start at the top of the circle
-				for (var fx in features) {
-					var f = features[fx];
+				var furthest_point = plasmid_start; // Start at a complete lower bound
+				var edge_crosses_boundary = false;
+
+				// Go through the feature list twice, to make sure that features
+				// that cross the boundary are resolved
+				for (var fx = 0; fx < 2 * features.length; fx++) {
+					var f = features[fx % features.length];
 					if (f.radius == rad && f.type() != ft.enzyme) { 
 						var new_size = f.size_degrees();
 						var overlap = -(furthest_point - f.start_degrees());
+						
+						// Only the first time around, make sure that features
+						// that cross the boundary are treated as though their
+						// end_degrees were much further along (i.e., much more
+						// negative, even though the result of end_degrees() will 
+						// be normalized.
+						// If you do this for more than the first time around,
+						// then the compensation for last feature that crosses 
+						// the boundary will force every other feature off of its 
+						// level.
+						if (edge_crosses_boundary && fx <= features.length)
+							overlap += 360;
+
 						if (overlap <= min_overlap_cutoff) { 
 							// We've cleared all potential conflicts: reset
 							// the indicators
 							biggest_size = new_size;
 							biggest_feature = f;
 							furthest_point = f.end_degrees();
-						} else if (biggest_size > min_overlap_feature_size &&
+							edge_crosses_boundary = f.crosses_boundary();
+
+						// since we go around twice, it is now possible
+						// for a feature to "conflict with itself," so we
+						// explicitly prevent this
+						} else if ( !(biggest_feature === f) && 
+								   biggest_size > min_overlap_feature_size &&
 								   new_size > min_overlap_feature_size &&
 								  (overlap <= 0 || 
 								  (overlap/biggest_size > min_overlap_pct &&
@@ -971,6 +1034,7 @@
 								biggest_size = new_size;
 								biggest_feature = f;
 								furthest_point = f.end_degrees();
+								edge_crosses_boundary = f.crosses_boundary();
 
 							} else { // The original feature is top dog. move the new
 									 // feature to the new radius
@@ -989,7 +1053,6 @@
 				// Move on to the next radius
 				rad = new_rad;
 				rx++;
-
 				
 			} while (conflicts > 0); // Keep adding levels of resolution
 
@@ -1208,12 +1271,882 @@
 		// Main entry point.
 		draw();
 
-		return paper;
-	}
+		// Export the main properties as part of the CircularMap object
+		this.paper = paper;
+		this.draw = draw;
+		this.features = features;
+	}; // End CircularMap()
 
 	///////////////////////////////////////////////////////////////////
-	// Linear map drawing
-	gd.draw_linear_map = function () {};
+	// Linear Map Drawing Class
+	this.LinearMap = function (options) {
+	
+		// Map-specific canvas element
+		var paper;
 
-	return gd;
+		// Map-specific feature list
+		var features = [];
+
+		// Paper setup - not the final width, but how we will draw the
+		// map, we will scale later on
+		var map_width = 800;
+		var map_height = 800;
+		var cx = map_width/2;
+		var cy = map_height/2;
+
+		var plasmid_y = cy;
+		var plasmid_width = map_width * 0.9;
+		var plasmid_left = (map_width - plasmid_width) / 2;
+		var plasmid_right = plasmid_left + plasmid_width;
+
+		// Where to draw the map
+		var map_dom_id = 'giraffe-draw-map';
+		if ('map_dom_id' in options) {
+			map_dom_id = options['map_dom_id'];
+		}
+
+		// Final size
+		var final_map_width = 640;
+		var final_map_height = 640;
+		if ('map_width' in options) {
+			final_map_width = parseInt(options['map_width'])
+		}
+		if ('map_height' in options) {
+			final_map_height = parseInt(options['map_height'])
+		}
+
+		// Heights of levels
+		var y_spacing = 20; // spacing
+		var label_y_offset = 50;
+		if ('label_offset' in options) {
+			label_y_offset = parseInt(options['label_offset']);
+		}
+
+		// Feature visual properties
+		var feature_width = 15;
+		var enzyme_width = 25;
+		var enzyme_weight = 1; // Restriction enzymes are drawn differently
+							   // This controls their "thickness" on the map
+		var enzyme_bold_weight = 3; // How thick when highlighted
+		var feature_opacity = 0.7;
+		var enzyme_opacity = 0.7;
+		if ('opacity' in options) {
+			feature_opacity = parseFloat(options['opacity']);
+			enzyme_opacity = parseFloat(options['opacity']);
+		}
+		var bold_opacity = 1.0;
+		var head_width = 25;
+		var head_length = 5;
+
+		// Cutters to show
+		var cutters_to_show = [1];
+		if ('cutters' in options) {
+			cutters_to_show = options['cutters'];
+		}
+
+		// Animation properties
+		var fade_time = 0;
+		if ('fade_time' in options) {
+			fade_time = parseInt(options['fade_time'])
+		}
+
+		// Overlaps
+		var min_overlap_cutoff = -1;// in pixels
+		var min_overlap_pct = 0;
+		var min_overlap_feature_size = 0; // in pixels
+		
+		// Labels and other text
+		var label_line_weight = 1;
+		var label_line_bold_weight = 1.5 * label_line_weight;
+		var label_font_size = '13pt';
+		var plasmid_font_size = '16pt';
+		var plasmid_name = '';
+		if ('plasmid_name' in options) {
+			plasmid_name = options['plasmid_name'];
+		}
+
+        var label_letter_height = 0;
+        var label_letter_width = 0;
+
+		var convert = {
+			pos_to_x: function (p) {
+				return plasmid_left + (p/seq_length) * plasmid_width;
+			}
+		};
+
+		// TODO: MAJOR CODE REORGANIZATION: MERGE COMMON ELEMENTS INTO ONE CLASS
+		function LinearFeature(basic_feature) {
+			// Clone the basic feature, to extend it later
+			function Clone() {}; // empty function to use as a hanger for prototype
+			Clone.prototype = basic_feature;
+			var _this = new Clone(); // Make a new "this" pointer to return at
+			                         // the end
+			// The result of this function will be a LinearFeature object
+
+			// The visual object to modify when accessing the feature.
+			var _feature_set;
+			var _arrow_set;
+			var _label_set;
+			var _label_drawn = false;
+
+			// Visual properties
+			var _visible = true;
+			var _labeled = true;
+
+			// Type-based property selection
+			var _color = colors.feature;
+			var _width = feature_width;
+			var _draw_head = false;
+			var _opacity = feature_opacity;
+			var _opaque = false; // holds opacity for clicks
+			switch(_this.type()) {
+				case ft.promoter:
+				case ft.primer:
+					_draw_head = true; // Promotors and primers are the only primer-colored
+				case ft.terminator:   // features with heads
+					_color = colors.primer;
+					break;
+				case ft.regulatory:
+				case ft.origin:
+					_color = colors.origin;
+					break;
+				case ft.enzyme:
+					_color = colors.enzyme;
+					_width = enzyme_width;
+					_opacity = enzyme_opacity;
+					break;
+                case ft.orf:
+                    _color = colors.orf;
+				case ft.gene:
+					_draw_head = true;
+					break;
+			}
+
+			// Accessors for private properties set at creation
+			_this.visible = function() { return _visible; };
+			_this.labeled = function() { return _labeled; };
+
+			_this.y = 0; // default to plasmid height (y is an offset)
+
+			// Check to see if label has been drawn yet
+			_this.label_drawn = function() { return _label_drawn; };
+			_this.feature_set = function() { return _feature_set };
+			_this.label_set = function() { return _label_set };
+
+            _this.initialize = function() {
+			    _feature_set = paper.set();
+			    _arrow_set = paper.set();
+			    _label_set = paper.set();
+            }
+
+			_this.real_center = function() {
+				return (this.real_start() + this.real_end()) / 2.0;
+			}
+
+			// Degree conversion, for overlap calculation:
+			// for these functions, the sequence starts at 90 degrees and goes down.
+			_this.real_start = function() {
+				var rs;
+				// Take the minimum head size into account. Only need to do this 
+				// when the head is drawn and pointing clockwise, to
+				// "push the start back."
+				if (_draw_head && this.clockwise()) { 
+					rs = convert.pos_to_x(this.end()) - this.real_size();
+				} else { // Headless feature, or head is pointing the wrong way.
+						 // Just give its typical start position
+					rs = convert.pos_to_x(this.start());
+				}
+				return rs;
+			};
+
+			_this.real_end = function() {
+				var re;
+				// Take the minimum head size into account. Only need to do this 
+				// when the head is drawn and pointing counterclockwise, to 
+				// "push the end forward."
+				if (_draw_head && !this.clockwise()) { // Take the minimum head size into account
+					re = convert.pos_to_x(this.start()) + this.real_size();
+				} else { // Headless feature, or head is pointing the wrong way.
+						 // Just give its typical end position
+					re = convert.pos_to_x(this.end());
+				}
+
+				return re;
+			};
+
+			_this.real_size = function() {
+				var rsz; 
+				// Normal definition of size
+				rsz = convert.pos_to_x(_this.end()) -
+				      convert.pos_to_x(_this.start());
+
+				// Head size: return this if it's bigger
+				if (_draw_head && head_length > rsz)
+						rsz = head_length;
+
+				return rsz;
+			};
+
+			// Actions for interactivity
+			// Generic fading animation/property setting mechanism
+			var _fade = function (props, line_props) {
+				var sets = paper.set();
+				var lines = paper.set();
+				sets.push(_feature_set);
+				lines.push(_label_set[0]); // label line
+
+                // Cutters: highlight other examples of this enzyme if
+                // it's a multi-cutter
+                if (_this.type() == ft.enzyme) {
+					for (var fx in _this.other_cutters()) {
+						var f = features[_this.other_cutters()[fx]];
+						sets.push(f.feature_set());
+						lines.push(f.label_set()[0]);
+					}
+				}
+
+				if (fade_time) { 
+					sets.animate(props, fade_time); 
+					lines.animateWith(sets, line_props, fade_time); 
+				} else { 
+					sets.attr(props);
+					lines.attr(line_props); 
+				}
+			}
+
+			var _bolder = function () {
+				var props = {"opacity": bold_opacity,
+                             "font-weight": "bold" };
+                if (_this.type() == ft.enzyme) {
+				    props["stroke-width"] = enzyme_bold_weight;
+                }
+				var line_props = {"stroke": colors.plasmid, 
+				                  "stroke-width": label_line_bold_weight};
+				_fade(props, line_props);
+			}
+
+			var _lighter = function () {
+				var props = {"opacity": _opacity,
+                             "font-weight":"normal"};
+                if (_this.type() == ft.enzyme) {
+				    props["stroke-width"] = enzyme_weight;
+                }
+				var line_props = {"stroke": colors.bg_text,
+				                  "stroke-width": label_line_weight};
+				_fade(props, line_props);
+			}
+
+			// Toggle solid/light upon click
+			var _click = function (event) {
+				if (_opaque) {
+					_lighter();
+					_opaque = false;
+				} else {
+					_bolder();
+					_opaque = true;
+				}
+			};
+
+			// Hovering: solid/light upon mouseover
+			var _mouse_over = function (event) {
+				if (!_opaque)
+					_bolder();
+			};
+			var _mouse_up = function (event) {
+				if (!_opaque)
+					_lighter();
+			};
+
+			_this.draw = function () {
+				// Don't draw features that cross the boundary, as this is not
+				// a circular plasmid
+                if (!_visible || _this.crosses_boundary()) { return; }
+
+				// Convert from sequence positions to x-coords
+				var x0 = convert.pos_to_x(_this.start());
+				var x1 = convert.pos_to_x(_this.end());
+
+				var y = plasmid_y + _this.y;
+
+				// Arrowhead drawing, if needed
+				if (_draw_head) {
+					var hx_tip, hx_back;
+					if (_this.clockwise()) {
+						hx_tip = x1;
+						x1 -= head_length;
+						hx_back = x1;
+					} else {
+						hx_tip = x0;
+						x0 += head_length;
+						hx_back = x0;
+					}
+
+					// Unlike the body, the head is traced with a line, and
+					// then created entirely with the fill color
+					var head = paper.path(svg.move(hx_tip, y) +
+					                 svg.line(hx_back, y - head_width/2.0) +
+					                 svg.line(hx_back, y + head_width/2.0) +
+					                 svg.close());
+					head.attr({"stroke-width": 0,
+							   "fill":         _color});
+					_arrow_set.push(head);
+				}
+
+				// Body drawing
+				if (x0 < x1 && _this.type() != ft.enzyme) { 
+					// Compensating for the head may have "taken up" all
+					// the room on the plasmid, in which case no arc needs
+					// to be drawn
+
+					// The body has no fill-color: it's just a thick line
+					var body = paper.path(svg.move(x0, y) +
+						  				  svg.line(x1, y));
+					body.attr({"stroke-width": _width});
+
+					_arrow_set.push(body);
+				} else if (_this.type() == ft.enzyme) { 
+					// Restriction enzymes get drawn on their own
+					var x_m = (x0 + x1)/2;
+
+					var body = paper.path(svg.move(x_m, y - _width/2.0) +
+					                      svg.line(x_m, y + _width/2.0));
+					body.attr({"stroke-width": enzyme_weight});
+					body.toBack();
+
+					_arrow_set.push(body);
+				}
+
+				_arrow_set.click(_click);
+				_arrow_set.hover(_mouse_over, _mouse_up);
+
+				_feature_set.push(_arrow_set);
+
+				// Apply the feature-wide properties to the whole feature
+				_feature_set.attr({"stroke":         _color,
+								   "stroke-linecap": "butt",
+								   "opacity":        _opacity,
+								   "title":          _this.name()});
+
+			} // END LinearFeature::draw()
+
+			// Should we draw the label?
+			_this.should_draw_label = function () {
+				// Don't bother unless we need to
+				if (!_visible || !_labeled || this.crosses_boundary()) 
+					return false;
+				return true;
+			} // END LinearFeature::should_draw_label()
+
+            // What label should we draw?
+            _this.label_name = function () {
+				var label_name = _this.name();
+				if (_this.type() == ft.enzyme) {
+					label_name += " (" + _this.cut() + ")";
+				}
+                return label_name;
+            } // END LinearFeature::label_name()
+
+			_this.label_size = function() {
+				var fake_label = paper.text(0, 0, this.label_name());
+				var w = fake_label.getBBox().width;
+				var h = fake_label.getBBox().height;
+				fake_label.remove();
+				
+				return { width: w, height: h };
+			}
+
+			_this.draw_label = function (height, pos) {
+				if (!this.should_draw_label()) { return; }
+
+				if (_label_drawn)
+					this.clear_label();
+
+				// Figure out the center of the feature
+				var x_c = this.real_center();
+
+				// Enzymes show their cut sites in the label
+				var label_name = _this.label_name();
+				var label = paper.text(pos, height, label_name);
+				
+				// Below, right-justify. Above, left-justify.
+				var anchor = (height >= plasmid_y) ? "end" : "start";
+				label.attr({"fill": _color,
+							"text-anchor": anchor,
+							"font-size": label_font_size,
+							"opacity": 1.0 });
+
+				// Draw the line to the label position
+				var label_line = paper.path(svg.move(x_c, plasmid_y + this.y) +
+											svg.line(pos, height));
+				label_line.attr({"stroke": colors.bg_text,
+				                 "stroke-width": label_line_weight,
+								 "opacity": 0.5 });
+
+				_label_set.push(label_line);
+				_label_set.push(label);
+
+				// Handlers
+				_label_set.click(_click);
+				_label_set.hover(_mouse_over, _mouse_up);
+
+                // Only push label_line, so when we fade in and out,
+                // we don't also fade the label.
+				_feature_set.push(label_line);
+
+				_labeled = true;
+				_label_drawn = true;
+
+				return label.getBBox();
+			} // END LinearFeature::draw_label()
+
+			_this.hide = function () {
+				if (_visible) {
+                    if (_feature_set) { _feature_set.hide(); }
+					_visible = false;
+					_labeled = false;
+				}
+			}; // END LinearFeature::hide()
+
+			_this.show = function () {
+				if (!_visible) {
+					if (_feature_set) { _feature_set.show(); }
+					if (!_labeled) {
+                        if (_label_set) { _label_set.hide(); }
+                    }
+					_visible = true;
+				}
+			}; // END LinearFeature::show()
+
+			_this.hide_label = function () {
+				if (_labeled) {
+                    if (_label_set) { _label_set.hide(); }
+					_labeled = false;
+				}
+			}; // END LinearFeature::hide_label()
+
+			_this.show_label = function () {
+				if (!_labeled) {
+                    if (_label_set) { _label_set.show(); }
+					_labeled = true;
+				}
+			}; // END LinearFeature::show_label()
+
+			_this.clear_label = function () {
+				if (_label_drawn) {
+                    if (_label_set) {
+					    _label_set.unclick(_click);
+					    _label_set.unhover(_mouse_over, _mouse_up);
+					    _label_set.remove();
+					    _label_set = paper.set();
+                    }
+					_labeled = false;
+					_label_drawn = false;
+				}
+			}; // END LinearFeature::clear_label()
+
+			return _this;
+		}; // END LinearFeature Class
+
+		function draw_plasmid() {
+
+			// Title
+			var title_y = 1.5 * y_spacing;
+
+			// Tic marks
+			var tic_mark_length = 15;
+			var tic_mark_y = plasmid_y + 2* y_spacing;
+			var tic_label_y = tic_mark_y + 1.5*tic_mark_length;
+
+			function draw_tic_mark(p) {
+				var x = convert.pos_to_x(p);
+				var y0 = tic_mark_y - tic_mark_length/2;
+				var y1 = tic_mark_y + tic_mark_length/2;
+				var tic = paper.path(svg.move(x, y0) +
+									 svg.line(x, y1));
+				tic.attr({"stroke": colors.bg_text});
+
+				var label = paper.text(x, tic_label_y, String(p));
+				label.attr({"fill": colors.bg_text});
+			}
+
+			var plasmid = paper.path(svg.move(plasmid_left,  plasmid_y) +
+									 svg.line(plasmid_right, plasmid_y));
+
+			plasmid.attr("stroke", colors.plasmid);
+			var title = seq_length + ' bp';
+			if (plasmid_name != "") {
+				title = plasmid_name + ": " + title;
+			}
+			var plasmid_label = paper.text(cx, title_y, title);
+			plasmid_label.attr({"fill":      colors.plasmid,
+								"font-size": plasmid_font_size, });
+
+			// Set the scale to be the order of magnitude of seq_length
+			// i.e. 100, 1000, 10, etc.
+			var scale = Math.pow(10, Math.floor(Math.log(seq_length)/Math.log(10)))
+			for (var xx = scale; xx <= seq_length; xx += scale) {
+				draw_tic_mark(xx);
+			}
+
+		}
+
+		function resolve_conflicts() {
+			var conflicts;
+			var y = 0; // current radius
+			var yx = 1;               // radius counter
+			var max_dist = 0;
+
+			function push(winner, loser) {
+				// Record that the push happened
+				winner.pushed_features.push(loser); 
+				conflicts++;
+
+				// Do it
+				loser.y = new_y; 
+
+				if (_debug) console.warn(loser.name() + " pushed by " + winner.name());
+				
+				// Since loser was pushed, un-push all the 
+				// features it caused to be pushed, as long as
+				// those features were not in conflict with the winner
+				for (var pfx in loser.pushed_features) {
+					var pf = loser.pushed_features[pfx];
+					// Check for conflict with other the winner feature itself.
+					// If there's no conflict, we can pushh it back safely.
+					if (winner.real_end() - pf.real_start() <= min_overlap_cutoff ||
+						pf.real_end() - winner.real_start() <= min_overlap_cutoff) {
+						if (_debug)
+							console.warn(pf.name() + " unpushed, because " 
+								+ loser.name() + " pushed by " + winner.name());
+						pf.y = y;
+					}
+				}
+			}
+
+			do {
+				// Keep alternating between inside and outside the plasmid.
+				var new_y = y + Math.pow(-1, yx) * yx * y_spacing;
+
+				conflicts = 0; // Assume you have no conflicts until you find some
+
+				// Clear the record of who pushed whom
+				for (var fx in features) {
+					features[fx].pushed_features = [];
+				}
+
+				var biggest_size = 0;
+				var biggest_feature;
+				var furthest_point = plasmid_left; // Start at a complete lower bound
+
+				for (var fx = 0; fx < features.length; fx++) {
+					var f = features[fx];
+					if (f.y == y && f.type() != ft.enzyme) { 
+						var new_size = f.real_size();
+						var overlap = furthest_point - f.real_start();
+						if (overlap <= min_overlap_cutoff) { 
+							// We've cleared all potential conflicts: reset
+							// the indicators
+							biggest_size = new_size;
+							biggest_feature = f;
+							furthest_point = f.real_end();
+						// explicitly prevent conflicts with self
+						} else if ( !(biggest_feature === f) && 
+								   biggest_size > min_overlap_feature_size &&
+								   new_size > min_overlap_feature_size &&
+								  (overlap <= 0 || 
+								  (overlap/biggest_size > min_overlap_pct &&
+								   overlap/new_size > min_overlap_pct))) {
+							// Overlap: conflict!
+							if (new_size > biggest_size) { // This feature is top dog,
+														   // move the original to the
+														   // new height
+								push(f, biggest_feature);
+
+								// Update the new top dog
+								biggest_size = new_size;
+								biggest_feature = f;
+								furthest_point = f.real_end();
+
+							} else { // The original feature is top dog. move the new
+									 // feature to the new height
+
+								push(biggest_feature, f);
+							}
+
+						}
+					}
+				}
+
+				// Keep track of the biggest distance from the plasmid 
+				// reached
+				var new_dist = Math.abs(y);
+				if (new_dist > max_dist)
+					max_dist = new_dist;
+
+				// Move on to the next radius
+				y = new_y;
+				yx++;
+				
+			} while (conflicts > 0); // Keep adding levels of resolution
+
+			return max_dist;
+		}
+
+		function extend_features() {
+			for (var bfx = 0; bfx < basic_features.length; bfx++) {
+				features.push(new LinearFeature(basic_features[bfx]));
+			}
+		}
+
+		// XXX copy-and-pasted: eliminate redundancy
+		function draw_features() {
+			for (var fx in features) {
+				features[fx].draw();
+			}
+		}
+
+		// Make sure that the appropriate cutters are shown
+		function show_hide_cutters() {
+			for (var fx in features) {
+				var f = features[fx];
+                if (f.default_show_feature()) {
+                    // Only draw enzymes if they are in the list of
+                    // cutters to show - i.e. 1 cutter, 2 cutters,
+                    // etc.
+                    if (f.type() == ft.enzyme) {
+					    if (cutters_to_show.indexOf(f.cut_count()) < 0) {
+						    f.hide();
+						    f.clear_label();
+					    } else {
+						    f.show();
+						    f.show_label();
+					    }
+				    }
+                } else {
+                    // If the enzyme is not set to be shown by
+                    // default, don't show it
+                    f.hide();
+                    f.clear_label();
+                }
+			}
+		}
+
+		var label_pos, label_lists;
+		function assign_label_lists() {
+			var label_overlap_cutoff = -1; // pixel
+
+			var nlists = 6;
+			//                   top                bottom
+            label_pos    = [ new Array(nlists), new Array(nlists)];
+            label_lists  = [ new Array(nlists), new Array(nlists)];
+                                
+			// Initialize
+			for (var ix = 0; ix < nlists; ix++) {
+				for (var lx = 0; lx < 2; lx++) {
+					label_lists[lx][ix] = [];
+				}
+			}
+
+			// Figure out which list each feature goes in
+            for (var fx in features) {
+				var f = features[fx];
+
+				// Which quarter of the plasmid is the feature in?
+				var section = Math.floor(nlists*(f.real_center() - plasmid_left)/
+				                                 plasmid_width);
+				// Is it in the top or bottom?
+				var bottom = section % 2;
+
+				if (f.should_draw_label()) {
+					// push it on the appropriate list
+					label_lists[bottom][section].push(f);
+				}
+            }
+
+			// Calculate positions of label lists
+			//                 top  bottom
+			var list_offset = [20, -20];
+			for (var ix = 0; ix < nlists; ix++) {
+				if (ix % 2 == 0) {
+					// Top label: just to the right of the last feature
+					label_pos[0][ix] = 
+						label_lists[0][ix][label_lists[0][ix].length - 1].real_end() +
+						list_offset[0];
+				} else {
+					// Bottom label: just to the left of the first feature
+					label_pos[1][ix] = 
+						label_lists[1][ix][0].real_start() +
+						list_offset[1];
+				}
+			}
+
+		}
+
+		function draw_labels(height) {
+			// Calculate the height of a label
+			var label_leading = 1.3;
+			var label_height = features[0].label_size().height * label_leading;
+
+			// Finally, draw all the features
+            for (var sx = 0; sx < label_pos[0].length; sx++) {
+				for (var lx = 0; lx < 2; lx++) {
+					var ll = label_lists[lx][sx];
+
+					// Sort the list by center position
+					var comp_factor = 0.55;
+					ll.sort(function (a,b) {
+						// Make some compensation for height as well
+						function key(feat) {
+							// On top, heigts closer to you are 
+							// negative, so we flip the sign depending on
+							// whether or not lx is 0 (top) or 1 (bottom)
+							return feat.real_center() + 
+								comp_factor * feat.y;
+						}
+						return key(a) - key(b);
+					})
+
+					var num_labels = ll.length;
+
+					// Iterate over every label in the list
+					for (var ix = 0; ix < num_labels; ix++) {
+						var curr_height;
+						if (lx) { // Bottom list: top to bottom
+							curr_height = plasmid_y + height + 
+								(ix) * label_height;
+						} else { // Top list: bottom to top
+							curr_height = plasmid_y - height - 
+								(num_labels - 1 - ix) * label_height;
+						}
+						ll[ix].draw_label(curr_height, label_pos[lx][sx]);
+					}
+				}
+			}
+		}
+
+		function set_bounding_box(height) {
+            // Figure out outer edge of label lists
+            //
+            // Just an educated guess based on 13pt font. we will use
+            // this to compute height of label lists. These are
+            // conservative.
+            label_letter_height = 15;
+            label_letter_width = 8;
+          
+            var min_y = map_height/2;
+            var max_y = map_height/2;
+			// By default, plasmid will scale to width of map, so unless we
+			// actually have lists that go off the page, no reason to adjust
+			// them. i.e., never make them smaller than they orignially were,
+			// because there is never a need to "zoom in."
+            var min_x = 0;
+            var max_x = map_width;
+
+			// Iterate over every list in a level
+            for (var sx = 0; sx < label_pos[0].length; sx++) {
+				for (var lx = 0; lx < 2; lx++) {
+					var ll = label_lists[lx][sx];
+
+					var list_max_letters = 0;
+					for (var ix = 0; ix < ll.length; ix++) {
+						var num_letts = ll[ix].label_name().length; 
+						if (num_letts > list_max_letters) {
+							list_max_letters = num_letts;
+						}
+					}
+
+					if (lx == 0) { // Top lists: move top and right
+						var list_top = plasmid_y - height - 
+							label_letter_height * (ll.length + 1);
+						if (list_top < min_y)
+							min_y = list_top;
+						var list_right =  label_pos[lx][sx] + 
+							label_letter_width * list_max_letters;
+						if (list_right > max_x)
+							max_x = list_right;
+
+					} else if (lx == 1) { // Bot lists: move bot and left
+						var list_bot = plasmid_y + height + 
+							label_letter_height * (ll.length + 1);
+						if (list_bot > max_y)
+							max_y = list_bot;
+						var list_left =  label_pos[lx][sx] - 
+							label_letter_width * list_max_letters;
+						if (list_left < min_x)
+							min_x = list_left;
+					}
+				}
+			}
+
+            // Now we have a new bounding box (height only): min_y to max_y
+			
+			// Extend or compress the box dimensions to encompas this new size
+		    map_width = max_x - min_x;
+		    map_height = max_y - min_y;
+
+			// Shift all the reference points to compensate for the re-zooming
+            cy -= min_y;
+            cx -= min_x;
+			plasmid_y = cy;
+			plasmid_left -= min_x;
+			plasmid_right -= min_x;
+
+			// Shift the label positions as well, to compensate
+			for (var lx = 0; lx < label_pos.length; lx++) {
+				for (var ix = 0; ix < label_pos[lx].length; ix++) {
+					label_pos[lx][ix] -= min_x;
+				}
+			}
+
+		}
+
+		function draw() { // Draw the linear map
+            // Extend basic features to get list of linear features
+			extend_features();
+
+            // Hide the right cutters
+            show_hide_cutters();
+            // Resolve conflicts on the line, push some overlapping
+            // features to other radii
+			var max_height = resolve_conflicts();
+			var label_height = max_height + label_y_offset; 
+
+			assign_label_lists();
+			set_bounding_box(label_height);
+        
+			paper = ScaleRaphael(map_dom_id, map_width, map_height); // global
+            for (var fx in features) {
+                features[fx].initialize();
+            }
+
+			draw_plasmid();
+			draw_features(); // Draw all the features initially
+			draw_labels(label_height); // Draw only the necessary labels
+
+			// Rescale
+			if (final_map_width != map_width ||
+				final_map_height != map_height) {
+				
+				// Make sure not to add additional height to the map, once we've
+				// trimmed it off
+				final_map_height = final_map_width * (map_height/map_width);
+
+				// "center" parameter just adds unnecessary CSS to the container
+				// object to give it an absolute position: not what we need
+				paper.changeSize(final_map_width,final_map_height,false,true)
+			}
+		}
+		
+		
+		///////////////////////////////////////////////////////////////////
+		// Main entry point.
+		draw();
+
+		// Export the main properties as part of the LinearMap object
+		this.paper = paper;
+		this.draw = draw;
+		this.features = features;
+	}; // End LinearMap()
+
+	return this;
 }})();
