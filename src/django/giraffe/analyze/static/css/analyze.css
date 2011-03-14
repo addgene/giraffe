@@ -1,7 +1,10 @@
 .giraffe-main {
     font-size:13px; width:inherit;
     font-family:helvetica, arial, sans-serif;
+    overflow-x:auto;
 }
+
+.giraffe-main td { vertical-align:top; }
 
 /* Generic */
 .giraffe-clear { clear:both; margin:15px; }
@@ -10,7 +13,22 @@
 .giraffe-link-on { text-decoration:none; font-weight:bold; }
 .giraffe-seq { font-family:courier; }
 
-/* Specific to tabs */
+/* Specific to panes/tabs */
+
+.giraffe-viewer {
+    padding:4px;
+    border:1px solid #ddd;
+}
+.giraffe-viewer-topbar { margin:0px 0px 10px 0px; padding-left:5px; }
+.giraffe-seq-viewer { height:600px; overflow:auto; }
+.giraffe-seq-viewer table { font-family:courier; }
+.giraffe-seq-viewer .giraffe-bp-marker { color:#777; }
+.giraffe-seq-viewer .giraffe-bp-marker-left { text-align:right; }
+.giraffe-seq-viewer .giraffe-bp-marker-right { text-align:left; }
+.giraffe-seq-highlight { background-color:#ffdddd; }
+/* mouseover takes precedence over highlight */
+.giraffe-seq-mouseover { background-color:yellow !important; }
+
 .giraffe-analyze-circular-map {}
 .giraffe-ncbi-button { margin:0px; }
 .giraffe-blast2 textarea {
