@@ -2,6 +2,7 @@
 //   Feature now exposed here, so draw.js better not change the API
 
 // Requires: jquery-ui, jquery, giraffe/blat/draw.js
+// Restriction: can only have one instance of this per DOM
 //
 // Call:
 //    GiraffeAnalyze(jQuery,gd,{...});
@@ -28,6 +29,8 @@
     if ('map_height' in options) { map_height = options['map_height']; }
     var analyzer_width = 1340;
     if ('analyzer_width' in options) { analyzer_width = options['analyzer_width']; }
+
+    var viewer_seqs_per_line = 5;
 
     var seqlen = gd.sequence.length;
     var sequence = new BioJS.DNASequence(gd.sequence);
@@ -301,10 +304,11 @@
             starts_with = 0;
             var f = gd.orf_features[i];
             var s = f.clockwise_sequence();
-            var t = 'ORF ';
+            var t = 'ORF <a href="#" class="giraffe-bp" bp="'
+                    +f.start()+','+f.end()+'">';
             if (f.clockwise()) { t += f.start()+' - '+f.end(); }
             else { t += f.end()+' - '+f.start()+' antisense'; }
-            t += ' ('+s.length/3+' aa)';
+            t += '</a> ('+s.length/3+' aa)';
             var title = $('<p></p>').append(t);
 
             var p;
@@ -463,7 +467,8 @@
          .append(dom_tab_align)
          .append(dom_tab_digest)
          .append(dom_tab_translate)
-         .append($('<div></div>').addClass('giraffe-clear'));
+         .append($('<div></div>').addClass('giraffe-clear'))
+         .addClass('giraffe-tabs');
 
         $(dom).append(dom_tabs);
         $(dom_tabs).tabs();
@@ -515,7 +520,7 @@
                 .append(lines_10[i]);
             $(row).append(td);
             j++;
-            if (j == 5) {
+            if (j == viewer_seqs_per_line) {
                 j = 0;
                 var end = (i+1)*10;
                 $(row).append
@@ -529,13 +534,32 @@
         $(dom).append(viewer);
     }
 
-    function sequence_viewer_bp_event(viewer_dom) {
-        $('.giraffe-bp').click(function(){
+    // global list of td's that have span in the middle
+    var global_has_span_td = [];
+
+    function sequence_viewer_clear_highlight() {
+        $('.giraffe-seq-highlight').removeClass('giraffe-seq-highlight');
+        for (var i in global_has_span_td) {
+            var t = $(global_has_span_td[i]).text();
+            t = t.replace(/\s/g,'');
+            $(global_has_span_td[i]).html(t);
+        }
+        global_has_span_td = [];
+    }
+
+    function sequence_viewer_bp_event() {
+        $('.giraffe-bp').click(function(evt){
+            $('.giraffe-bp-click-source')
+                .removeClass('giraffe-bp-click-source');
+            $(this).addClass('giraffe-bp-click-source');
+
+            evt.preventDefault();
+            sequence_viewer_clear_highlight();
+
             var bpstr = $(this).attr('bp');
             var bp = bpstr.split(',');
-            $('.giraffe-seq-highlight',viewer_dom)
-                .removeClass('giraffe-seq-highlight');
             if (bp.length > 0) {
+                for (var i in bp) { bp[i] = parseInt(bp[i]); }
                 // find start bp position for the first td
                 var first_td = Math.floor((bp[0]-1)/10)*10+1;
                 // find start bp position of the last td
@@ -543,23 +567,104 @@
                 if (bp.length > 1) {
                     last_td = Math.floor((bp[1]-1)/10)*10+1;
                 }
+                else { bp[1] = bp[0]; }
+
+                // draw first
+                var first_td_dom = $('#giraffe-bp-'+first_td);
+                var t = $(first_td_dom).text();
+                t = t.replace(/\s/g,'');
+                
+                if (first_td == last_td && bp[0]>bp[1]) {
+                    // yikes... difficult, need to draw two spans
+                    var span0_starts_at = 0;
+                    var span0_ends_before = bp[1]+1-first_td;
+                    var span1_starts_at = bp[0]-first_td;
+                    var span1_ends_before = 10;
+                    var new_t = '';
+                    for (var i=0; i<t.length; i++) {
+                        if (i == span0_starts_at || i == span1_starts_at) {
+                            new_t += '<span class="giraffe-seq-highlight">';
+                        }
+                        new_t += t[i];
+                        if (i == span0_ends_before-1 || i == span1_ends_before-1) {
+                            new_t += '</span>';
+                        }
+                    }
+                    $(first_td_dom).html(new_t);
+                    global_has_span_td.push(first_td_dom);
+                }
+                else {
+                    var span_starts_at = bp[0]-first_td;
+                    var span_ends_before = 10;
+                    if (last_td == first_td && bp[0] <= bp[1]) {
+                        span_ends_before = bp[1]+1-first_td;
+                    }
+                    var new_t = '';
+                    for (var i=0; i<t.length; i++) {
+                        if (i == span_starts_at) {
+                            new_t += '<span class="giraffe-seq-highlight">';
+                        }
+                        new_t += t[i];
+                        if (i == span_ends_before-1) {
+                        new_t += '</span>';
+                        }
+                    }
+                    $(first_td_dom).html(new_t);
+                    global_has_span_td.push(first_td_dom);
+                }
+
+                // draw everything in between
                 if (first_td <= last_td && bp[0] <= bp[1]) {
-                    for (var td=first_td; td<=last_td; td+= 10) {
-                        $('#giraffe-bp-'+td,viewer_dom)
-                            .addClass('giraffe-seq-highlight');
+                    for (var td=first_td+10; td<last_td; td+=10) {
+                        $('#giraffe-bp-'+td).addClass('giraffe-seq-highlight');
                     }
                 }
                 else {
                     var end_td = Math.floor((seqlen-1)/10)*10+1;
-                    for (var td=first_td; td<=end_td; td+= 10) {
-                        $('#giraffe-bp-'+td,viewer_dom)
-                            .addClass('giraffe-seq-highlight');
+                    for (var td=first_td+10; td<=end_td; td+= 10) {
+                        $('#giraffe-bp-'+td).addClass('giraffe-seq-highlight');
                     }
-                    for (var td=1; td<=last_td; td+= 10) {
-                        $('#giraffe-bp-'+td,viewer_dom)
-                            .addClass('giraffe-seq-highlight');
+                    for (var td=1; td<last_td; td+=10) {
+                        $('#giraffe-bp-'+td).addClass('giraffe-seq-highlight');
                     }
                 }
+
+                // draw last
+                if (first_td != last_td) {
+                    if (bp[1] == last_td+10-1) {
+                        $('#giraffe-bp-'+last_td).addClass('giraffe-seq-highlight');
+                    }
+                    else {
+                        var last_td_dom = $('#giraffe-bp-'+last_td);
+                        var t = $(last_td_dom).text();
+                        t = t.replace(/\s/g,'');
+                        var span_starts_at = 0;
+                        var span_ends_before = bp[1]-last_td+1;
+                        var new_t = '';
+                        for (var i=0; i<t.length; i++) {
+                            if (i == span_starts_at) {
+                                new_t += '<span class="giraffe-seq-highlight">';
+                            }
+                            new_t += t[i];
+                            if (i == span_ends_before-1) {
+                                new_t += '</span>';
+                            }
+                        }
+                        $(last_td_dom).html(new_t);
+                        global_has_span_td.push(last_td_dom);
+                    }
+                }
+
+                // for best visual, we want to scroll to the first td
+
+                var first_td_line = Math.floor(first_td/(viewer_seqs_per_line*10));
+                // we want the line to scroll to to not be the first
+                // line on screen, but a few lines down
+                if (first_td_line > 3) { first_td_line -= 3; }
+                var total_lines = Math.floor(seqlen/(viewer_seqs_per_line*10))+1;
+                var table = $('.giraffe-seq-viewer table');
+                var scroll = Math.floor((first_td_line/total_lines)*$(table).height());
+                $('.giraffe-seq-viewer').scrollTop(scroll);
             }
         });
     }

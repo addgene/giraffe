@@ -5,6 +5,11 @@
 }
 
 .giraffe-main td { vertical-align:top; }
+/* We want -viewer and -tabs to line up, and -seq-viewer should be
+ * contained within -viewer */
+.giraffe-viewer { height:700px; overflow:auto; }
+.giraffe-seq-viewer { height:660px; overflow:auto; }
+.giraffe-tabs { height:700px; overflow:auto; }
 
 /* Generic */
 .giraffe-clear { clear:both; margin:15px; }
@@ -15,19 +20,18 @@
 
 /* Specific to panes/tabs */
 
-.giraffe-viewer {
-    padding:4px;
-    border:1px solid #ddd;
-}
+.giraffe-viewer { padding:4px; border:1px solid #ddd; }
 .giraffe-viewer-topbar { margin:0px 0px 10px 0px; padding-left:5px; }
-.giraffe-seq-viewer { height:600px; overflow:auto; }
 .giraffe-seq-viewer table { font-family:courier; }
 .giraffe-seq-viewer .giraffe-bp-marker { color:#777; }
 .giraffe-seq-viewer .giraffe-bp-marker-left { text-align:right; }
 .giraffe-seq-viewer .giraffe-bp-marker-right { text-align:left; }
-.giraffe-seq-highlight { background-color:#ffdddd; }
-/* mouseover takes precedence over highlight */
-.giraffe-seq-mouseover { background-color:yellow !important; }
+.giraffe-seq-highlight { background-color:#aa3333; color:#fff; }
+/* -mouseover comes after -highlight, so takes precedence */
+.giraffe-seq-mouseover { background-color:yellow; color:black; }
+
+/* this should match -highlight */
+.giraffe-bp-click-source { background-color:#aa3333; color:#fff !important; }
 
 .giraffe-analyze-circular-map {}
 .giraffe-ncbi-button { margin:0px; }
