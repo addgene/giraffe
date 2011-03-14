@@ -208,7 +208,8 @@
                 cuts.push(gd.basic_features[all_of_this[c]].cut());
             }
             for (var c in cuts) {
-                cuts[c] = '<a href="#" bp="'+cuts[c]+'" class="giraffe-bp">'+cuts[c]+'</a>';
+                cuts[c] = '<a href="#" title="'+all[i].name()
+                          +'" bp="'+cuts[c]+'" class="giraffe-bp">'+cuts[c]+'</a>';
             }
             var s = $('<p>Cuts after '+cuts.join(', ')+'</p>');
             var item = $('<li></li>').append(name).append(s);
@@ -220,7 +221,8 @@
         var list = $('<ul></ul>').addClass('giraffe-enzyme-list');
         for (var i in unique) {
             var name = $('<label></label>').append(unique[i].name());
-            var x = '<a href="#" bp="'+unique[i].cut()+'" class="giraffe-bp">'
+            var x = '<a href="#" title="'+unique[i].name()
+                    +'" bp="'+unique[i].cut()+'" class="giraffe-bp">'
                     +unique[i].cut()+'</a>';
             var s = $('<p>Cuts after '+x+'</p>');
             var item = $('<li></li>').append(name).append(s);
@@ -256,25 +258,29 @@
                 var digests = []
                 for (var j=0; j<cuts.length; j++) {
                     if (j == 0 && !circular) {
-                        var a0 = '<a href="#" class="giraffe-bp" bp="1,'+cuts[j]+'">';
+                        var a0 = '<a href="#" class="giraffe-bp" title="Fragment cut by '
+                                 +all[i].name()+'" bp="1,'+cuts[j]+'">';
                         digests.push(a0+'1-'+(cuts[j])+'</a> ('+cuts[j]+' bp)');
                     }
                     if (j+1 == cuts.length) {
                         if (circular) {
-                            var a0 = '<a href="#" class="giraffe-bp" bp="'
+                            var a0 = '<a href="#" class="giraffe-bp" title="Fragment cut by '
+                                     +all[i].name()+'" bp="'
                                      +(cuts[j]+1)+','+cuts[0]+'">';
                             digests.push(a0+(cuts[j]+1)+'-'+cuts[0]+'</a> ('+
                                          (seqlen-(cuts[j]+1)+1+cuts[0])+' bp)');
                         }
                         else {
-                            var a0 = '<a href="#" class="giraffe-bp" bp="'
+                            var a0 = '<a href="#" class="giraffe-bp" title="Fragment cut by '
+                                     +all[i].name()+'" bp="'
                                      +(cuts[j]+1)+','+seqlen+'">';
                             digests.push(a0+(cuts[j]+1)+'-'+seqlen+'</a> ('+
                                          (seqlen-(cuts[j]+1)+1)+' bp)');
                         }
                     }
                     else {
-                        var a0 = '<a href="#" class="giraffe-bp" bp="'
+                        var a0 = '<a href="#" class="giraffe-bp" title="Fragment cut by '
+                                 +all[i].name()+'" bp="'
                                  +(cuts[j]+1)+','+cuts[j+1]+'">';
                         digests.push(a0+(cuts[j]+1)+'-'+(cuts[j+1])+'</a> ('+
                                      (cuts[j+1]-(cuts[j]+1)+1)+' bp)');
@@ -317,7 +323,7 @@
             starts_with = 0;
             var f = gd.orf_features[i];
             var s = f.clockwise_sequence();
-            var t = 'ORF <a href="#" class="giraffe-bp" bp="'
+            var t = 'ORF <a href="#" class="giraffe-bp" title="ORF" bp="'
                     +f.start()+','+f.end()+'">';
             if (f.clockwise()) { t += f.start()+' - '+f.end(); }
             else { t += f.end()+' - '+f.start()+' antisense'; }
@@ -501,9 +507,17 @@
     }
 
     // Sequence viewer
+    var sequence_veiwer_topbar_highlight;
+    var sequence_veiwer_topbar_mouseover;
     function sequence_viewer(dom) {
         var viewer = $('<div></div>').addClass('giraffe-viewer');
+        sequence_viewer_topbar_highlight = $('<div></div>')
+            .attr('id', 'giraffe-viewer-topbar-highlight');
+        sequence_viewer_topbar_mouseover = $('<div></div>')
+            .attr('id', 'giraffe-viewer-topbar-mouseover');
         var topbar = $('<div></div>').addClass('giraffe-viewer-topbar')
+            .append(sequence_viewer_topbar_highlight)
+            .append(sequence_viewer_topbar_mouseover)
             .append('&nbsp;');
 
         // Sequence viewer is basically a table, each cell has 10 bps.
@@ -530,11 +544,11 @@
                 .mouseenter(function(){
                     $(this).addClass('giraffe-seq-mouseover');
                     var title = $(this).attr('start')+'-'+$(this).attr('end');
-                    $(topbar).html(title);
+                    $(sequence_viewer_topbar_mouseover).html(title);
                  })
                 .mouseleave(function(){
                     $(this).removeClass('giraffe-seq-mouseover');
-                    $(topbar).html("&nbsp;");
+                    $(sequence_viewer_topbar_mouseover).html("");
                  })
                 .append(lines_10[i]);
             $(row).append(td);
@@ -557,6 +571,7 @@
     var global_has_span_td = [];
 
     function sequence_viewer_clear_highlight() {
+        $(sequence_viewer_topbar_highlight).html("");
         $('.giraffe-seq-highlight').removeClass('giraffe-seq-highlight');
         for (var i in global_has_span_td) {
             var t = $(global_has_span_td[i]).text();
@@ -575,12 +590,13 @@
             evt.preventDefault();
 
             var bpstr = $(this).attr('bp');
+            var title = $(this).attr('title');
             var bp = bpstr.split(',');
-            if (bp.length > 0) { sequence_viewer_bp_event_highlight(bp); }
+            if (bp.length > 0) { sequence_viewer_bp_event_highlight(bp,title); }
         });
     }
 
-    function sequence_viewer_bp_event_highlight(bp) {
+    function sequence_viewer_bp_event_highlight(bp,title) {
         sequence_viewer_clear_highlight();
 
         for (var i in bp) { bp[i] = parseInt(bp[i]); }
@@ -592,6 +608,9 @@
             last_td = Math.floor((bp[1]-1)/10)*10+1;
         }
         else { bp[1] = bp[0]; }
+        
+        var desc = bp[0]+'-'+bp[1]+': '+title;
+        $(sequence_viewer_topbar_highlight).html(desc);
 
         // draw first
         var first_td_dom = $('#giraffe-bp-'+first_td);
@@ -693,7 +712,7 @@
 
     function map_feature_click_callback(feature) {
         var bp = [feature.start(),feature.end()];
-        sequence_viewer_bp_event_highlight(bp);
+        sequence_viewer_bp_event_highlight(bp,feature.name());
     }
 
     function full_widget() {

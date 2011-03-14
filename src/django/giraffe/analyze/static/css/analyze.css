@@ -28,13 +28,17 @@ svg path { cursor:pointer; }
 
 .giraffe-viewer { padding:4px; border:1px solid #ddd; }
 .giraffe-viewer-topbar { margin:0px 0px 10px 0px; padding-left:5px; }
+.giraffe-viewer-topbar div { display:inline-block; margin-right:4px; }
 .giraffe-seq-viewer table { font-family:courier; }
 .giraffe-seq-viewer .giraffe-bp-marker { color:#777; }
 .giraffe-seq-viewer .giraffe-bp-marker-left { text-align:right; }
 .giraffe-seq-viewer .giraffe-bp-marker-right { text-align:left; }
-.giraffe-seq-highlight { background-color:#aa3333; color:#fff; }
+
+.giraffe-seq-highlight,
+#giraffe-viewer-topbar-highlight { background-color:#aa3333; color:#fff; }
 /* -mouseover comes after -highlight, so takes precedence */
-.giraffe-seq-mouseover { background-color:yellow; color:black; }
+.giraffe-seq-mouseover,
+#giraffe-viewer-topbar-mouseover { background-color:yellow; color:black; }
 
 /* this should match -highlight */
 .giraffe-bp-click-source { background-color:#aa3333; color:#fff !important; }
