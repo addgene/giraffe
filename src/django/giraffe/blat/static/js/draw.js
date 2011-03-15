@@ -1175,19 +1175,8 @@
 			}
 		}
 
-		function draw() { // Draw the circular map
-            // Extend basic features to get list of circular features
-			extend_features();
-            // Hide the right cutters
-            show_hide_cutters();
-            // Resolve conflicts on the circle, push some overlapping
-            // features to other radii
-			var max_radius = resolve_conflicts();
-			var label_radius = max_radius + label_radius_offset; 
-            // Determine which labels are in which lists
-            set_label_lists();
-
-            // Figure out outter edge of label lists
+		function set_bounding_box(label_radius) {
+			// Figure out outter edge of label lists
             //
             // Just an educated guess based on 13pt font. we will use
             // this to compute height of label lists. These are
@@ -1199,7 +1188,6 @@
             var max_x = map_width/2;
             var min_y = map_width/2;
             var max_y = map_width/2;
-			var label_radius = max_radius + label_radius_offset; 
             for (var section=0; section<label_f_c.length; section++) {
                 var list_max_letters = 0;
                 for (var i=0; i<label_f_c[section].length; i++) {
@@ -1249,7 +1237,22 @@
 		    map_height = bb_height;
             cx = left_x_extend;
             cy = top_y_extend;
+		}
 
+		function draw() { // Draw the circular map
+            // Extend basic features to get list of circular features
+			extend_features();
+            // Hide the right cutters
+            show_hide_cutters();
+            // Resolve conflicts on the circle, push some overlapping
+            // features to other radii
+			var max_radius = resolve_conflicts();
+			var label_radius = max_radius + label_radius_offset; 
+            // Determine which labels are in which lists
+            set_label_lists();
+
+			set_bounding_box(label_radius);
+        
 			paper = ScaleRaphael(map_dom_id, map_width, map_height); // global
             for (var fx in features) {
                 features[fx].initialize();
