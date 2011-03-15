@@ -13,19 +13,20 @@ svg path { cursor:pointer; }
 .giraffe-main td { vertical-align:top; }
 /* We want -viewer and -tabs to line up, and -seq-viewer should be
  * contained within -viewer */
-.giraffe-viewer { height:700px; overflow:auto; }
-.giraffe-seq-viewer { height:660px; overflow:auto; }
-.giraffe-tabs { height:700px; overflow:auto; }
+.giraffe-viewer { height:820px; overflow:auto; }
+.giraffe-seq-viewer { height:780px; overflow:auto; }
+.giraffe-tabs { height:820px; overflow:auto; }
 
 /* Generic */
 .giraffe-clear { clear:both; margin:15px; }
 .giraffe-left { float:left; margin-right:10px; }
 .giraffe-left-last { margin-right:0px; }
-.giraffe-link-on { text-decoration:none; font-weight:bold; }
 .giraffe-seq { font-family:courier; }
 .giraffe-bp-marker { color:#777; }
 .giraffe-bp-marker-left { text-align:right; }
 .giraffe-bp-marker-right { text-align:left; }
+.giraffe-seq-overlay { color:#777; }
+.giraffe-link-on { text-decoration:none !important; font-weight:bold; color:black !important; }
 
 /* Specific to panes/tabs */
 
@@ -52,6 +53,8 @@ svg path { cursor:pointer; }
     display:block; margin:10px 0px; width:600px; height:200px;
 }
 .giraffe-tag { color:red !important; }
+
+.giraffe-orf-group { border-top:1px solid #d0d0d0; }
 
 .giraffe-enzyme-list { list-style-type:none; margin:0px; padding:0px; }
 .giraffe-enzyme-list li label {

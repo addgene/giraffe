@@ -211,7 +211,9 @@
         panes = Switch_Panes(['Circular Map', 'Linear Map']);
 
         $(dom)
-            .append('<p class="giraffe-help">Click on a feature label or feature to see corresponding DNA sequence.</p>')
+            .append('<p class="giraffe-help">'+
+                    'Click on a feature label or feature to highlight DNA sequence.'+
+                    '</p>')
               .append(panes.links)
               .append(panes.panes);
 
@@ -258,7 +260,9 @@
         );
 
         $(dom)
-            .append('<p class="giraffe-help">Click on a base pair number to see corresponding DNA sequence.</p>')
+            .append('<p class="giraffe-help">'+
+                    'Click on a base pair number to highlight DNA sequence.'+
+                    '</p>')
             .append(panes.links)
             .append(panes.panes);
 
@@ -380,7 +384,9 @@
 
 
         $(panes.pane(0))
-            .append('<p class="giraffe-help">Click on base pair numbers to see corresponding DNA sequence.</p>');
+            .append('<p class="giraffe-help">'+
+                    'Click on base pair numbers to highlight DNA sequence.'+
+                    '</p>');
 
         var starts_with = 1;
         for (var i in gd.orf_features) {
@@ -411,106 +417,154 @@
 
             starts_with = 0;
             var s = f.clockwise_sequence();
+
+            var p;
+            if (f.clockwise()) {
+                s = new BioJS.DNASequence(s);
+                p = s.translate();
+            }
+            else {
+                s = new BioJS.DNASequence(s).reverse_complement();
+                p = s.translate();
+            }
+        
+            var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
+            $(overlay_switch.pane(0)).append(p.format_html_with_bp());
+            $(overlay_switch.pane(1)).append(s.format_html_with_aa());
+            overlay_switch.show(0);
+
             var title = 'ORF';
             if (gene_desc !== '') { title += ', '+gene_desc; }
             var t = 'ORF <a href="#" class="giraffe-bp" title="'+title+'" bp="'
                     +f.start()+','+f.end()+'">';
             if (f.clockwise()) { t += f.start()+' - '+f.end(); }
             else { t += f.end()+' - '+f.start()+' antisense'; }
-            t += '</a> ('+s.length/3+' aa)';
+            t += '</a> ('+s.length()/3+' aa)';
             if (gene_desc !== '') { t += ', '+gene_desc; }
+            
             var title = $('<p></p>').append(t);
-
-            var p;
-            if (f.clockwise()) {
-                p = new BioJS.DNASequence(s).translate();
-            }
-            else {
-                p = new BioJS.DNASequence(s).reverse_complement().translate();
-            }
+            $(title).append(overlay_switch.links);
 
             $(panes.pane(0))
-                .append(title)
-                .append($('<div></div>').addClass('giraffe-seq')
-                                        .addClass('giraffe-left')
-                                        .addClass('giraffe-protein')
-                                        .append(p.format_html_with_bp())
-                )
-                .append(
-                    $(BioJS.NCBI_blastp_form(p))
-                        .addClass('giraffe-ncbi-button')
-                        .addClass('giraffe-left')
-                        .addClass('giraffe-left-last')
-                )
-                .append($('<div>&nbsp;</div>').addClass('giraffe-clear'));
+                .append($('<div></div>').addClass('giraffe-orf-group')
+                            .append(title)
+                            .append($('<div></div>').addClass('giraffe-seq')
+                                                    .addClass('giraffe-left')
+                                                    .addClass('giraffe-protein')
+                                                    .append(overlay_switch.panes)
+                            )
+                            .append(
+                                $('<div></div>')
+                                    .append($(BioJS.NCBI_blastp_form(p)))
+                                    .addClass('giraffe-ncbi-button')
+                                    .addClass('giraffe-left')
+                                    .addClass('giraffe-left-last')
+                            )
+                            .append($('<div>&nbsp;</div>').addClass('giraffe-clear'))
+                       );
         }
 
         var p = sequence.translate();
-        $(panes.pane(1)).append(
+        var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
+        $(overlay_switch.pane(0)).append(p.format_html_with_bp());
+        $(overlay_switch.pane(1)).append(sequence.format_html_with_aa());
+        overlay_switch.show(0);
+
+        $(panes.pane(1)).append(overlay_switch.links).append(
             $('<div></div>').addClass('giraffe-seq')
                             .addClass('giraffe-left')
                             .addClass('giraffe-protein')
-                            .append(p.format_html_with_bp())
+                            .append(overlay_switch.panes)
         ).append(
             $(BioJS.NCBI_blastp_form(p))
                 .addClass('giraffe-left')
                 .addClass('giraffe-left-last')
         );
 
-        var p = sequence.substring(1).translate();
-        $(panes.pane(2)).append(
+        var s = sequence.substring(1);
+        var p = s.translate();
+        var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
+        $(overlay_switch.pane(0)).append(p.format_html_with_bp());
+        $(overlay_switch.pane(1)).append(s.format_html_with_aa());
+        overlay_switch.show(0);
+
+        $(panes.pane(2)).append(overlay_switch.links).append(
             $('<div></div>').addClass('giraffe-seq')
                             .addClass('giraffe-left')
                             .addClass('giraffe-protein')
-                            .append(p.format_html_with_bp())
+                            .append(overlay_switch.panes)
         ).append(
             $(BioJS.NCBI_blastp_form(p))
                 .addClass('giraffe-left')
                 .addClass('giraffe-left-last')
         );
 
-        var p = sequence.substring(2).translate();
-        $(panes.pane(3)).append(
+        var s = sequence.substring(2);
+        var p = s.translate();
+        var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
+        $(overlay_switch.pane(0)).append(p.format_html_with_bp());
+        $(overlay_switch.pane(1)).append(s.format_html_with_aa());
+        overlay_switch.show(0);
+
+        $(panes.pane(3)).append(overlay_switch.links).append(
             $('<div></div>').addClass('giraffe-seq')
                             .addClass('giraffe-left')
                             .addClass('giraffe-protein')
-                            .append(p.format_html_with_bp())
+                            .append(overlay_switch.panes)
         ).append(
             $(BioJS.NCBI_blastp_form(p))
                 .addClass('giraffe-left')
                 .addClass('giraffe-left-last')
         );
 
-        var p = sequence.reverse_complement().translate();
-        $(panes.pane(4)).append(
+        var s = sequence.reverse_complement();
+        var p = s.translate();
+        var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
+        $(overlay_switch.pane(0)).append(p.format_html_with_bp());
+        $(overlay_switch.pane(1)).append(s.format_html_with_aa());
+        overlay_switch.show(0);
+
+        $(panes.pane(4)).append(overlay_switch.links).append(
             $('<div></div>').addClass('giraffe-seq')
                             .addClass('giraffe-left')
                             .addClass('giraffe-protein')
-                            .append(p.format_html_with_bp())
+                            .append(overlay_switch.panes)
+        ).append(
+            $(BioJS.NCBI_blastp_form(p))
+                .addClass('giraffe-left')
+                .addClass('giraffe-left-last')
+        );
+        
+        var s = sequence.reverse_complement().substring(1);
+        var p = s.translate();
+        var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
+        $(overlay_switch.pane(0)).append(p.format_html_with_bp());
+        $(overlay_switch.pane(1)).append(s.format_html_with_aa());
+        overlay_switch.show(0);
+
+        $(panes.pane(5)).append(overlay_switch.links).append(
+            $('<div></div>').addClass('giraffe-seq')
+                            .addClass('giraffe-left')
+                            .addClass('giraffe-protein')
+                            .append(overlay_switch.panes)
         ).append(
             $(BioJS.NCBI_blastp_form(p))
                 .addClass('giraffe-left')
                 .addClass('giraffe-left-last')
         );
 
-        var p = sequence.reverse_complement().substring(1).translate();
-        $(panes.pane(5)).append(
-            $('<div></div>').addClass('giraffe-seq')
-                            .addClass('giraffe-left')
-                            .addClass('giraffe-protein')
-                            .append(p.format_html_with_bp())
-        ).append(
-            $(BioJS.NCBI_blastp_form(p))
-                .addClass('giraffe-left')
-                .addClass('giraffe-left-last')
-        );
+        var s = sequence.reverse_complement().substring(2);
+        var p = s.translate();
+        var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
+        $(overlay_switch.pane(0)).append(p.format_html_with_bp());
+        $(overlay_switch.pane(1)).append(s.format_html_with_aa());
+        overlay_switch.show(0);
 
-        var p = sequence.reverse_complement().substring(2).translate();
-        $(panes.pane(6)).append(
+        $(panes.pane(6)).append(overlay_switch.links).append(
             $('<div></div>').addClass('giraffe-seq')
                             .addClass('giraffe-left')
                             .addClass('giraffe-protein')
-                            .append(p.format_html_with_bp())
+                            .append(overlay_switch.panes)
         ).append(
             $(BioJS.NCBI_blastp_form(p))
                 .addClass('giraffe-left')

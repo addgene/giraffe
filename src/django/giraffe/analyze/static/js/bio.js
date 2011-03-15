@@ -152,6 +152,42 @@ window.BioJS = function(){
         return this.__html;
     }
 
+    // Format DNA sequence, with amino acid sequence overlay.
+    DNASequence.prototype.format_html_with_aa=function() {
+        if (this.__aa_html) { return this.__aa_html; }
+        var aa = this.translate();
+
+        // line_width MUST BE multiple of 3
+        var line_width = 60;
+        var dna_vec = wrap(this.__sequence,line_width);
+        var aa_vec = wrap(aa.sequence(),Math.floor(line_width/3));
+
+        var left_markers = [];
+        var right_markers = [];
+        s = '';
+        for (var i=0; i<dna_vec.length; i++) {
+            if (i<aa_vec.length) {
+                left_markers.push(i*(line_width/3)+1);
+                right_markers.push((i+1)*(line_width/3));
+                var p = aa_vec[i];
+                var l = p.split('').join('&nbsp;&nbsp;');
+                s += l+'<br/>';
+            }
+            s += '<span class="giraffe-seq-overlay">'+dna_vec[i]+'</span><br/>';
+        }
+
+        var table = '<table><tr>'+
+            '<td class="giraffe-bp-marker giraffe-bp-marker-left">'+
+            left_markers.join('<br/><br/>')+
+            '</td><td>'+s+'</td>'+
+            '<td class="giraffe-bp-marker giraffe-bp-marker-right">'+
+            right_markers.join('<br/><br/>')+
+            '</td></tr></table>';
+
+        this.__aa_html = table;
+        return this.__aa_html;
+    }
+
     function ProteinSequence(seq_string) { this.__sequence = seq_string; }
 
     ProteinSequence.prototype.sequence=function() { return this.__sequence; }
