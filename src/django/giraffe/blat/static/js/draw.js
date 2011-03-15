@@ -1990,15 +1990,26 @@
 			var list_offset = [20, -20];
 			for (var ix = 0; ix < nlists; ix++) {
 				if (ix % 2 == 0) {
-					// Top label: just to the right of the last feature
-					label_pos[0][ix] = 
-						label_lists[0][ix][label_lists[0][ix].length - 1].real_end() +
-						list_offset[0];
+
+					if (label_lists[0][ix].length >= 1) {
+						// Top label: just to the right of the last feature
+						label_pos[0][ix] = 
+							label_lists[0][ix][label_lists[0][ix].length - 1].real_end() +
+							list_offset[0];
+					} else { // Empty list: just put it somewhere
+						label_pos[0][ix] = plasmid_left + 
+							ix * plasmid_width / nlists + list_offset[0];
+					}
 				} else {
-					// Bottom label: just to the left of the first feature
-					label_pos[1][ix] = 
-						label_lists[1][ix][0].real_start() +
-						list_offset[1];
+					if (label_lists[1][ix].length >= 1) {
+						// Bottom label: just to the left of the first feature
+						label_pos[1][ix] = 
+							label_lists[1][ix][0].real_start() +
+							list_offset[1];
+					} else { // Empty list: just put it somewhere
+						label_pos[1][ix] = plasmid_left + 
+							(ix + 0.5) * plasmid_width / nlists + list_offset[1];
+					}
 				}
 			}
 
