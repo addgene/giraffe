@@ -631,7 +631,9 @@
         }
         else { bp[1] = bp[0]; }
         
-        var desc = bp[0]+'-'+bp[1]+': '+title;
+        var desc = bp[0];
+        if (bp[0] != bp[1]) { desc += '-'+bp[1]; }
+        desc += ': '+title;
         $(sequence_viewer_topbar_highlight).html(desc);
 
         // draw first

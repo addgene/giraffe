@@ -160,7 +160,14 @@ window.BioJS = function(){
     // Format protein to HTML, with bp markers. Also highlight tags
     // with giraffe-tag CSS class.
     ProteinSequence.prototype.format_html_with_bp=function() {
+        // We have to construct three columns all in ONE SINGLE row,
+        // left and right most columns for bp markers, and middle for
+        // sequence. This allows 1) user selection (for copy/paste) of
+        // just sequence in the middle w/o bp markers, and 2) using
+        // span to highlight sequence fragments across lines.
+
         var line_width = 60;
+        var seg_width = 10;
         if (this.__html) { return this.__html; }
         if (this.__sequence === undefined) { return ""; }
 
@@ -171,11 +178,11 @@ window.BioJS = function(){
         var in_tag = false;
         var tag_length = 0;
         var line = 0;
+        var seg = 0;
         for (var i=0; i<this.__sequence.length; i++) {
-            if (line == 0) {
-                res += '<tr><td class="giraffe-bp-marker giraffe-bp-marker-left">'+
-                       (i+1)+'</td><td>';
-            }
+            if (line == 0) { left_markers.push((i+1)); }
+            else if (seg == 0) { res += '&nbsp;'; }
+
             if (!in_tag) {
                 for (var j in PROTEIN_TAGS) {
                     var l = PROTEIN_TAGS[j][1].length;
@@ -189,6 +196,8 @@ window.BioJS = function(){
             }
             res += this.__sequence[i];
             line++;
+            seg++;
+
             if (in_tag) { // found a new tag or was already in new tag
                 tag_length--; 
                 if (tag_length == 0) {
@@ -197,22 +206,28 @@ window.BioJS = function(){
                 }
             }
             if (line == line_width) {
-                res += '</td>'+
-                       '<td class="giraffe-bp-marker giraffe-bp-marker-right">'+
-                        (i+1)+'</td></tr>';
+                res += '<br/>';
+                right_markers.push ((i+1));
                 line = 0;
+                seg = 0;
             }
+            else if (seg == seg_width) { seg = 0; }
         }
 
         // just to be sure, but we really should never be here...
         if (in_tag) { res += '</span>'; }
 
-        if (line > 0) {
-            res += '</td><td></td></tr>';
-        }
-        res += '</table>';
+        if (line > 0) { res += '<br/>'; }
+       
+        var table = '<table><tr>'+
+            '<td class="giraffe-bp-marker giraffe-bp-marker-left">'+
+            left_markers.join('<br/>')+
+            '</td><td>'+res+'</td>'+
+            '<td class="giraffe-bp-marker giraffe-bp-marker-right">'+
+            right_markers.join('<br/>')+
+            '</td></tr></table>';
 
-        this.__html = res;
+        this.__html = table;
         return this.__html;
     }
 
