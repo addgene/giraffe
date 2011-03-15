@@ -169,12 +169,20 @@
     }
 
     function map_tab(dom) {
-        var dom_id_c = 'giraffe-'+Math.floor(Math.random()*100000000);
-        var dom_map = $('<div id="'+dom_id_c+'" class="giraffe-analyze-circular-map"></div>');
+        panes = Switch_Panes(['Circular Map', 'Linear Map']);
+
         $(dom)
             .append('<p class="giraffe-help">Click on a feature label or feature to see corresponding DNA sequence.</p>')
-            .append(dom_map)
-        gd.draw_circular_map({
+              .append(panes.links)
+              .append(panes.panes);
+
+		// Circular map pane
+        var dom_id_c = 'giraffe-'+Math.floor(Math.random()*100000000);
+        var dom_map_c = $('<div id="'+dom_id_c+'" class="giraffe-analyze-map giraffe-analyze-circular-map"></div>');
+        $(panes.pane(0))
+            .append(dom_map_c)
+
+        gd.CircularMap({
             'map_dom_id' : dom_id_c,
             'plasmid_name' : name,
             'cutters': [1],
@@ -182,6 +190,23 @@
             'map_height' : map_height,
             'feature_click_callback' : map_feature_click_callback
         });
+
+        var dom_id_l = 'giraffe-'+Math.floor(Math.random()*100000000);
+        var dom_map_l = $('<div id="'+dom_id_l+'" class="giraffe-analyze-map giraffe-analyze-linear-map"></div>');
+        $(panes.pane(1))
+            .append(dom_map_l)
+
+        gd.LinearMap({
+            'map_dom_id' : dom_id_l,
+            'plasmid_name' : name,
+            'cutters': [1],
+            'map_width' : map_width,
+            'map_height' : map_height,
+            'feature_click_callback' : map_feature_click_callback
+        });
+
+        panes.hide_all();
+        panes.show(0);
     }
 
     function digest_tab(dom) {
