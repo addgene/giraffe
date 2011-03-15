@@ -209,7 +209,7 @@
             }
             for (var c in cuts) {
                 cuts[c] = '<a href="#" title="'+all[i].name()
-                          +'" bp="'+cuts[c]+'" class="giraffe-bp">'+cuts[c]+'</a>';
+                          +' cut site" bp="'+cuts[c]+'" class="giraffe-bp">'+cuts[c]+'</a>';
             }
             var s = $('<p>Cuts after '+cuts.join(', ')+'</p>');
             var item = $('<li></li>').append(name).append(s);
@@ -222,7 +222,7 @@
         for (var i in unique) {
             var name = $('<label></label>').append(unique[i].name());
             var x = '<a href="#" title="'+unique[i].name()
-                    +'" bp="'+unique[i].cut()+'" class="giraffe-bp">'
+                    +' cut site" bp="'+unique[i].cut()+'" class="giraffe-bp">'
                     +unique[i].cut()+'</a>';
             var s = $('<p>Cuts after '+x+'</p>');
             var item = $('<li></li>').append(name).append(s);
