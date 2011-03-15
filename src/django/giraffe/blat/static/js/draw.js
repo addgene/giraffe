@@ -1973,7 +1973,7 @@
             for (var fx in features) {
 				var f = features[fx];
 
-				// Which quarter of the plasmid is the feature in?
+				// Which nth of the plasmid is the feature in?
 				var section = Math.floor(nlists*(f.real_center() - plasmid_left)/
 				                                 plasmid_width);
 				// Is it in the top or bottom?
