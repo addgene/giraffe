@@ -591,18 +591,17 @@
 
 			// Toggle solid/light upon click
 			var _click = function (event) {
-                /* BC: for now, only change on mouseover
-				if (_opaque) {
-					_lighter();
-					_opaque = false;
-				} else {
-					_bolder();
-					_opaque = true;
-				}
-                */
                 if (feature_click_callback) {
                     feature_click_callback(basic_feature);
-                }
+                } else {
+					if (_opaque) {
+						_lighter();
+						_opaque = false;
+					} else {
+						_bolder();
+						_opaque = true;
+					}
+				}
 			};
 
 			// Hovering: solid/light upon mouseover
@@ -1351,6 +1350,12 @@
 		var head_width = 25;
 		var head_length = 5;
 
+        // Callback
+        var feature_click_callback = undefined;
+        if ('feature_click_callback' in options) {
+            feature_click_callback = options['feature_click_callback'];
+        }
+
 		// Cutters to show
 		var cutters_to_show = [1];
 		if ('cutters' in options) {
@@ -1551,12 +1556,16 @@
 
 			// Toggle solid/light upon click
 			var _click = function (event) {
-				if (_opaque) {
-					_lighter();
-					_opaque = false;
-				} else {
-					_bolder();
-					_opaque = true;
+                if (feature_click_callback) {
+                    feature_click_callback(basic_feature);
+                } else {
+					if (_opaque) {
+						_lighter();
+						_opaque = false;
+					} else {
+						_bolder();
+						_opaque = true;
+					}
 				}
 			};
 
