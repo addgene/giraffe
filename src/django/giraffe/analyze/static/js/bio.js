@@ -139,13 +139,14 @@ window.BioJS = function(){
         return new DNASequence(this.__sequence.substring(i,j));
     }
 
-    // Format HTML 80 chars wide
+    // Format DNA sequence to HTML
     DNASequence.prototype.format_html=function() {
+        var line_width = 80;
         if (this.__html) { return this.__html; }
-        var lines_80 = wrap(this.__sequence,80);
+        var lines_vec = wrap(this.__sequence,line_width);
         s = '';
-        for (var i=0; i<lines_80.length; i++) {
-            s += lines_80[i]+'<br/>';
+        for (var i=0; i<lines_vec.length; i++) {
+            s += lines_vec[i]+'<br/>';
         }
         this.__html = s;
         return this.__html;
@@ -156,17 +157,25 @@ window.BioJS = function(){
     ProteinSequence.prototype.sequence=function() { return this.__sequence; }
     ProteinSequence.prototype.length=function() { return this.__sequence.length; }
 
-    // Format HTML 80 chars wide, also highlight tags with giraffe-tag
-    // CSS class.
-    ProteinSequence.prototype.format_html=function() {
+    // Format protein to HTML, with bp markers. Also highlight tags
+    // with giraffe-tag CSS class.
+    ProteinSequence.prototype.format_html_with_bp=function() {
+        var line_width = 60;
         if (this.__html) { return this.__html; }
         if (this.__sequence === undefined) { return ""; }
+
+        var left_markers = [];
+        var right_markers = [];
 
         var res = '';
         var in_tag = false;
         var tag_length = 0;
         var line = 0;
         for (var i=0; i<this.__sequence.length; i++) {
+            if (line == 0) {
+                res += '<tr><td class="giraffe-bp-marker giraffe-bp-marker-left">'+
+                       (i+1)+'</td><td>';
+            }
             if (!in_tag) {
                 for (var j in PROTEIN_TAGS) {
                     var l = PROTEIN_TAGS[j][1].length;
@@ -187,15 +196,21 @@ window.BioJS = function(){
                     res += '</span>';
                 }
             }
-            if (line == 80) {
-                res += '<br/>';
+            if (line == line_width) {
+                res += '</td>'+
+                       '<td class="giraffe-bp-marker giraffe-bp-marker-right">'+
+                        (i+1)+'</td></tr>';
                 line = 0;
             }
         }
 
         // just to be sure, but we really should never be here...
         if (in_tag) { res += '</span>'; }
-        if (line > 0) { res += '<br/>'; }
+
+        if (line > 0) {
+            res += '</td><td></td></tr>';
+        }
+        res += '</table>';
 
         this.__html = res;
         return this.__html;
@@ -203,13 +218,14 @@ window.BioJS = function(){
 
     // Returns FASTA format of sequence
     function fasta(seq_object,name,html) {
+        var line_width = 80;
         if (html === undefined) { html = true; }
-        var lines_80 = wrap(seq_object.sequence(),80);
+        var lines_vec = wrap(seq_object.sequence(),line_width);
         var s = '';
         if (html) { s = '<p>&gt;'+name+'<br/>'; }
         else { s = '>'+name+'\n'; }
-        for (var i=0; i<lines_80.length; i++) {
-            s += lines_80[i];
+        for (var i=0; i<lines_vec.length; i++) {
+            s += lines_vec[i];
             if (html) { s += '<br/>'; } else { s += '\n'; }
         }
         if (html) { s += '</p>'; }

@@ -368,7 +368,7 @@
                 .append($('<div></div>').addClass('giraffe-seq')
                                         .addClass('giraffe-left')
                                         .addClass('giraffe-protein')
-                                        .append(p.format_html())
+                                        .append(p.format_html_with_bp())
                 )
                 .append(
                     $(BioJS.NCBI_blastp_form(p))
@@ -384,7 +384,7 @@
             $('<div></div>').addClass('giraffe-seq')
                             .addClass('giraffe-left')
                             .addClass('giraffe-protein')
-                            .append(p.format_html())
+                            .append(p.format_html_with_bp())
         ).append(
             $(BioJS.NCBI_blastp_form(p))
                 .addClass('giraffe-left')
@@ -396,7 +396,7 @@
             $('<div></div>').addClass('giraffe-seq')
                             .addClass('giraffe-left')
                             .addClass('giraffe-protein')
-                            .append(p.format_html())
+                            .append(p.format_html_with_bp())
         ).append(
             $(BioJS.NCBI_blastp_form(p))
                 .addClass('giraffe-left')
@@ -408,7 +408,7 @@
             $('<div></div>').addClass('giraffe-seq')
                             .addClass('giraffe-left')
                             .addClass('giraffe-protein')
-                            .append(p.format_html())
+                            .append(p.format_html_with_bp())
         ).append(
             $(BioJS.NCBI_blastp_form(p))
                 .addClass('giraffe-left')
@@ -420,7 +420,7 @@
             $('<div></div>').addClass('giraffe-seq')
                             .addClass('giraffe-left')
                             .addClass('giraffe-protein')
-                            .append(p.format_html())
+                            .append(p.format_html_with_bp())
         ).append(
             $(BioJS.NCBI_blastp_form(p))
                 .addClass('giraffe-left')
@@ -432,7 +432,7 @@
             $('<div></div>').addClass('giraffe-seq')
                             .addClass('giraffe-left')
                             .addClass('giraffe-protein')
-                            .append(p.format_html())
+                            .append(p.format_html_with_bp())
         ).append(
             $(BioJS.NCBI_blastp_form(p))
                 .addClass('giraffe-left')
@@ -444,7 +444,7 @@
             $('<div></div>').addClass('giraffe-seq')
                             .addClass('giraffe-left')
                             .addClass('giraffe-protein')
-                            .append(p.format_html())
+                            .append(p.format_html_with_bp())
         ).append(
             $(BioJS.NCBI_blastp_form(p))
                 .addClass('giraffe-left')
