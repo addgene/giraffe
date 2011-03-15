@@ -12,7 +12,7 @@
 //
 // Drawing API: caller should call the GiraffeDraw function to get a drawing
 // and parsing object. The caller should use the object's read() method to
-// read in a JSON list of features, then call one of the object's draw_<foo>_map
+// read in a JSON list of features, then call one of the object's <Foo>Map
 // methods, with a customized set of options.
 //
 // The read() method can be passed as the JSONP argument to the
@@ -31,7 +31,7 @@
 // example:
 //
 //    <script> 
-//    gd.draw_circular_map({ "map_dom_id" : "some_id", ... })
+//    gd.CircularMap({ "map_dom_id" : "some_id", ... })
 //    </script>
 //
 /// Available options are:
@@ -65,16 +65,16 @@
 // FRAMEWORK
 // GiraffeDraw()
 // |
-// -- basic initialization of list of Features
+// |- basic initialization of list of Features
 // |
-// -- read(JSON)
+// |- read(JSON)
 // |  feature parsing into "local" features object
 // |
-// -- draw_circular_map()
+// |- CircularMap()
 // |  circular feature drawing, which creates clones of the original Feature 
 // |  objects with extended properties
 // |
-// -- draw_linear_map() (maybe) 
+// `- LinearMap() 
 //    linear feature drawing, which makes its own extended clones of objects
 
 // Protect scope, but ensure that GiraffeDraw() is global
