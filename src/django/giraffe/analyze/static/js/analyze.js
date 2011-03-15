@@ -598,6 +598,7 @@
     function sequence_viewer_clear_highlight() {
         $(sequence_viewer_topbar_highlight).html("");
         $('.giraffe-seq-highlight').removeClass('giraffe-seq-highlight');
+        $('.giraffe-bp-click-source').removeClass('giraffe-bp-click-source');
         for (var i in global_has_span_td) {
             var t = $(global_has_span_td[i]).text();
             t = t.replace(/\s/g,'');
@@ -608,10 +609,8 @@
 
     function sequence_viewer_bp_event() {
         $('.giraffe-bp').click(function(evt){
-            $('.giraffe-bp-click-source')
-                .removeClass('giraffe-bp-click-source');
+            sequence_viewer_clear_highlight();
             $(this).addClass('giraffe-bp-click-source');
-
             evt.preventDefault();
 
             var bpstr = $(this).attr('bp');
@@ -622,8 +621,6 @@
     }
 
     function sequence_viewer_bp_event_highlight(bp,title) {
-        sequence_viewer_clear_highlight();
-
         for (var i in bp) { bp[i] = parseInt(bp[i]); }
         // find start bp position for the first td
         var first_td = Math.floor((bp[0]-1)/10)*10+1;
@@ -736,6 +733,7 @@
     }
 
     function map_feature_click_callback(feature) {
+        sequence_viewer_clear_highlight();
         var bp = [feature.start(),feature.end()];
         sequence_viewer_bp_event_highlight(bp,feature.name());
     }
