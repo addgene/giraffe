@@ -247,26 +247,102 @@ window.BioJS = function(){
         return s;
     }
 
-    // Returns GenBank format of sequence. Currently does not handle
-    // feature list, we will work on that.
-    function genbank(seq_object,name,html) {
+    // Returns GenBank format of sequence.
+    //
+    // features array should be an array of objects. Each object
+    // should have these keys:
+    //    label
+    //    type -- must be a valid GenBank feature type
+    //    start,end -- always in 5' to 3', we will adjust for clockwise
+    //    clockwise -- true or false
+    //    clockwise_sequence -- optional, but if type is CDS, then you
+    //                          need to supply this if you want to see
+    //                          a translation shown.
+    //    gene -- optional
+    //    notes -- optional
+    //
+    function genbank(seq_object,name,html,features) {
         if (html === undefined) { html = true; }
+        if (features === undefined) { features = []; }
 
         var sp = "&nbsp;";
         var delim = "<br/>";
         var tab = sp+sp+sp+sp;
         if (!html) { sp = " "; delim = "\n"; tab = "\t"; }
 
-        s =
-            'LOCUS'+__repeat(sp,7)+name+tab+seq_object.length()+' bp '+
+        s = 'LOCUS'+__repeat(sp,7)+name+tab+seq_object.length()+' bp '+
                     tab+'DNA'+tab+'SYN'+delim+
             'DEFINITION'+__repeat(sp,2)+name+delim+
             'ACCESSION'+__repeat(sp,3)+delim+
             'KEYWORDS'+__repeat(sp,4)+delim+
             'SOURCE'+__repeat(sp,6)+delim+
             __repeat(sp,2)+'ORGANISM'+__repeat(sp,2)+
-            'other sequences; artificial sequences; vectors.'+delim+
-            'ORIGIN'+delim;
+            'other sequences; artificial sequences; vectors.'+delim;
+
+        function __gb(p) {
+            // need special formatting: lw=58, first=44
+            var res = [];
+            var line = '';
+            var ctr = 0;
+            for (var i=0; i<p.length; i++) {
+                line += p[i];
+                ctr++;
+                if ((res.length == 0 && ctr >= 44) || ctr >= 58) {
+                    res.push(line);
+                    line = __repeat(sp,21);
+                    ctr = 0;
+                }
+            }
+            if (ctr > 0) { res.push(line); }
+            return res.join(delim);
+        }
+
+        if (features.length) {
+            s += "FEATURES"+__repeat(sp,13)
+                 +"Location/Qualifiers"+delim+__repeat(sp,5)+"source";
+            s += __repeat(sp, 16-"source".length);
+            s += "1.."+seq_object.length()+delim+__repeat(sp,21)
+                +"/organism=\""+name+"\""+delim
+                +__repeat(sp,21)+"/mol_type=\"other DNA\""+delim;
+        }
+
+        for (var i in features) {
+            var type = features[i].type;
+            var tran = undefined;
+            if (type == 'CDS' && features[i].clockwise_sequence &&
+                features[i].clockwise_sequence !== '') {
+                if (features[i].clockwise) {
+                    tran = new BioJS.DNASequence(features[i].clockwise_sequence).translate();
+                }
+                else {
+                    tran = new BioJS.DNASequence(features[i].clockwise_sequence)
+                        .reverse_complement().translate();
+                }
+            }
+            s += __repeat(sp,5)+type
+            var nsp = 16-type.length;
+            if (nsp < 0) nsp = 0;
+            s += __repeat(sp, nsp);
+            if (features[i].clockwise) {
+                s += features[i].start+".."+features[i].end+delim;
+            }
+            else {
+                s += "complement("+features[i].end+".."+features[i].start+")"+delim;
+            }
+            s += __repeat(sp,21)+"/label=\""+features[i].label+"\""+delim;
+            if (features[i].gene && features[i].gene !== '') {
+                s += __repeat(sp,21)+"/gene=\""+features[i].gene+"\""+delim;
+            }
+            if (features[i].notes && features[i].notes !== '') {
+                s += __repeat(sp,21)+"/note=\""+features[i].notes+"\""+delim;
+            }
+            // User annotated CDS may not be in-frame...
+            if (tran) {
+                s += __repeat(sp,21)+"/translation=\""+__gb(tran.sequence())+"\""+delim;
+            }
+        }
+
+        s += 'ORIGIN'+delim;
 
         var lines_10 = wrap(seq_object.sequence(),10);
         for (var i=0,j=0; i<lines_10.length; i++) {

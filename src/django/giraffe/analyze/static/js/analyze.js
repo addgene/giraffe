@@ -1,9 +1,13 @@
-// XXX discuss
-//   Feature object now exposed here, so draw.js better not change the
-//   API
-
 // Requires: jquery-ui, jquery, giraffe/blat/draw.js
 // Restriction: can only have one instance of this per DOM
+//
+// Depends on draw.js for the following (at least):
+//    Feature
+//    Feature.other_cutters
+//    basic_features
+//    enzyme_features
+//    orf_features
+//
 //
 // Call:
 //    GiraffeAnalyze(jQuery,gd,{...});
@@ -158,8 +162,43 @@
 
         $(panes.pane(0))
             .addClass('giraffe-seq').append(BioJS.fasta(sequence,name));
+
+        var features = [];
+        for (var i in gd.basic_features) {
+            if (gd.basic_features[i].is_enzyme()) { continue; }
+            var type = "misc_feature";
+            var label = gd.basic_features[i].name()
+            var gene = "";
+            if (gd.basic_features[i].type() == gd.Feature_Type.origin) {
+                type = "rep_origin";
+            }
+            else if (gd.basic_features[i].type() == gd.Feature_Type.gene) {
+                type = "gene";
+                gene = gd.basic_features[i].name();
+            }
+            else if (gd.basic_features[i].is_orf()) {
+                type = "CDS";
+            }
+            else if (gd.basic_features[i].type() == gd.Feature_Type.promoter) {
+                type = "promoter";
+            }
+            else if (gd.basic_features[i].type() == gd.Feature_Type.terminator) {
+                type = "terminator";
+            }
+            var f = {
+                label : label,
+                gene : gene,
+                type : type,
+                start : gd.basic_features[i].start(),
+                end : gd.basic_features[i].end(),
+                clockwise : gd.basic_features[i].clockwise(),
+                clockwise_sequence : gd.basic_features[i].clockwise_sequence()
+            }
+            features.push(f); 
+        }
+
         $(panes.pane(1))
-            .addClass('giraffe-seq').append(BioJS.genbank(sequence,name));
+            .addClass('giraffe-seq').append(BioJS.genbank(sequence,name,true,features));
         $(panes.pane(2))
             .addClass('giraffe-seq').append(
                 BioJS.fasta(sequence.reverse_complement(),name)
