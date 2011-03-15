@@ -327,7 +327,7 @@ window.BioJS = function(){
                 s += features[i].start+".."+features[i].end+delim;
             }
             else {
-                s += "complement("+features[i].end+".."+features[i].start+")"+delim;
+                s += "complement("+features[i].start+".."+features[i].end+")"+delim;
             }
             s += __repeat(sp,21)+"/label=\""+features[i].label+"\""+delim;
             if (features[i].gene && features[i].gene !== '') {

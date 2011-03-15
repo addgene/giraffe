@@ -384,14 +384,41 @@
 
         var starts_with = 1;
         for (var i in gd.orf_features) {
-            starts_with = 0;
             var f = gd.orf_features[i];
+
+            // does this ORF cover, or is the same as, a gene?
+            var gene_desc = '';
+            for (var j in gd.basic_features) {
+                if (gd.basic_features[j].type() == gd.Feature_Type.gene &&
+                    gd.basic_features[j].clockwise() == f.clockwise()) {
+                    var g = gd.basic_features[j];
+                    var f_end = f.end();
+                    if (f.end() < f.start()) { f_end = f_end+seqlen; }
+                    var g_end = g.end();
+                    if (g.end() < g.start()) { g_end = g_end+seqlen; }
+                    if (g.start() >= f.start() && g_end <= f_end) {
+                        gene_desc = 'contains '+g.name();
+                    }
+                    else if (g.start() < f.start() && g_end > f_end) {
+                        gene_desc = 'within '+g.name();
+                    }
+                    else if ((g.start() < f.start() && g_end > f.start()) ||
+                             (g.start() < f_end && g_end > f_end)) {
+                        gene_desc = 'overlaps with '+g.name();
+                    }
+                }
+            }
+
+            starts_with = 0;
             var s = f.clockwise_sequence();
-            var t = 'ORF <a href="#" class="giraffe-bp" title="ORF" bp="'
+            var title = 'ORF';
+            if (gene_desc !== '') { title += ', '+gene_desc; }
+            var t = 'ORF <a href="#" class="giraffe-bp" title="'+title+'" bp="'
                     +f.start()+','+f.end()+'">';
             if (f.clockwise()) { t += f.start()+' - '+f.end(); }
             else { t += f.end()+' - '+f.start()+' antisense'; }
             t += '</a> ('+s.length/3+' aa)';
+            if (gene_desc !== '') { t += ', '+gene_desc; }
             var title = $('<p></p>').append(t);
 
             var p;
