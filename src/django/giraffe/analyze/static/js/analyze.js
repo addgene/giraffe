@@ -35,7 +35,7 @@
     var analyzer_width = 1340;
     if ('analyzer_width' in options) { analyzer_width = options['analyzer_width']; }
 
-    var viewer_seqs_per_line = 5;
+    var viewer_segs_per_line = 5;
 
     var seqlen = gd.sequence.length;
     var sequence = new BioJS.DNASequence(gd.sequence);
@@ -419,18 +419,23 @@
             var s = f.clockwise_sequence();
 
             var p;
+            var seq_start, seq_end;
             if (f.clockwise()) {
                 s = new BioJS.DNASequence(s);
                 p = s.translate();
+                seq_start = f.start();
+                seq_end = f.end();
             }
             else {
                 s = new BioJS.DNASequence(s).reverse_complement();
                 p = s.translate();
+                seq_start = f.end();
+                seq_end = f.start();
             }
         
             var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
             $(overlay_switch.pane(0)).append(p.format_html_with_bp());
-            $(overlay_switch.pane(1)).append(s.format_html_with_aa());
+            $(overlay_switch.pane(1)).append(s.format_html_with_aa(seq_start,seq_end));
             overlay_switch.show(0);
 
             var title = 'ORF';
@@ -485,7 +490,7 @@
         var p = s.translate();
         var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
         $(overlay_switch.pane(0)).append(p.format_html_with_bp());
-        $(overlay_switch.pane(1)).append(s.format_html_with_aa());
+        $(overlay_switch.pane(1)).append(s.format_html_with_aa(2));
         overlay_switch.show(0);
 
         $(panes.pane(2)).append(overlay_switch.links).append(
@@ -503,7 +508,7 @@
         var p = s.translate();
         var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
         $(overlay_switch.pane(0)).append(p.format_html_with_bp());
-        $(overlay_switch.pane(1)).append(s.format_html_with_aa());
+        $(overlay_switch.pane(1)).append(s.format_html_with_aa(3));
         overlay_switch.show(0);
 
         $(panes.pane(3)).append(overlay_switch.links).append(
@@ -521,7 +526,7 @@
         var p = s.translate();
         var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
         $(overlay_switch.pane(0)).append(p.format_html_with_bp());
-        $(overlay_switch.pane(1)).append(s.format_html_with_aa());
+        $(overlay_switch.pane(1)).append(s.format_html_with_aa(sequence.length(),1));
         overlay_switch.show(0);
 
         $(panes.pane(4)).append(overlay_switch.links).append(
@@ -539,7 +544,7 @@
         var p = s.translate();
         var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
         $(overlay_switch.pane(0)).append(p.format_html_with_bp());
-        $(overlay_switch.pane(1)).append(s.format_html_with_aa());
+        $(overlay_switch.pane(1)).append(s.format_html_with_aa(sequence.length()-1,1));
         overlay_switch.show(0);
 
         $(panes.pane(5)).append(overlay_switch.links).append(
@@ -557,7 +562,7 @@
         var p = s.translate();
         var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
         $(overlay_switch.pane(0)).append(p.format_html_with_bp());
-        $(overlay_switch.pane(1)).append(s.format_html_with_aa());
+        $(overlay_switch.pane(1)).append(s.format_html_with_aa(sequence.length()-2,1));
         overlay_switch.show(0);
 
         $(panes.pane(6)).append(overlay_switch.links).append(
@@ -698,11 +703,16 @@
                 .append(lines_10[i]);
             $(row).append(td);
             j++;
-            if (j == viewer_seqs_per_line) {
+            if (j == viewer_segs_per_line && i+1 < lines_10.length) {
                 j = 0;
                 var end = (i+1)*10;
                 $(row).append
                     ('<td class="giraffe-bp-marker giraffe-bp-marker-right">'+end+'</td>');
+            }
+            if (i+1 == lines_10.length) {
+                $(row).append
+                    ('<td class="giraffe-bp-marker giraffe-bp-marker-right">'
+                     +sequence.length()+'</td>');
             }
         }
 
@@ -844,11 +854,11 @@
 
         // for best visual, we want to scroll to the first td
 
-        var first_td_line = Math.floor(first_td/(viewer_seqs_per_line*10));
+        var first_td_line = Math.floor(first_td/(viewer_segs_per_line*10));
         // we want the line to scroll to to not be the first line on
         // screen, but a few lines down
         if (first_td_line > 3) { first_td_line -= 3; }
-        var total_lines = Math.floor(seqlen/(viewer_seqs_per_line*10))+1;
+        var total_lines = Math.floor(seqlen/(viewer_segs_per_line*10))+1;
         var table = $('.giraffe-seq-viewer table');
         var scroll = Math.floor((first_td_line/total_lines)*$(table).height());
         $('.giraffe-seq-viewer').scrollTop(scroll);

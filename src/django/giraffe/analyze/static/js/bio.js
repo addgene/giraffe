@@ -153,8 +153,14 @@ window.BioJS = function(){
     }
 
     // Format DNA sequence, with amino acid sequence overlay.
-    DNASequence.prototype.format_html_with_aa=function() {
+    // seq_start and seq_end should be 1-indexed base pair numbers in
+    // 5' to 3' direction of *this* sequence, so if are displaying
+    // reverse complement, then end should be smaller than start.
+    DNASequence.prototype.format_html_with_aa=function(seq_start,seq_end) {
         if (this.__aa_html) { return this.__aa_html; }
+        
+        if (seq_start == undefined) { seq_start = 1; }
+        if (seq_end == undefined) { seq_end = this.__sequence.length+seq_start-1; }
         var aa = this.translate();
 
         // line_width MUST BE multiple of 3
@@ -167,8 +173,30 @@ window.BioJS = function(){
         s = '';
         for (var i=0; i<dna_vec.length; i++) {
             if (i<aa_vec.length) {
-                left_markers.push(i*(line_width/3)+1);
-                right_markers.push((i+1)*(line_width/3));
+                if (i+1 == dna_vec.length) {
+                    left_markers.push(i*(line_width/3)+1);
+                    right_markers.push(aa.length());
+                    if (seq_start < seq_end) {
+                        left_markers.push(seq_start+i*line_width);
+                        right_markers.push(seq_end);
+                    }
+                    else {
+                        left_markers.push(seq_start-i*line_width);
+                        right_markers.push(seq_end);
+                    }
+                }
+                else {
+                    left_markers.push(i*(line_width/3)+1);
+                    right_markers.push((i+1)*(line_width/3));
+                    if (seq_start < seq_end) {
+                        left_markers.push(seq_start+i*line_width);
+                        right_markers.push(seq_start+(i+1)*line_width-1);
+                    }
+                    else {
+                        left_markers.push(seq_start-i*line_width);
+                        right_markers.push(seq_start-(i+1)*line_width+1);
+                    }
+                }
                 var p = aa_vec[i];
                 var l = p.split('').join('&nbsp;&nbsp;');
                 s += l+'<br/>';
@@ -178,10 +206,10 @@ window.BioJS = function(){
 
         var table = '<table><tr>'+
             '<td class="giraffe-bp-marker giraffe-bp-marker-left">'+
-            left_markers.join('<br/><br/>')+
+            left_markers.join('<br/>')+
             '</td><td>'+s+'</td>'+
             '<td class="giraffe-bp-marker giraffe-bp-marker-right">'+
-            right_markers.join('<br/><br/>')+
+            right_markers.join('<br/>')+
             '</td></tr></table>';
 
         this.__aa_html = table;
