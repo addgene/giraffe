@@ -669,24 +669,39 @@
 				}
 
 				// Arc drawing
-				if ((_this.crosses_boundary() || a1 < a0) && _this.type() != ft.enzyme) { 
+				if ((_this.crosses_boundary() || a1 < a0) && _this.type() != ft.enzyme) {
 					// Compensating for the head may have "taken up" all
 					// the room on the plasmid, in which case no arc needs
 					// to be drawn
 
-					// Rectangular coordinates of the edges of the arc: 
-					// arcs are drawn counterclockwise, even though the plasmid
-					// sequence increases clockwise, so we flip the
-					// indices
-					var xy0 = convert.polar_to_rect(_this.radius, a1);
-					var xy1 = convert.polar_to_rect(_this.radius, a0);
+                    var arc_coord = [];
 
-					// The arc has no fill-color: it's just a thick line
-					var arc = paper.path(svg.move(xy0.x, xy0.y) +
-										 svg.arc(_this.radius, xy1.x, xy1.y));
-					arc.attr({"stroke-width": _width});
+                    // RaphaelJS has issues drawing arc larger than
+                    // 190 degree or so, so we just divide it up into
+                    // two parts.
+                    if ((a0>a1 && a0-a1>180) ||
+                        (a1>a0 && a1-a0>180)) {
+                        // divide it up into two
+                        var a_mid = (a0+a1)/2.0;
+                        arc_coord[0] = [a0,a_mid];
+                        arc_coord[1] = [a_mid,a1];
+                    }
+                    else { arc_coord[0] = [a0,a1]; }
 
-					_arrow_set.push(arc);
+                    for (var arc_i in arc_coord) {
+                        // Rectangular coordinates of the edges of the
+                        // arc: arcs are drawn counterclockwise, even
+                        // though the plasmid sequence increases
+                        // clockwise, so we flip the indices
+					    var xy0 = convert.polar_to_rect(_this.radius, arc_coord[arc_i][1]);
+					    var xy1 = convert.polar_to_rect(_this.radius, arc_coord[arc_i][0]);
+					    // The arc has no fill-color: it's just a thick line
+					    var arc = paper.path(svg.move(xy0.x, xy0.y) +
+										     svg.arc(_this.radius, xy1.x, xy1.y));
+					    arc.attr({"stroke-width": _width});
+					    _arrow_set.push(arc);
+                    }
+
 				} else if (_this.type() == ft.enzyme) { 
 					// Restriction enzymes get drawn on their own
 					var xy0 = convert.polar_to_rect(_this.radius - enzyme_width/2.0, 
@@ -1237,6 +1252,19 @@
                     if (min_y > xy.y-list_height) { min_y = xy.y-list_height; }
                     if (min_x > xy.x-list_width) { min_x = xy.x-list_width; }
                 }
+            }
+
+            if (max_x < cx+outer_radius+label_radius_offset) {
+                max_x = cx+outer_radius+label_radius_offset;
+            }
+            if (min_x > cx-outer_radius-label_radius_offset) {
+                min_x = cx-outer_radius-label_radius_offset;
+            }
+            if (max_y < cy+outer_radius+label_radius_offset) {
+                max_y = cy+outer_radius+label_radius_offset;
+            }
+            if (min_y > cy-outer_radius-label_radius_offset) {
+                min_y = cy-outer_radius-label_radius_offset;
             }
 
             // Now we have a new bounding box: min_x,min_y to max_x,max_y
