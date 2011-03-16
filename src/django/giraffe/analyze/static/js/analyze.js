@@ -21,6 +21,8 @@
 //    map_width: map width
 //    map_height: map height
 //    analyzer_width: main width of the entire analyzer
+//    linear_map: if 1, switch to linear map to start (default is 0,
+//    and uses circular map)
 // 
 
 (function(){window.GiraffeAnalyze = function ($,gd,options) {
@@ -34,6 +36,8 @@
     if ('map_height' in options) { map_height = options['map_height']; }
     var analyzer_width = 1340;
     if ('analyzer_width' in options) { analyzer_width = options['analyzer_width']; }
+    var starts_with_linear_map = false;
+    if ('linear_map' in options && options['linear_map']) { starts_with_linear_map = true; }
 
     var viewer_segs_per_line = 5;
 
@@ -247,7 +251,8 @@
         });
 
         panes.hide_all();
-        panes.show(0);
+        if (starts_with_linear_map) { panes.show(1); }
+        else { panes.show(0); }
     }
 
     function digest_tab(dom) {
