@@ -14,7 +14,7 @@ def detect_orfs(sequence_object):
     # boundary
     seq = Seq(sequence_object.sequence*2)
     seq_len = len(sequence_object.sequence)
-    aa_len = math.floor(seq_len/3.0)
+    aa_len = int(math.floor(seq_len/3.0))
 
     for strand,nuc in [(+1,seq), (-1,seq.reverse_complement())]:
         for frame in range(3):
@@ -28,8 +28,11 @@ def detect_orfs(sequence_object):
             # go through the translation and find end codons that
             # follow a start codon.
             while aa_start < trans_len and aa_start < aa_len:
-                #print 'start '+str(aa_start)
-                aa_end = trans.find("*", aa_start)
+                # Since we doubled up the sequence to find ORFs across
+                # boundaries, we want to make sure we limit possible
+                # ORF to be less than aa_len -- hence the +aa_len
+                # here.
+                aa_end = trans.find("*", aa_start, aa_start+aa_len)
                 has_stop = 1
                 if aa_end == -1:
                     # no more stop codon, just abort...
@@ -37,7 +40,8 @@ def detect_orfs(sequence_object):
 
                 start_codon = trans.find('M', aa_start, aa_end)
 
-                # is there a start codon?
+                # is there a start codon? and is it before end of
+                # sequence
                 if start_codon == -1 or start_codon >= aa_len:
                     assert(aa_end != -1)
                     aa_start = aa_end+1
@@ -85,6 +89,8 @@ def detect_orfs(sequence_object):
                             if strand == 1:
                                 tag_start = frame+tag_aa_start*3+1
                                 tag_end = frame+tag_aa_end*3
+                                if tag_start > seq_len:
+                                    tag_start = tag_start % seq_len
                                 if tag_end > seq_len:
                                     tag_end = tag_end % seq_len
                             else:
