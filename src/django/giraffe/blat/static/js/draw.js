@@ -679,8 +679,7 @@
                     // RaphaelJS has issues drawing arc larger than
                     // 190 degree or so, so we just divide it up into
                     // two parts.
-                    if ((a0>a1 && a0-a1>180) ||
-                        (a1>a0 && a1-a0>180)) {
+                    if (a0-a1>180) {
                         // divide it up into two
                         var a_mid = (a0+a1)/2.0;
                         arc_coord[0] = [a0,a_mid];
