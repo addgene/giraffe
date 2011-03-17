@@ -277,7 +277,8 @@
 
     function digest_tab(dom) {
         panes = Switch_Panes(
-            [['Cutters','See restriction enzymes that cut the sequence'],
+            [['All Cutters','See restriction enzymes that cut the sequence'],
+             ['Unique Cutters','See restriction enzymes that cut the sequence only once'],
              ['Non-Cutters','See restriction enzymes that do not cut the sequence'],
              ['Circular Digest','See restriction digest bands assuming a circular sequence'],
              ['Linear Digest','See restriction digest bands assuming a linear sequence']
@@ -408,6 +409,9 @@
             .append(panes.links)
             .append(panes.panes);
 
+        $(panes.pane(0))
+            .append('<p>Click on ORF bp numbers to highlight sequence.</p>');
+
         var starts_with = 1;
         for (var i in gd.orf_features) {
             var f = gd.orf_features[i];
@@ -461,7 +465,6 @@
             var title = 'ORF';
             if (gene_desc !== '') { title += ', '+gene_desc; }
             var t = 'ORF <a href="#" class="giraffe-bp" '
-                     +'title="Click to highlight sequence in sequence viewer." '
                      +'seq-title="'+title+'" bp="'
                      +f.start()+','+f.end()+'">';
             if (f.clockwise()) { t += f.start()+' - '+f.end(); }
@@ -692,7 +695,8 @@
             .attr('id', 'giraffe-viewer-search-container')
             .append($('<textarea></textarea>')
                         .attr('id', 'giraffe-viewer-search-textarea'))
-            .append($('<input type="submit" value="Search">')
+            .append($('<input type="submit" value="Search" '+
+                      ' title="Search sequence and reverse complement of sequence">')
                         .attr('id', 'giraffe-viewer-search-button'));
 
         sequence_viewer_topbar_highlight = $('<div></div>')

@@ -56,7 +56,7 @@ svg path { cursor:pointer; }
 }
 #giraffe-viewer-search-textarea { height:20px; width:120px; float:left; }
 #giraffe-viewer-search-button { float:left; margin-left:2px; }
-#giraffe-viewer-search-textarea:hover { height:40px; width:250px; }
+#giraffe-viewer-search-textarea:hover { height:60px; width:120px; }
 
 .giraffe-seq-highlight,
 #giraffe-viewer-topbar-highlight { background-color:#aa3333; color:#fff; }
