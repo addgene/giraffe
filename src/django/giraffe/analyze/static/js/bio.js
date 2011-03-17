@@ -136,7 +136,10 @@ window.BioJS = function(){
 
     // Returns substring
     DNASequence.prototype.substring=function(i,j){
-        return new DNASequence(this.__sequence.substring(i,j));
+        var a;
+        if (j === undefined) { a = this.__sequence.substring(i); }
+        else { a = this.__sequence.substring(i,j); }
+        return new DNASequence(a);
     }
 
     // Format DNA sequence to HTML
@@ -230,7 +233,7 @@ window.BioJS = function(){
         // just sequence in the middle w/o bp markers, and 2) using
         // span to highlight sequence fragments across lines.
 
-        var line_width = 60;
+        var line_width = 50;
         var seg_width = 10;
         if (this.__html) { return this.__html; }
         if (this.__sequence === undefined) { return ""; }

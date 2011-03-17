@@ -9,6 +9,7 @@ svg path { cursor:pointer; }
 
 /* overriding jquery */
 .giraffe-main .giraffe-tab a { color:#06c; text-decoration:underline; }
+.giraffe-main form input[type=submit] { font-size:12px; }
 
 .giraffe-main td { vertical-align:top; }
 /* We want -viewer and -tabs to line up, and -seq-viewer should be
