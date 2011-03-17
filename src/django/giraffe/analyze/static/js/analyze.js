@@ -234,8 +234,8 @@
               '</p>');
 
         $(dom)
-            .append(panes.links)
             .append(help)
+            .append(panes.links)
             .append(panes.panes);
 
 		// Circular map pane
@@ -679,17 +679,31 @@
     }
 
     // Sequence viewer
-    var sequence_veiwer_topbar_highlight;
-    var sequence_veiwer_topbar_mouseover;
+
+    var sequence_viewer_topbar_highlight;
+    var sequence_viewer_topbar_mouseover;
+    var search_rc = false;
+    var search_next = -1;
+
     function sequence_viewer(dom) {
         var viewer = $('<div></div>').addClass('giraffe-viewer');
+
+        var sequence_viewer_search = $('<div></div>')
+            .attr('id', 'giraffe-viewer-search-container')
+            .append($('<textarea></textarea>')
+                        .attr('id', 'giraffe-viewer-search-textarea'))
+            .append($('<input type="submit" value="Search">')
+                        .attr('id', 'giraffe-viewer-search-button'));
+
         sequence_viewer_topbar_highlight = $('<div></div>')
             .attr('id', 'giraffe-viewer-topbar-highlight');
         sequence_viewer_topbar_mouseover = $('<div></div>')
             .attr('id', 'giraffe-viewer-topbar-mouseover');
+
         var topbar = $('<div></div>').addClass('giraffe-viewer-topbar')
-            .append(sequence_viewer_topbar_highlight)
+            .append(sequence_viewer_search)
             .append(sequence_viewer_topbar_mouseover)
+            .append(sequence_viewer_topbar_highlight)
             .append('&nbsp;');
 
         // Sequence viewer is basically a table, each cell has 10 bps.
@@ -738,10 +752,62 @@
             }
         }
 
+        // messages for search, normally hidden
+        var search_not_found = $('<div></div>')
+            .attr('id','giraffe-viewer-search-not-found')
+            .append('Search: cannot find sequence')
+            .attr('title', 'Sequence Search')
+            .hide();
+
         $(viewer)
             .append(topbar)
-            .append(seq_viewer);
+            .append(seq_viewer)
+            .append(search_not_found);
+
         $(dom).append(viewer);
+
+        // for searching:
+        var rc = sequence.reverse_complement();
+
+        $('#giraffe-viewer-search-textarea').change(function(){
+            search_next = -1;
+            search_rc = false;
+        });
+        $('#giraffe-viewer-search-button').click(function(){
+            var q = $('#giraffe-viewer-search-textarea').val();
+            q = q.replace(/\s/g,'');
+            $('#giraffe-viewer-search-textarea').val(q);
+            var n;
+            if (!search_rc) {
+                n = sequence.find(q,search_next);
+                if (n == -1) {
+                    search_next = -1;
+                    search_rc = true;
+                    n = rc.find(q,search_next);
+                }
+            }
+            else { n = rc.find(q,search_next); }
+
+            if (n == -1) {
+                $(search_not_found).dialog({
+                    modal: true,
+                    buttons: { 'Close' : function() { $(this).dialog( "close" ); } }
+                });
+            }
+            else {
+                search_next = n+q.length;
+                sequence_viewer_clear_highlight();
+                var bp;
+                if (search_rc) {
+                    bp = [sequence.length()-(n+q.length-1)+1,sequence.length()-n+1];
+                    sequence_viewer_bp_event_highlight(bp,'Reverse complement of query');
+                }
+                else {
+                    bp = [n,n+q.length-1];
+                    sequence_viewer_bp_event_highlight(bp,'Query');
+                }
+            }
+        });
     }
 
     // global list of td's that have span in the middle

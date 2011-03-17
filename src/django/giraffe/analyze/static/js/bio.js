@@ -39,10 +39,16 @@ window.BioJS = function(){
         ["FLAG","DYKDDDDK"],
         ["FLAG","DYKDHDI"],
         ["FLAG","DYKDHDG"],
+        ["VSVG Tag","YTDIEMNRLGK"],
+        ["SV40 NLS","PKKKRKV"],
+        ["SV40 NLS","PKKKRKVG"],
+        ["T7 Tag", "MASMTGGQQMG"],
+        ["NLS", "KKRKV"],
         ["HA","YPYDVPDYA"],
         ["6xHIS","HHHHHH"],
         ["Myc","EQKLISEEDL"],
         ["TEV","ENLYFQG"],
+        ["TEV","ENPYFQG"],
         ["Myr","MGSNKSKPKDASQRR"],
         ["Myr","MGSSKSKPKDPSQRA"],
         ["V5","GKPIPNPLLGLDST"],
@@ -132,6 +138,22 @@ window.BioJS = function(){
         var p = TranslationTable.STANDARD.translate(this.__sequence);
         this.__translation = new ProteinSequence(p);
         return this.__translation;
+    }
+
+    // Returns 1-indexed bp position of the first occurance of the
+    // query sequence, or -1. start, also 1-indexed, can be the start
+    // position to search, or -1.
+    DNASequence.prototype.find=function(query,start){
+        if (query === undefined || query.length == 0) { return -1; }
+        var n;
+        if (start > 0) {
+            n = this.__sequence.indexOf(query,start-1);
+        }
+        else {
+            n = this.__sequence.indexOf(query);
+        }
+        if (n >= 0) { return n+1; }
+        return n;
     }
 
     // Returns substring

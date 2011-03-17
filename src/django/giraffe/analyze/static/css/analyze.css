@@ -45,9 +45,18 @@ svg path { cursor:pointer; }
 /* Specific to panes/tabs */
 
 .giraffe-viewer { padding:4px; border:1px solid #ddd; }
-.giraffe-viewer-topbar { margin:0px 0px 10px 0px; padding-left:5px; }
-.giraffe-viewer-topbar div { display:inline-block; margin-right:4px; }
+.giraffe-viewer-topbar { margin:0px 0px 10px 0px; padding-right:5px; text-align:right; }
+.giraffe-viewer-topbar div { display:inline-block; margin-left:4px; }
 .giraffe-seq-viewer table { font-family:courier; }
+
+#giraffe-viewer-search-container {
+    float:right;
+    position:absolute;
+    z-index:1000;
+}
+#giraffe-viewer-search-textarea { height:20px; width:120px; float:left; }
+#giraffe-viewer-search-button { float:left; margin-left:2px; }
+#giraffe-viewer-search-textarea:hover { height:40px; width:250px; }
 
 .giraffe-seq-highlight,
 #giraffe-viewer-topbar-highlight { background-color:#aa3333; color:#fff; }
