@@ -725,8 +725,7 @@
 				// Apply the feature-wide properties to the whole feature
 				_feature_set.attr({"stroke":         _color,
 								   "stroke-linecap": "butt",
-								   "opacity":        _opacity,
-								   "title":          _this.name()});
+								   "opacity":        _opacity});
 
 			} // END CircularFeature::draw()
 
@@ -1664,10 +1663,9 @@
 				_feature_set.push(_arrow_set);
 
 				// Apply the feature-wide properties to the whole feature
-				_feature_set.attr({"stroke":         _color,
+				_feature_set.attr({"stroke": _color,
 								   "stroke-linecap": "butt",
-								   "opacity":        _opacity,
-								   "title":          _this.name()});
+								   "opacity": _opacity});
 
 			} // END LinearFeature::draw()
 
