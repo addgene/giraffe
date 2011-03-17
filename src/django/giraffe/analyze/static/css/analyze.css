@@ -20,6 +20,8 @@ svg path { cursor:pointer; }
 
 /* Generic */
 .giraffe-clear { clear:both; margin:15px; }
+.giraffe-hide { display:none; }
+.giraffe-right { float:right; margin-left:10px; }
 .giraffe-left { float:left; margin-right:10px; }
 .giraffe-left-last { margin-right:0px; }
 .giraffe-seq { font-family:courier; }
@@ -28,6 +30,17 @@ svg path { cursor:pointer; }
 .giraffe-bp-marker-right { text-align:left; }
 .giraffe-seq-overlay { color:#777; }
 .giraffe-link-on { text-decoration:none !important; font-weight:bold; color:black !important; }
+.giraffe-help {
+    padding:4px;
+    position:absolute;
+    z-index:9999;
+	-o-box-shadow: 0 0 5px #aaa;
+	-moz-box-shadow: 0 0 5px #aaa;
+	-webkit-box-shadow: 0 0 5px #aaa;
+	box-shadow: 0 0 5px #aaa;
+}
+
+#giraffe-map-help { width:500px; }
 
 /* Specific to panes/tabs */
 
@@ -63,4 +76,25 @@ svg path { cursor:pointer; }
 }
 .giraffe-enzyme-list li p { margin:15px 0px; padding-left:115px; }
 .giraffe-enzyme-list li { clear:left; }
+
+/* following are default jquery-ui tooltip module CSS. jquery-ui
+ * tooltip is not released yet, so we are including these ourselves */
+.ui-tooltip {
+	padding:8px;
+	position:absolute;
+	z-index:9999;
+	-o-box-shadow: 0 0 5px #aaa;
+	-moz-box-shadow: 0 0 5px #aaa;
+	-webkit-box-shadow: 0 0 5px #aaa;
+	box-shadow: 0 0 5px #aaa;
+}
+/* Fades and background-images don't work well together in IE6, drop the image */
+* html .ui-tooltip {
+	background-image: none;
+}
+body .ui-tooltip { border-width:2px; }
+
+/* giraffe customized tooltip CSS */
+.ui-tooltip { font-size:12px; }
+
 

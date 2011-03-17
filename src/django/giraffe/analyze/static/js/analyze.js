@@ -1,4 +1,9 @@
-// Requires: jquery-ui, jquery, giraffe/blat/draw.js
+// Requires: 
+//    jquery-ui 1.8.6
+//    jquery 1.4.2
+//    jquery.ui.tooltip (part of jquery UI 1.9)
+//    giraffe/blat/draw.js
+//
 // Restriction: can only have one instance of this per DOM
 //
 // Depends on draw.js for the following (at least):
@@ -65,10 +70,17 @@
         var divs_dom = $('<div></div>');
 
         for (var i in panes) {
+            var link_text = panes[i];
+            var link_title = undefined;
+            if (typeof panes[i] == typeof []) {
+                link_text = panes[i][0];
+                link_title = panes[i][1];
+            }
             divs[i] = $('<div></div>');
-            links[i] = $('<a pane="'+i+'" href="#">'+panes[i]+'</a>').click(function() {
+            links[i] = $('<a pane="'+i+'" href="#">'+link_text+'</a>').click(function() {
                 var i = $(this).attr('pane'); show(i);
             });
+            if (link_title !== undefined) { links[i].attr('title',link_title); }
             $(links_dom).append(links[i]);
             if (i < panes.length-1) { $(links_dom).append(' | '); }
             $(divs_dom).append(divs[i]);
@@ -158,7 +170,7 @@
     }
 
     function sequence_tab(dom) {
-        panes = Switch_Panes(['Fasta', 'GenBank', 'Reverse Complement']);
+        panes = Switch_Panes(['FASTA','GenBank','Reverse Complement']);
 
         $(dom).append('<p>Current sequence: '+sequence.length()+' base pairs</p>')
               .append(panes.links)
@@ -214,12 +226,17 @@
     function map_tab(dom) {
         panes = Switch_Panes(['Circular Map', 'Linear Map']);
 
+        var help =
+            $('<p id="giraffe-map-help" '+
+              ' class="giraffe-help giraffe-hide '+
+                      'ui-widget ui-corner-all ui-widget-content">'+
+              'Click on a feature label or feature to highlight DNA sequence.'+
+              '</p>');
+
         $(dom)
-            .append('<p class="giraffe-help">'+
-                    'Click on a feature label or feature to highlight DNA sequence.'+
-                    '</p>')
-              .append(panes.links)
-              .append(panes.panes);
+            .append(panes.links)
+            .append(help)
+            .append(panes.panes);
 
 		// Circular map pane
         var dom_id_c = 'giraffe-'+Math.floor(Math.random()*100000000);
@@ -253,21 +270,21 @@
         panes.hide_all();
         if (starts_with_linear_map) { panes.show(1); }
         else { panes.show(0); }
+
+        $('svg path, svg text').mouseover(function(){ $(help).show(); });
+        $('svg path, svg text').mouseout(function(){ $(help).hide(); });
     }
 
     function digest_tab(dom) {
         panes = Switch_Panes(
-            ['All Cutters',
-             'Unique Cutters',
-             'Non-Cutters',
-             'Circular Digest',
-             'Linear Digest']
+            [['Cutters','See restriction enzymes that cut the sequence'],
+             ['Non-Cutters','See restriction enzymes that do not cut the sequence'],
+             ['Circular Digest','See restriction digest bands assuming a circular sequence'],
+             ['Linear Digest','See restriction digest bands assuming a linear sequence']
+            ]
         );
 
         $(dom)
-            .append('<p class="giraffe-help">'+
-                    'Click on a base pair number to highlight DNA sequence.'+
-                    '</p>')
             .append(panes.links)
             .append(panes.panes);
 
@@ -281,7 +298,7 @@
                 cuts.push(gd.basic_features[all_of_this[c]].cut());
             }
             for (var c in cuts) {
-                cuts[c] = '<a href="#" title="'+all[i].name()
+                cuts[c] = '<a href="#" seq-title="'+all[i].name()
                           +' cut site" bp="'+cuts[c]+'" class="giraffe-bp">'+cuts[c]+'</a>';
             }
             var s = $('<p>Cuts after '+cuts.join(', ')+'</p>');
@@ -294,7 +311,7 @@
         var list = $('<ul></ul>').addClass('giraffe-enzyme-list');
         for (var i in unique) {
             var name = $('<label></label>').append(unique[i].name());
-            var x = '<a href="#" title="'+unique[i].name()
+            var x = '<a href="#" seq-title="'+unique[i].name()
                     +' cut site" bp="'+unique[i].cut()+'" class="giraffe-bp">'
                     +unique[i].cut()+'</a>';
             var s = $('<p>Cuts after '+x+'</p>');
@@ -331,20 +348,23 @@
                 var digests = []
                 for (var j=0; j<cuts.length; j++) {
                     if (j == 0 && !circular) {
-                        var a0 = '<a href="#" class="giraffe-bp" title="Fragment cut by '
+                        var a0 = '<a href="#" class="giraffe-bp" '
+                                 +'seq-title="Fragment cut by '
                                  +all[i].name()+'" bp="1,'+cuts[j]+'">';
                         digests.push(a0+'1-'+(cuts[j])+'</a> ('+cuts[j]+' bp)');
                     }
                     if (j+1 == cuts.length) {
                         if (circular) {
-                            var a0 = '<a href="#" class="giraffe-bp" title="Fragment cut by '
+                            var a0 = '<a href="#" class="giraffe-bp" '
+                                     +'seq-title="Fragment cut by '
                                      +all[i].name()+'" bp="'
                                      +(cuts[j]+1)+','+cuts[0]+'">';
                             digests.push(a0+(cuts[j]+1)+'-'+cuts[0]+'</a> ('+
                                          (seqlen-(cuts[j]+1)+1+cuts[0])+' bp)');
                         }
                         else {
-                            var a0 = '<a href="#" class="giraffe-bp" title="Fragment cut by '
+                            var a0 = '<a href="#" class="giraffe-bp" '
+                                     +'seq-title="Fragment cut by '
                                      +all[i].name()+'" bp="'
                                      +(cuts[j]+1)+','+seqlen+'">';
                             digests.push(a0+(cuts[j]+1)+'-'+seqlen+'</a> ('+
@@ -352,7 +372,8 @@
                         }
                     }
                     else {
-                        var a0 = '<a href="#" class="giraffe-bp" title="Fragment cut by '
+                        var a0 = '<a href="#" class="giraffe-bp" '
+                                 +'seq-title="Fragment cut by '
                                  +all[i].name()+'" bp="'
                                  +(cuts[j]+1)+','+cuts[j+1]+'">';
                         digests.push(a0+(cuts[j]+1)+'-'+(cuts[j+1])+'</a> ('+
@@ -386,12 +407,6 @@
         $(dom)
             .append(panes.links)
             .append(panes.panes);
-
-
-        $(panes.pane(0))
-            .append('<p class="giraffe-help">'+
-                    'Click on base pair numbers to highlight DNA sequence.'+
-                    '</p>');
 
         var starts_with = 1;
         for (var i in gd.orf_features) {
@@ -445,8 +460,10 @@
 
             var title = 'ORF';
             if (gene_desc !== '') { title += ', '+gene_desc; }
-            var t = 'ORF <a href="#" class="giraffe-bp" title="'+title+'" bp="'
-                    +f.start()+','+f.end()+'">';
+            var t = 'ORF <a href="#" class="giraffe-bp" '
+                     +'title="Click to highlight sequence in sequence viewer." '
+                     +'seq-title="'+title+'" bp="'
+                     +f.start()+','+f.end()+'">';
             if (f.clockwise()) { t += f.start()+' - '+f.end(); }
             else { t += f.end()+' - '+f.start()+' antisense'; }
             t += '</a> ('+s.length()/3+' aa)';
@@ -749,7 +766,7 @@
             evt.preventDefault();
 
             var bpstr = $(this).attr('bp');
-            var title = $(this).attr('title');
+            var title = $(this).attr('seq-title');
             var bp = bpstr.split(',');
             if (bp.length > 0) { sequence_viewer_bp_event_highlight(bp,title); }
         });
@@ -904,6 +921,8 @@
         var tabs_width = analyzer_width-viewer_width;
         $(dom_viewer).width(viewer_width);
         $(dom_tabs).width(tabs_width);
+    
+        $(dom_main).tooltip();
     }
 
     full_widget();
