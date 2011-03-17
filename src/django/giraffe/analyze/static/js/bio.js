@@ -145,12 +145,15 @@ window.BioJS = function(){
     // position to search, or -1.
     DNASequence.prototype.find=function(query,start){
         if (query === undefined || query.length == 0) { return -1; }
+        if (this.__sequence_lc === undefined) {
+            this.__sequence_lc = this.__sequence.toLowerCase();
+        }
         var n;
         if (start > 0) {
-            n = this.__sequence.indexOf(query,start-1);
+            n = this.__sequence_lc.indexOf(query.toLowerCase(),start-1);
         }
         else {
-            n = this.__sequence.indexOf(query);
+            n = this.__sequence_lc.indexOf(query.toLowerCase());
         }
         if (n >= 0) { return n+1; }
         return n;

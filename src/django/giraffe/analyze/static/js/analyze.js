@@ -793,6 +793,8 @@
                     modal: true,
                     buttons: { 'Close' : function() { $(this).dialog( "close" ); } }
                 });
+                search_next = -1;
+                search_rc = true;
             }
             else {
                 search_next = n+q.length;
