@@ -40,6 +40,10 @@ class Giraffe_Mappable_Model(models.Model):
         import orfs
         db = Feature_Database.objects.get(name=db_name)
 
+        # remove leading > for FASTA sequence
+        if sequence.startswith('>'):
+            sequence = re.sub(r'^\>[^\n]*\n','',sequence);
+
         # clean the sequence
         sequence = Sequence.strip(sequence)
 
