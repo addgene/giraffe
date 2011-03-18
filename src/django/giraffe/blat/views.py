@@ -11,14 +11,32 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 
 
+"""
+post view: post a sequence and run the sequence through blat and orf
+detection.
+
+    expects: db and sequence
+    response:
+        1. if 'next' is specified as a CGI argument, redirect to that
+        URL with '/hash/db_name/' appended, where 'hash' is the hash
+        ID of the sequence and 'db_name' is the name of the features
+        database.
+        2. otherwise, redirects to the 'get' view that returns JSON
+        array of features.
+"""
 def post(request):
     assert (request.method == 'POST')
     db_name = request.POST['db']
     sequence = request.POST['sequence']
     hash = models.Giraffe_Mappable_Model.detect_features(sequence,db_name)
-    if request.is_ajax() or 'demo' not in request.POST:
-        return redirect(reverse(get,args=[hash,db_name]))
-    return redirect(reverse('analyzer',args=[hash,db_name]))
+    if 'next' in request.POST:
+        u = request.POST['next']
+        if u.endswith('/'):
+            u = u+hash+'/'+db_name
+        else:
+            u = u+'/'+hash+'/'+db_name
+        return redirect(u)
+    return redirect(reverse(get,args=[hash,db_name]))
 
 
 def get(request,hash,db_name):

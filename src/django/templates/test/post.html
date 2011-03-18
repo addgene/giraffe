@@ -6,7 +6,7 @@
 
 <form id="example_form" action="{% url blat-post %}" method="POST">
 {% csrf_token %}
-<input type="hidden" name="demo" value="1" />
+<input type="hidden" name="next" value="/test/analyze/" />
 <input type="hidden" name="db" value="default" />
 <input type="hidden" name="sequence" value="
 ttggggttgcgccttttccaaggcagccctgggtttgcgcagggacgcggctgctctgggcgtggttccgggaaacgcag
@@ -128,7 +128,7 @@ tttggccgcggctcgaggggg
 <h2>Enter Sequence to Map</h2>
 
 <form id="post_form" action="{% url blat-post %}" method="POST">{% csrf_token %}
-<input type="hidden" name="demo" value="1" />
+<input type="hidden" name="next" value="/test/analyze/" />
 <input type="hidden" name="db" value="default" />
 
 <textarea name="sequence" class="sequence">
