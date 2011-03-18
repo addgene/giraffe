@@ -47,6 +47,8 @@ def detect_orfs(sequence_object):
                     aa_start = aa_end+1
                     continue
 
+                #print str(aa_len)+": "+str(start_codon)+"-"+str(aa_end)
+
                 if aa_end-start_codon >= min_protein_len:
                     #print 'found '+trans[start_codon:aa_end]
 
@@ -84,7 +86,7 @@ def detect_orfs(sequence_object):
                         tag = tag_pair[0]
                         peptide = tag_pair[1]
                         tag_aa_start = trans.find(peptide,start_codon,aa_end)
-                        if tag_aa_start >= 0:
+                        if tag_aa_start >= 0 and tag_aa_start < aa_len:
                             tag_aa_end = tag_aa_start+len(peptide)
                             if strand == 1:
                                 tag_start = frame+tag_aa_start*3+1
