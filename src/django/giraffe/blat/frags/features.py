@@ -55,7 +55,7 @@ def blat(db,sequence_obj):
     if _debug: 
         t = timer()
         t.next()
-    frags = _get_frags(db.name,sequence_obj.sequence)
+    frags = _get_frags(db.name,Sequence.convert_to_dna(sequence_obj.sequence))
     if _debug: print "get_frags took %f seconds" % t.next()
 
     # Translate frags to features and store them into the database
