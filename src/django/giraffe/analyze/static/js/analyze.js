@@ -170,6 +170,8 @@
     }
 
     function sequence_tab(dom) {
+        var copy_all = 'To copy sequence: click on sequence, hit ctrl/cmd-A, then ctrl/cmd-C';
+
         panes = Switch_Panes(['FASTA','GenBank','Reverse Complement']);
 
         $(dom).append('<p>Current sequence: '+sequence.length()+' base pairs</p>')
@@ -177,7 +179,10 @@
               .append(panes.panes);
 
         $(panes.pane(0))
-            .addClass('giraffe-seq').append(BioJS.fasta(sequence,name));
+            .append('<p>'+copy_all+'</p>')
+            .append($('<textarea readonly></textarea>')
+                        .addClass('giraffe-seq-textarea')
+                        .val(BioJS.fasta(sequence,name,false)));
 
         var features = [];
         for (var i in gd.basic_features) {
@@ -214,11 +219,17 @@
         }
 
         $(panes.pane(1))
-            .addClass('giraffe-seq').append(BioJS.genbank(sequence,name,true,features));
+            .append('<p>'+copy_all+'</p>')
+            .append($('<textarea readonly></textarea>')
+                        .addClass('giraffe-seq-textarea')
+                        .val(BioJS.genbank(sequence,name,false,features)));
+
         $(panes.pane(2))
-            .addClass('giraffe-seq').append(
-                BioJS.fasta(sequence.reverse_complement(),name)
-            );
+            .append('<p>'+copy_all+'</p>')
+            .append($('<textarea readonly></textarea>')
+                        .addClass('giraffe-seq-textarea')
+                        .val(BioJS.fasta(sequence.reverse_complement(),name,false)));
+
         panes.hide_all();
         panes.show(0);
     }

@@ -44,6 +44,14 @@ svg path { cursor:pointer; }
 
 /* Specific to panes/tabs */
 
+.giraffe-seq-textarea {
+    border:1px solid #e0e0e0;
+    width:100%;
+    height:600px;
+    font-family:courier !important;
+    font-size:12px;
+}
+
 .giraffe-viewer { padding:4px; border:1px solid #ddd; }
 .giraffe-viewer-topbar { margin:0px 0px 10px 0px; padding-right:5px; text-align:right; }
 .giraffe-viewer-topbar div { display:inline-block; margin-left:4px; }
