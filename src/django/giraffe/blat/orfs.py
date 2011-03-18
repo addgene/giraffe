@@ -10,9 +10,12 @@ min_protein_len = 150
 def detect_orfs(sequence_object):
     sequence_object.clear_orf_features()
 
+    # convert to DNA sequence, to get rid of degenerates and 'U's...
+    dna = models.Sequence.convert_to_dna(sequence_object.sequence)
+
     # double up sequence, so we can detect features across 0 bp
     # boundary
-    seq = Seq(sequence_object.sequence*2)
+    seq = Seq(dna*2)
     seq_len = len(sequence_object.sequence)
     aa_len = int(math.floor(seq_len/3.0))
 

@@ -2029,7 +2029,10 @@
 		function draw_labels(height) {
 			// Calculate the height of a label
 			var label_leading = 1.3;
-			var label_height = features[0].label_size().height * label_leading;
+			var label_height = 0;
+            if (features.length) {
+                label_height = features[0].label_size().height * label_leading;
+            }
 
 			// Finally, draw all the features
             for (var sx = 0; sx < label_pos[0].length; sx++) {

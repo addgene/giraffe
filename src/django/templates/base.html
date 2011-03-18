@@ -7,12 +7,29 @@
         <title>{% block title %}Giraffe{% endblock %}</title>
         <link href="/static/css/jquery-ui/redmond/jquery-ui-1.8.6.custom.css"
          rel="stylesheet" type="text/css" />
+        <link href="/static/css/site.css" rel="stylesheet" type="text/css" />
         {% block pagecss %}{% endblock %}
     </head>
     <body class="giraffe">
-    <div class="container">
-    {% block body %}{% endblock %}
+    <div id="container">
+
+    <div id="header">
+        <div id="links">
+            <a href="/">Enter New Sequence</a> |
+            <a href="https://github.com/addgene/giraffe">GitHub</a>
+        </div>
+        <div id="title">Giraffe: DNA Sequence Analysis</div>
+        <p>
+            Feature Detection, Sequence Maps, Digests, and more ...
+        </p>
     </div>
+
+    <div id="body">
+    {% block body %}{% endblock %}
+    </div> {# body #}
+
+    </div> {# container #}
+
     <!--[if lt IE 7.]>
     <script defer type="text/javascript" src="/static/js/pngfix.js">
     </script>
