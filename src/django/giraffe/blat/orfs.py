@@ -5,7 +5,7 @@ import math
 import tags
 
 trans_table = 1 # standard translation table
-min_protein_len = 200
+min_protein_len = 150
 
 def detect_orfs(sequence_object):
     sequence_object.clear_orf_features()
@@ -46,8 +46,6 @@ def detect_orfs(sequence_object):
                     assert(aa_end != -1)
                     aa_start = aa_end+1
                     continue
-
-                #print str(aa_len)+": "+str(start_codon)+"-"+str(aa_end)
 
                 if aa_end-start_codon >= min_protein_len:
                     #print 'found '+trans[start_codon:aa_end]
