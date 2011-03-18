@@ -16,7 +16,7 @@ def post(request):
     db_name = request.POST['db']
     sequence = request.POST['sequence']
     hash = models.Giraffe_Mappable_Model.detect_features(sequence,db_name)
-    if request.is_ajax():
+    if request.is_ajax() or 'demo' not in request.POST:
         return redirect(reverse(get,args=[hash,db_name]))
     return redirect(reverse('analyzer',args=[hash,db_name]))
 
