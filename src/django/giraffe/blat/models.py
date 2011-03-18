@@ -275,6 +275,7 @@ class Feature(models.Model):
 
     class Meta:
         unique_together = (("name","hash"),)
+        ordering = ('type','name')
 
 
 class Feature_Database(models.Model):
