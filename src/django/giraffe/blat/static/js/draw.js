@@ -683,11 +683,11 @@
 					var xy1 = convert.polar_to_rect(_this.radius, a0);
 
 					// The arc has no fill-color: it's just a thick line
-					var large_angle = Math.abs(a0 - a1) > 180 ? 1 : 0;
-					var p = svg.move(xy0.x, xy0.y) +
+					var large_angle = _this.size_degrees() > 180 ? 1 : 0;
+
+					var arc = paper.path(svg.move(xy0.x, xy0.y) +
 										 svg.arc(_this.radius, xy1.x, xy1.y,
-					                             large_angle);
-					var arc = paper.path(p);
+					                             large_angle));
 					arc.attr({"stroke-width": _width});
 
 					_arrow_set.push(arc);
