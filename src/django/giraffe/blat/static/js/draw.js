@@ -106,8 +106,10 @@
 		move: function (x, y) {
 			return this.to_path(['M', x, y]);
 		},
-		arc: function (r, x, y) {
-			return this.to_path(['A', r, r, 0, 0, 0, x, y]);
+		arc: function (r, x, y, l) {
+			if (arguments.length < 4)
+				l = 0;
+			return this.to_path(['A', r, r, 0, l, 0, x, y]);
 		},
 		line: function (x, y) {
 			return this.to_path(['L', x, y]);
@@ -679,8 +681,11 @@
 					var xy1 = convert.polar_to_rect(_this.radius, a0);
 
 					// The arc has no fill-color: it's just a thick line
-					var arc = paper.path(svg.move(xy0.x, xy0.y) +
-										 svg.arc(_this.radius, xy1.x, xy1.y));
+					var large_angle = Math.abs(a0 - a1) > 180 ? 1 : 0;
+					var p = svg.move(xy0.x, xy0.y) +
+										 svg.arc(_this.radius, xy1.x, xy1.y,
+					                             large_angle);
+					var arc = paper.path(p);
 					arc.attr({"stroke-width": _width});
 
 					_arrow_set.push(arc);
