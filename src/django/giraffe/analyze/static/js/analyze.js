@@ -244,16 +244,24 @@
               'Click on a feature label or feature to highlight DNA sequence.'+
               '</p>');
 
+		// Table dom
+        var dom_tab_id = 'giraffe-table';
+		var dom_tab = $('<div id="'+dom_tab_id+'" class="giraffe-analyze-table"></div>');
+
         $(dom)
             .append(help)
             .append(panes.links)
-            .append(panes.panes);
+            .append(panes.panes)
+			.append(dom_tab);
+
+		var gt = GiraffeTable($, gd, dom_tab);
+		
 
 		// Circular map pane
         var dom_id_c = 'giraffe-'+Math.floor(Math.random()*100000000);
         var dom_map_c = $('<div id="'+dom_id_c+'" class="giraffe-analyze-map giraffe-analyze-circular-map"></div>');
         $(panes.pane(0))
-            .append(dom_map_c)
+            .append(dom_map_c);
 
         gd.CircularMap({
             'map_dom_id' : dom_id_c,
@@ -267,7 +275,7 @@
         var dom_id_l = 'giraffe-'+Math.floor(Math.random()*100000000);
         var dom_map_l = $('<div id="'+dom_id_l+'" class="giraffe-analyze-map giraffe-analyze-linear-map"></div>');
         $(panes.pane(1))
-            .append(dom_map_l)
+            .append(dom_map_l);
 
         gd.LinearMap({
             'map_dom_id' : dom_id_l,
@@ -281,6 +289,7 @@
         panes.hide_all();
         if (starts_with_linear_map) { panes.show(1); }
         else { panes.show(0); }
+
 
         $('svg path, svg text').mouseover(function(){ $(help).show(); });
         $('svg path, svg text').mouseout(function(){ $(help).hide(); });
