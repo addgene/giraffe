@@ -11,11 +11,31 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 
 
+"""
+post view: post a sequence and run the sequence through blat and orf
+detection.
+
+    expects: db and sequence
+    response:
+        1. if 'next' is specified as a CGI argument, redirect to that
+        URL with '/hash/db_name/' appended, where 'hash' is the hash
+        ID of the sequence and 'db_name' is the name of the features
+        database.
+        2. otherwise, redirects to the 'get' view that returns JSON
+        array of features.
+"""
 def post(request):
     assert (request.method == 'POST')
     db_name = request.POST['db']
     sequence = request.POST['sequence']
     hash = models.Giraffe_Mappable_Model.detect_features(sequence,db_name)
+    if 'next' in request.POST:
+        u = request.POST['next']
+        if u.endswith('/'):
+            u = u+hash+'/'+db_name
+        else:
+            u = u+'/'+hash+'/'+db_name
+        return redirect(u)
     return redirect(reverse(get,args=[hash,db_name]))
 
 
@@ -86,20 +106,18 @@ def get(request,hash,db_name):
 
     if 'jsonp' in request.GET:
         j = request.GET['jsonp']+'('+j+')'
-        http_res = HttpResponse(
-            j,mimetype="text/javascript",status=httplib.OK
-        )
+        http_res = HttpResponse(j,mimetype="text/javascript",status=httplib.OK)
 
     else:
-        http_res = HttpResponse(
-            # technically we should be returning "application/json",
-            # but in that case browsers force user to download into a
-            # file, and for debugging we want to be able to see the
-            # JSON list in browser. looks like most browsers will
-            # handle JSON sent back as text/html anyways.
-            #mimetype="application/json",
-            j,status=httplib.OK
-        )
+        # technically we should be returning "application/json", but
+        # in that case browsers force user to download into a file,
+        # and for debugging we want to be able to see the JSON list in
+        # browser. looks like most browsers will handle JSON sent back
+        # as text/html anyways.
+        if request.is_ajax():
+            http_res = HttpResponse(j,mimetype="application/json",status=httplib.OK)
+        else:
+            http_res = HttpResponse(j,status=httplib.OK)
 
     # we tell browser to cache this; if the sequence change, the hash would
     # change. the only danger is if we re-blat the sequence, in that case the

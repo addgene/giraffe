@@ -5,6 +5,13 @@ import hashlib
 import re
 
 
+class BadSequenceError(Exception):
+    def __init__(self,why):
+        self.why = why
+    def __str__(self):
+        return repr(self.why)
+
+
 class Giraffe_Mappable_Model(models.Model):
     """
     This is an abstract class for other apps to use with their models;
@@ -19,22 +26,42 @@ class Giraffe_Mappable_Model(models.Model):
     sequence_giraffe_id = models.CharField(max_length=64,null=True,blank=True)
     sequence_giraffe_time = models.DateTimeField(null=True,blank=True)
 
+
     def sequence_giraffe_unixtime(self):
         """Useful for using the unixtime as a timestamp in URL, to
         help with caching."""
         import time
         return int(time.mktime(self.sequence_giraffe_time.timetuple()))
 
+
     @staticmethod
     def detect_features(sequence,db_name):
         import frags.features
         import orfs
         db = Feature_Database.objects.get(name=db_name)
+
+        # remove leading > for FASTA sequence
+        if sequence.startswith('>'):
+            sequence = re.sub(r'^\>[^\n]*\n','',sequence);
+
+        # clean the sequence
+        sequence = Sequence.strip(sequence)
+
+        # create sequence record
+        s = Sequence()
+        s.sequence = sequence
+        s.db = db
+        s.save()
+        s.clear_features()
+
         # run blat algorithm to automatically detect features
-        s = frags.features.blat(db,sequence)
+        frags.features.blat(db,s)
+
         # detect ORFs
         orfs.detect_orfs(s)
+
         return s.hash
+
 
     def giraffe_ready(self,db_name='default',force=False,save=True):
         if not self.sequence:
@@ -55,6 +82,7 @@ class Giraffe_Mappable_Model(models.Model):
             if save:
                 self.save()
     giraffe_ready.alters_data = True
+
 
     def save(self,run_giraffe_ready=True):
         if run_giraffe_ready:
@@ -130,6 +158,28 @@ class Sequence_Feature(Sequence_Feature_Base):
 
 class Sequence(models.Model):
     @staticmethod
+    def verify_clean(sequence):
+        if re.match(r'^[atgcATGCnNbdhkmnrsvwyBDHKMNRSVWYuU\*\s]*$',sequence):
+            return True
+        return False
+
+    @staticmethod
+    def convert_to_dna(sequence):
+        """
+        Take a sequence we accept, e.g. with degenerates, and convert
+        it to a valid DNA sequence with just atgc.
+        """
+        sequence = re.sub(r'[\*DHMNRVW]','A',sequence)
+        sequence = re.sub(r'[\*dhmnrvw]','a',sequence)
+        sequence = re.sub(r'[BYS]','C',sequence)
+        sequence = re.sub(r'[bys]','c',sequence)
+        sequence = re.sub(r'[K]','G',sequence)
+        sequence = re.sub(r'[k]','g',sequence)
+        sequence = re.sub(r'[U]','T',sequence)
+        sequence = re.sub(r'[u]','t',sequence)
+        return sequence
+
+    @staticmethod
     def strip(sequence):
         if sequence:
             sequence = re.sub(r'\s', '', sequence)
@@ -156,6 +206,9 @@ class Sequence(models.Model):
         unique_together = (("db","hash"),)
 
     def save(self):
+        if not Sequence.verify_clean(self.sequence):
+            raise BadSequenceError("Found non-DNA base pair character")
+
         (self.sequence,self.hash) = Sequence.clean_and_hash(self.sequence)
         try:
             super(Sequence,self).save()
@@ -222,6 +275,7 @@ class Feature(models.Model):
 
     class Meta:
         unique_together = (("name","hash"),)
+        ordering = ('type','name')
 
 
 class Feature_Database(models.Model):

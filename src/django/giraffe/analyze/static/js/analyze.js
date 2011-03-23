@@ -1,9 +1,18 @@
-// XXX discuss
-//   Feature object now exposed here, so draw.js better not change the
-//   API
-
-// Requires: jquery-ui, jquery, giraffe/blat/draw.js
+// Requires: 
+//    jquery-ui 1.8.6
+//    jquery 1.4.2
+//    jquery.ui.tooltip (part of jquery UI 1.9)
+//    giraffe/blat/draw.js
+//
 // Restriction: can only have one instance of this per DOM
+//
+// Depends on draw.js for the following (at least):
+//    Feature
+//    Feature.other_cutters
+//    basic_features
+//    enzyme_features
+//    orf_features
+//
 //
 // Call:
 //    GiraffeAnalyze(jQuery,gd,{...});
@@ -17,6 +26,8 @@
 //    map_width: map width
 //    map_height: map height
 //    analyzer_width: main width of the entire analyzer
+//    linear_map: if 1, switch to linear map to start (default is 0,
+//    and uses circular map)
 // 
 
 (function(){window.GiraffeAnalyze = function ($,gd,options) {
@@ -30,8 +41,10 @@
     if ('map_height' in options) { map_height = options['map_height']; }
     var analyzer_width = 1340;
     if ('analyzer_width' in options) { analyzer_width = options['analyzer_width']; }
+    var starts_with_linear_map = false;
+    if ('linear_map' in options && options['linear_map']) { starts_with_linear_map = true; }
 
-    var viewer_seqs_per_line = 5;
+    var viewer_segs_per_line = 5;
 
     var seqlen = gd.sequence.length;
     var sequence = new BioJS.DNASequence(gd.sequence);
@@ -57,10 +70,17 @@
         var divs_dom = $('<div></div>');
 
         for (var i in panes) {
+            var link_text = panes[i];
+            var link_title = undefined;
+            if (typeof panes[i] == typeof []) {
+                link_text = panes[i][0];
+                link_title = panes[i][1];
+            }
             divs[i] = $('<div></div>');
-            links[i] = $('<a pane="'+i+'" href="#">'+panes[i]+'</a>').click(function() {
+            links[i] = $('<a pane="'+i+'" href="#">'+link_text+'</a>').click(function() {
                 var i = $(this).attr('pane'); show(i);
             });
+            if (link_title !== undefined) { links[i].attr('title',link_title); }
             $(links_dom).append(links[i]);
             if (i < panes.length-1) { $(links_dom).append(' | '); }
             $(divs_dom).append(divs[i]);
@@ -150,20 +170,66 @@
     }
 
     function sequence_tab(dom) {
-        panes = Switch_Panes(['Fasta', 'GenBank', 'Reverse Complement']);
+        var copy_all = 'To copy sequence: click on sequence, hit ctrl/cmd-A, then ctrl/cmd-C';
+
+        panes = Switch_Panes(['FASTA','GenBank','Reverse Complement']);
 
         $(dom).append('<p>Current sequence: '+sequence.length()+' base pairs</p>')
               .append(panes.links)
               .append(panes.panes);
 
         $(panes.pane(0))
-            .addClass('giraffe-seq').append(BioJS.fasta(sequence,name));
+            .append('<p>'+copy_all+'</p>')
+            .append($('<textarea readonly></textarea>')
+                        .addClass('giraffe-seq-textarea')
+                        .val(BioJS.fasta(sequence,name,false)));
+
+        var features = [];
+        for (var i in gd.basic_features) {
+            if (gd.basic_features[i].is_enzyme()) { continue; }
+            var type = "misc_feature";
+            var label = gd.basic_features[i].name()
+            var gene = "";
+            if (gd.basic_features[i].type() == gd.Feature_Type.origin) {
+                type = "rep_origin";
+            }
+            else if (gd.basic_features[i].type() == gd.Feature_Type.gene) {
+                type = "gene";
+                gene = gd.basic_features[i].name();
+            }
+            else if (gd.basic_features[i].is_orf()) {
+                type = "CDS";
+            }
+            else if (gd.basic_features[i].type() == gd.Feature_Type.promoter) {
+                type = "promoter";
+            }
+            else if (gd.basic_features[i].type() == gd.Feature_Type.terminator) {
+                type = "terminator";
+            }
+            var f = {
+                label : label,
+                gene : gene,
+                type : type,
+                start : gd.basic_features[i].start(),
+                end : gd.basic_features[i].end(),
+                clockwise : gd.basic_features[i].clockwise(),
+                clockwise_sequence : gd.basic_features[i].clockwise_sequence()
+            }
+            features.push(f); 
+        }
+
         $(panes.pane(1))
-            .addClass('giraffe-seq').append(BioJS.genbank(sequence,name));
+            .append('<p>'+copy_all+'</p>')
+            .append($('<textarea readonly></textarea>')
+                        .addClass('giraffe-seq-textarea')
+                        .val(BioJS.genbank(sequence,name,false,features)));
+
         $(panes.pane(2))
-            .addClass('giraffe-seq').append(
-                BioJS.fasta(sequence.reverse_complement(),name)
-            );
+            .append('<p>'+copy_all+'</p>')
+            .append($('<textarea readonly></textarea>')
+                        .addClass('giraffe-seq-textarea')
+                        .val(BioJS.fasta(sequence.reverse_complement(),name,false)));
+
         panes.hide_all();
         panes.show(0);
     }
@@ -171,10 +237,17 @@
     function map_tab(dom) {
         panes = Switch_Panes(['Circular Map', 'Linear Map']);
 
+        var help =
+            $('<p id="giraffe-map-help" '+
+              ' class="giraffe-help giraffe-hide '+
+                      'ui-widget ui-corner-all ui-widget-content">'+
+              'Click on a feature label or feature to highlight DNA sequence.'+
+              '</p>');
+
         $(dom)
-            .append('<p class="giraffe-help">Click on a feature label or feature to see corresponding DNA sequence.</p>')
-              .append(panes.links)
-              .append(panes.panes);
+            .append(help)
+            .append(panes.links)
+            .append(panes.panes);
 
 		// Circular map pane
         var dom_id_c = 'giraffe-'+Math.floor(Math.random()*100000000);
@@ -206,20 +279,24 @@
         });
 
         panes.hide_all();
-        panes.show(0);
+        if (starts_with_linear_map) { panes.show(1); }
+        else { panes.show(0); }
+
+        $('svg path, svg text').mouseover(function(){ $(help).show(); });
+        $('svg path, svg text').mouseout(function(){ $(help).hide(); });
     }
 
     function digest_tab(dom) {
         panes = Switch_Panes(
-            ['All Cutters',
-             'Unique Cutters',
-             'Non-Cutters',
-             'Circular Digest',
-             'Linear Digest']
+            [['All Cutters','See restriction enzymes that cut the sequence'],
+             ['Unique Cutters','See restriction enzymes that cut the sequence only once'],
+             ['Non-Cutters','See restriction enzymes that do not cut the sequence'],
+             ['Circular Digest','See restriction digest bands assuming a circular sequence'],
+             ['Linear Digest','See restriction digest bands assuming a linear sequence']
+            ]
         );
 
         $(dom)
-            .append('<p class="giraffe-help">Click on a base pair number to see corresponding DNA sequence.</p>')
             .append(panes.links)
             .append(panes.panes);
 
@@ -233,8 +310,8 @@
                 cuts.push(gd.basic_features[all_of_this[c]].cut());
             }
             for (var c in cuts) {
-                cuts[c] = '<a href="#" title="'+all[i].name()
-                          +'" bp="'+cuts[c]+'" class="giraffe-bp">'+cuts[c]+'</a>';
+                cuts[c] = '<a href="#" seq-title="'+all[i].name()
+                          +' cut site" bp="'+cuts[c]+'" class="giraffe-bp">'+cuts[c]+'</a>';
             }
             var s = $('<p>Cuts after '+cuts.join(', ')+'</p>');
             var item = $('<li></li>').append(name).append(s);
@@ -246,8 +323,8 @@
         var list = $('<ul></ul>').addClass('giraffe-enzyme-list');
         for (var i in unique) {
             var name = $('<label></label>').append(unique[i].name());
-            var x = '<a href="#" title="'+unique[i].name()
-                    +'" bp="'+unique[i].cut()+'" class="giraffe-bp">'
+            var x = '<a href="#" seq-title="'+unique[i].name()
+                    +' cut site" bp="'+unique[i].cut()+'" class="giraffe-bp">'
                     +unique[i].cut()+'</a>';
             var s = $('<p>Cuts after '+x+'</p>');
             var item = $('<li></li>').append(name).append(s);
@@ -283,20 +360,23 @@
                 var digests = []
                 for (var j=0; j<cuts.length; j++) {
                     if (j == 0 && !circular) {
-                        var a0 = '<a href="#" class="giraffe-bp" title="Fragment cut by '
+                        var a0 = '<a href="#" class="giraffe-bp" '
+                                 +'seq-title="Fragment cut by '
                                  +all[i].name()+'" bp="1,'+cuts[j]+'">';
                         digests.push(a0+'1-'+(cuts[j])+'</a> ('+cuts[j]+' bp)');
                     }
                     if (j+1 == cuts.length) {
                         if (circular) {
-                            var a0 = '<a href="#" class="giraffe-bp" title="Fragment cut by '
+                            var a0 = '<a href="#" class="giraffe-bp" '
+                                     +'seq-title="Fragment cut by '
                                      +all[i].name()+'" bp="'
                                      +(cuts[j]+1)+','+cuts[0]+'">';
                             digests.push(a0+(cuts[j]+1)+'-'+cuts[0]+'</a> ('+
                                          (seqlen-(cuts[j]+1)+1+cuts[0])+' bp)');
                         }
                         else {
-                            var a0 = '<a href="#" class="giraffe-bp" title="Fragment cut by '
+                            var a0 = '<a href="#" class="giraffe-bp" '
+                                     +'seq-title="Fragment cut by '
                                      +all[i].name()+'" bp="'
                                      +(cuts[j]+1)+','+seqlen+'">';
                             digests.push(a0+(cuts[j]+1)+'-'+seqlen+'</a> ('+
@@ -304,7 +384,8 @@
                         }
                     }
                     else {
-                        var a0 = '<a href="#" class="giraffe-bp" title="Fragment cut by '
+                        var a0 = '<a href="#" class="giraffe-bp" '
+                                 +'seq-title="Fragment cut by '
                                  +all[i].name()+'" bp="'
                                  +(cuts[j]+1)+','+cuts[j+1]+'">';
                         digests.push(a0+(cuts[j]+1)+'-'+(cuts[j+1])+'</a> ('+
@@ -339,112 +420,192 @@
             .append(panes.links)
             .append(panes.panes);
 
-
         $(panes.pane(0))
-            .append('<p class="giraffe-help">Click on base pair numbers to see corresponding DNA sequence.</p>');
+            .append('<p>Click on ORF bp numbers to highlight sequence.</p>');
 
         var starts_with = 1;
         for (var i in gd.orf_features) {
-            starts_with = 0;
             var f = gd.orf_features[i];
+
+            // does this ORF cover, or is the same as, a gene?
+            var gene_desc = '';
+            for (var j in gd.basic_features) {
+                if (gd.basic_features[j].type() == gd.Feature_Type.gene &&
+                    gd.basic_features[j].clockwise() == f.clockwise()) {
+                    var g = gd.basic_features[j];
+                    var f_end = f.end();
+                    if (f.end() < f.start()) { f_end = f_end+seqlen; }
+                    var g_end = g.end();
+                    if (g.end() < g.start()) { g_end = g_end+seqlen; }
+                    if (g.start() >= f.start() && g_end <= f_end) {
+                        gene_desc = 'contains '+g.name();
+                    }
+                    else if (g.start() < f.start() && g_end > f_end) {
+                        gene_desc = 'within '+g.name();
+                    }
+                    else if ((g.start() < f.start() && g_end > f.start()) ||
+                             (g.start() < f_end && g_end > f_end)) {
+                        gene_desc = 'overlaps with '+g.name();
+                    }
+                }
+            }
+
+            starts_with = 0;
             var s = f.clockwise_sequence();
-            var t = 'ORF <a href="#" class="giraffe-bp" title="ORF" bp="'
-                    +f.start()+','+f.end()+'">';
-            if (f.clockwise()) { t += f.start()+' - '+f.end(); }
-            else { t += f.end()+' - '+f.start()+' antisense'; }
-            t += '</a> ('+s.length/3+' aa)';
-            var title = $('<p></p>').append(t);
 
             var p;
+            var seq_start, seq_end;
             if (f.clockwise()) {
-                p = new BioJS.DNASequence(s).translate();
+                s = new BioJS.DNASequence(s);
+                p = s.translate();
+                seq_start = f.start();
+                seq_end = f.end();
             }
             else {
-                p = new BioJS.DNASequence(s).reverse_complement().translate();
+                s = new BioJS.DNASequence(s).reverse_complement();
+                p = s.translate();
+                seq_start = f.end();
+                seq_end = f.start();
             }
+        
+            var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
+            $(overlay_switch.pane(0)).append(p.format_html_with_bp());
+            $(overlay_switch.pane(1)).append(s.format_html_with_aa(seq_start,seq_end));
+            overlay_switch.show(0);
+
+            var title = 'ORF';
+            if (gene_desc !== '') { title += ', '+gene_desc; }
+            var t = 'ORF <a href="#" class="giraffe-bp" '
+                     +'seq-title="'+title+'" bp="'
+                     +f.start()+','+f.end()+'">';
+            if (f.clockwise()) { t += f.start()+' - '+f.end(); }
+            else { t += f.end()+' - '+f.start()+' antisense'; }
+            t += '</a> ('+s.length()/3+' aa)';
+            if (gene_desc !== '') { t += ', '+gene_desc; }
+            
+            var title = $('<p></p>').append(t);
+            $(title).append(overlay_switch.links);
 
             $(panes.pane(0))
-                .append(title)
-                .append($('<div></div>').addClass('giraffe-seq')
-                                        .addClass('giraffe-left')
-                                        .addClass('giraffe-protein')
-                                        .append(p.format_html())
-                )
-                .append(
-                    $(BioJS.NCBI_blastp_form(p))
-                        .addClass('giraffe-ncbi-button')
-                        .addClass('giraffe-left')
-                        .addClass('giraffe-left-last')
-                )
-                .append($('<div>&nbsp;</div>').addClass('giraffe-clear'));
+                .append($('<div></div>').addClass('giraffe-orf-group')
+                            .append(title)
+                            .append($('<div></div>').addClass('giraffe-seq')
+                                                    .addClass('giraffe-left')
+                                                    .addClass('giraffe-protein')
+                                                    .append(overlay_switch.panes)
+                            )
+                            .append(
+                                $('<div></div>')
+                                    .append($(BioJS.NCBI_blastp_form(p)))
+                                    .addClass('giraffe-ncbi-button')
+                                    .addClass('giraffe-left')
+                                    .addClass('giraffe-left-last')
+                            )
+                            .append($('<div>&nbsp;</div>').addClass('giraffe-clear'))
+                       );
         }
 
         var p = sequence.translate();
-        $(panes.pane(1)).append(
+        var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
+        $(overlay_switch.pane(0)).append(p.format_html_with_bp());
+        $(overlay_switch.pane(1)).append(sequence.format_html_with_aa());
+        overlay_switch.show(0);
+
+        $(panes.pane(1)).append(overlay_switch.links).append(
             $('<div></div>').addClass('giraffe-seq')
                             .addClass('giraffe-left')
                             .addClass('giraffe-protein')
-                            .append(p.format_html())
+                            .append(overlay_switch.panes)
         ).append(
             $(BioJS.NCBI_blastp_form(p))
                 .addClass('giraffe-left')
                 .addClass('giraffe-left-last')
         );
 
-        var p = sequence.substring(1).translate();
-        $(panes.pane(2)).append(
+        var s = sequence.substring(1);
+        var p = s.translate();
+        var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
+        $(overlay_switch.pane(0)).append(p.format_html_with_bp());
+        $(overlay_switch.pane(1)).append(s.format_html_with_aa(2));
+        overlay_switch.show(0);
+
+        $(panes.pane(2)).append(overlay_switch.links).append(
             $('<div></div>').addClass('giraffe-seq')
                             .addClass('giraffe-left')
                             .addClass('giraffe-protein')
-                            .append(p.format_html())
+                            .append(overlay_switch.panes)
         ).append(
             $(BioJS.NCBI_blastp_form(p))
                 .addClass('giraffe-left')
                 .addClass('giraffe-left-last')
         );
 
-        var p = sequence.substring(2).translate();
-        $(panes.pane(3)).append(
+        var s = sequence.substring(2);
+        var p = s.translate();
+        var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
+        $(overlay_switch.pane(0)).append(p.format_html_with_bp());
+        $(overlay_switch.pane(1)).append(s.format_html_with_aa(3));
+        overlay_switch.show(0);
+
+        $(panes.pane(3)).append(overlay_switch.links).append(
             $('<div></div>').addClass('giraffe-seq')
                             .addClass('giraffe-left')
                             .addClass('giraffe-protein')
-                            .append(p.format_html())
+                            .append(overlay_switch.panes)
         ).append(
             $(BioJS.NCBI_blastp_form(p))
                 .addClass('giraffe-left')
                 .addClass('giraffe-left-last')
         );
 
-        var p = sequence.reverse_complement().translate();
-        $(panes.pane(4)).append(
+        var s = sequence.reverse_complement();
+        var p = s.translate();
+        var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
+        $(overlay_switch.pane(0)).append(p.format_html_with_bp());
+        $(overlay_switch.pane(1)).append(s.format_html_with_aa(sequence.length(),1));
+        overlay_switch.show(0);
+
+        $(panes.pane(4)).append(overlay_switch.links).append(
             $('<div></div>').addClass('giraffe-seq')
                             .addClass('giraffe-left')
                             .addClass('giraffe-protein')
-                            .append(p.format_html())
+                            .append(overlay_switch.panes)
+        ).append(
+            $(BioJS.NCBI_blastp_form(p))
+                .addClass('giraffe-left')
+                .addClass('giraffe-left-last')
+        );
+        
+        var s = sequence.reverse_complement().substring(1);
+        var p = s.translate();
+        var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
+        $(overlay_switch.pane(0)).append(p.format_html_with_bp());
+        $(overlay_switch.pane(1)).append(s.format_html_with_aa(sequence.length()-1,1));
+        overlay_switch.show(0);
+
+        $(panes.pane(5)).append(overlay_switch.links).append(
+            $('<div></div>').addClass('giraffe-seq')
+                            .addClass('giraffe-left')
+                            .addClass('giraffe-protein')
+                            .append(overlay_switch.panes)
         ).append(
             $(BioJS.NCBI_blastp_form(p))
                 .addClass('giraffe-left')
                 .addClass('giraffe-left-last')
         );
 
-        var p = sequence.reverse_complement().substring(1).translate();
-        $(panes.pane(5)).append(
-            $('<div></div>').addClass('giraffe-seq')
-                            .addClass('giraffe-left')
-                            .addClass('giraffe-protein')
-                            .append(p.format_html())
-        ).append(
-            $(BioJS.NCBI_blastp_form(p))
-                .addClass('giraffe-left')
-                .addClass('giraffe-left-last')
-        );
+        var s = sequence.reverse_complement().substring(2);
+        var p = s.translate();
+        var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
+        $(overlay_switch.pane(0)).append(p.format_html_with_bp());
+        $(overlay_switch.pane(1)).append(s.format_html_with_aa(sequence.length()-2,1));
+        overlay_switch.show(0);
 
-        var p = sequence.reverse_complement().substring(2).translate();
-        $(panes.pane(6)).append(
+        $(panes.pane(6)).append(overlay_switch.links).append(
             $('<div></div>').addClass('giraffe-seq')
                             .addClass('giraffe-left')
                             .addClass('giraffe-protein')
-                            .append(p.format_html())
+                            .append(overlay_switch.panes)
         ).append(
             $(BioJS.NCBI_blastp_form(p))
                 .addClass('giraffe-left')
@@ -532,17 +693,32 @@
     }
 
     // Sequence viewer
-    var sequence_veiwer_topbar_highlight;
-    var sequence_veiwer_topbar_mouseover;
+
+    var sequence_viewer_topbar_highlight;
+    var sequence_viewer_topbar_mouseover;
+    var search_rc = false;
+    var search_next = -1;
+
     function sequence_viewer(dom) {
         var viewer = $('<div></div>').addClass('giraffe-viewer');
+
+        var sequence_viewer_search = $('<div></div>')
+            .attr('id', 'giraffe-viewer-search-container')
+            .append($('<textarea></textarea>')
+                        .attr('id', 'giraffe-viewer-search-textarea'))
+            .append($('<input type="submit" value="Search" '+
+                      ' title="Search sequence and reverse complement of sequence">')
+                        .attr('id', 'giraffe-viewer-search-button'));
+
         sequence_viewer_topbar_highlight = $('<div></div>')
             .attr('id', 'giraffe-viewer-topbar-highlight');
         sequence_viewer_topbar_mouseover = $('<div></div>')
             .attr('id', 'giraffe-viewer-topbar-mouseover');
+
         var topbar = $('<div></div>').addClass('giraffe-viewer-topbar')
-            .append(sequence_viewer_topbar_highlight)
+            .append(sequence_viewer_search)
             .append(sequence_viewer_topbar_mouseover)
+            .append(sequence_viewer_topbar_highlight)
             .append('&nbsp;');
 
         // Sequence viewer is basically a table, each cell has 10 bps.
@@ -578,18 +754,77 @@
                 .append(lines_10[i]);
             $(row).append(td);
             j++;
-            if (j == viewer_seqs_per_line) {
+            if (j == viewer_segs_per_line && i+1 < lines_10.length) {
                 j = 0;
                 var end = (i+1)*10;
                 $(row).append
                     ('<td class="giraffe-bp-marker giraffe-bp-marker-right">'+end+'</td>');
             }
+            if (i+1 == lines_10.length) {
+                $(row).append
+                    ('<td class="giraffe-bp-marker giraffe-bp-marker-right">'
+                     +sequence.length()+'</td>');
+            }
         }
+
+        // messages for search, normally hidden
+        var search_not_found = $('<div></div>')
+            .attr('id','giraffe-viewer-search-not-found')
+            .append('Search: cannot find sequence')
+            .attr('title', 'Sequence Search')
+            .hide();
 
         $(viewer)
             .append(topbar)
-            .append(seq_viewer);
+            .append(seq_viewer)
+            .append(search_not_found);
+
         $(dom).append(viewer);
+
+        // for searching:
+        var rc = sequence.reverse_complement();
+
+        $('#giraffe-viewer-search-textarea').change(function(){
+            search_next = -1;
+            search_rc = false;
+        });
+        $('#giraffe-viewer-search-button').click(function(){
+            var q = $('#giraffe-viewer-search-textarea').val();
+            q = q.replace(/\s/g,'');
+            $('#giraffe-viewer-search-textarea').val(q);
+            var n;
+            if (!search_rc) {
+                n = sequence.find(q,search_next);
+                if (n == -1) {
+                    search_next = -1;
+                    search_rc = true;
+                    n = rc.find(q,search_next);
+                }
+            }
+            else { n = rc.find(q,search_next); }
+
+            if (n == -1) {
+                $(search_not_found).dialog({
+                    modal: true,
+                    buttons: { 'Close' : function() { $(this).dialog( "close" ); } }
+                });
+                search_next = -1;
+                search_rc = true;
+            }
+            else {
+                search_next = n+q.length;
+                sequence_viewer_clear_highlight();
+                var bp;
+                if (search_rc) {
+                    bp = [sequence.length()-(n+q.length-1)+1,sequence.length()-n+1];
+                    sequence_viewer_bp_event_highlight(bp,'Reverse complement of query');
+                }
+                else {
+                    bp = [n,n+q.length-1];
+                    sequence_viewer_bp_event_highlight(bp,'Query');
+                }
+            }
+        });
     }
 
     // global list of td's that have span in the middle
@@ -598,6 +833,7 @@
     function sequence_viewer_clear_highlight() {
         $(sequence_viewer_topbar_highlight).html("");
         $('.giraffe-seq-highlight').removeClass('giraffe-seq-highlight');
+        $('.giraffe-bp-click-source').removeClass('giraffe-bp-click-source');
         for (var i in global_has_span_td) {
             var t = $(global_has_span_td[i]).text();
             t = t.replace(/\s/g,'');
@@ -608,22 +844,18 @@
 
     function sequence_viewer_bp_event() {
         $('.giraffe-bp').click(function(evt){
-            $('.giraffe-bp-click-source')
-                .removeClass('giraffe-bp-click-source');
+            sequence_viewer_clear_highlight();
             $(this).addClass('giraffe-bp-click-source');
-
             evt.preventDefault();
 
             var bpstr = $(this).attr('bp');
-            var title = $(this).attr('title');
+            var title = $(this).attr('seq-title');
             var bp = bpstr.split(',');
             if (bp.length > 0) { sequence_viewer_bp_event_highlight(bp,title); }
         });
     }
 
     function sequence_viewer_bp_event_highlight(bp,title) {
-        sequence_viewer_clear_highlight();
-
         for (var i in bp) { bp[i] = parseInt(bp[i]); }
         // find start bp position for the first td
         var first_td = Math.floor((bp[0]-1)/10)*10+1;
@@ -634,7 +866,9 @@
         }
         else { bp[1] = bp[0]; }
         
-        var desc = bp[0]+'-'+bp[1]+': '+title;
+        var desc = bp[0];
+        if (bp[0] != bp[1]) { desc += '-'+bp[1]; }
+        desc += ': '+title;
         $(sequence_viewer_topbar_highlight).html(desc);
 
         // draw first
@@ -725,17 +959,18 @@
 
         // for best visual, we want to scroll to the first td
 
-        var first_td_line = Math.floor(first_td/(viewer_seqs_per_line*10));
+        var first_td_line = Math.floor(first_td/(viewer_segs_per_line*10));
         // we want the line to scroll to to not be the first line on
         // screen, but a few lines down
         if (first_td_line > 3) { first_td_line -= 3; }
-        var total_lines = Math.floor(seqlen/(viewer_seqs_per_line*10))+1;
+        var total_lines = Math.floor(seqlen/(viewer_segs_per_line*10))+1;
         var table = $('.giraffe-seq-viewer table');
         var scroll = Math.floor((first_td_line/total_lines)*$(table).height());
         $('.giraffe-seq-viewer').scrollTop(scroll);
     }
 
     function map_feature_click_callback(feature) {
+        sequence_viewer_clear_highlight();
         var bp = [feature.start(),feature.end()];
         sequence_viewer_bp_event_highlight(bp,feature.name());
     }
@@ -769,6 +1004,8 @@
         var tabs_width = analyzer_width-viewer_width;
         $(dom_viewer).width(viewer_width);
         $(dom_tabs).width(tabs_width);
+    
+        $(dom_main).tooltip();
     }
 
     full_widget();

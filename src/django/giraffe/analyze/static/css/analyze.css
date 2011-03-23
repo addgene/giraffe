@@ -9,30 +9,62 @@ svg path { cursor:pointer; }
 
 /* overriding jquery */
 .giraffe-main .giraffe-tab a { color:#06c; text-decoration:underline; }
+.giraffe-main form input[type=submit] { font-size:12px; }
 
 .giraffe-main td { vertical-align:top; }
 /* We want -viewer and -tabs to line up, and -seq-viewer should be
  * contained within -viewer */
-.giraffe-viewer { height:700px; overflow:auto; }
-.giraffe-seq-viewer { height:660px; overflow:auto; }
-.giraffe-tabs { height:700px; overflow:auto; }
+.giraffe-viewer { height:820px; overflow:auto; }
+.giraffe-seq-viewer { height:780px; overflow:auto; }
+.giraffe-tabs { height:820px; overflow:auto; }
 
 /* Generic */
 .giraffe-clear { clear:both; margin:15px; }
+.giraffe-hide { display:none; }
+.giraffe-right { float:right; margin-left:10px; }
 .giraffe-left { float:left; margin-right:10px; }
 .giraffe-left-last { margin-right:0px; }
-.giraffe-link-on { text-decoration:none; font-weight:bold; }
 .giraffe-seq { font-family:courier; }
+.giraffe-bp-marker { color:#777; }
+.giraffe-bp-marker-left { text-align:right; }
+.giraffe-bp-marker-right { text-align:left; }
+.giraffe-seq-overlay { color:#777; }
+.giraffe-link-on { text-decoration:none !important; font-weight:bold; color:black !important; }
+.giraffe-help {
+    padding:4px;
+    position:absolute;
+    z-index:9999;
+	-o-box-shadow: 0 0 5px #aaa;
+	-moz-box-shadow: 0 0 5px #aaa;
+	-webkit-box-shadow: 0 0 5px #aaa;
+	box-shadow: 0 0 5px #aaa;
+}
+
+#giraffe-map-help { width:500px; }
 
 /* Specific to panes/tabs */
 
+.giraffe-seq-textarea {
+    border:1px solid #e0e0e0;
+    width:100%;
+    height:600px;
+    font-family:courier !important;
+    font-size:12px;
+}
+
 .giraffe-viewer { padding:4px; border:1px solid #ddd; }
-.giraffe-viewer-topbar { margin:0px 0px 10px 0px; padding-left:5px; }
-.giraffe-viewer-topbar div { display:inline-block; margin-right:4px; }
+.giraffe-viewer-topbar { margin:0px 0px 10px 0px; padding-right:5px; text-align:right; }
+.giraffe-viewer-topbar div { display:inline-block; margin-left:4px; }
 .giraffe-seq-viewer table { font-family:courier; }
-.giraffe-seq-viewer .giraffe-bp-marker { color:#777; }
-.giraffe-seq-viewer .giraffe-bp-marker-left { text-align:right; }
-.giraffe-seq-viewer .giraffe-bp-marker-right { text-align:left; }
+
+#giraffe-viewer-search-container {
+    float:right;
+    position:absolute;
+    z-index:1000;
+}
+#giraffe-viewer-search-textarea { height:20px; width:120px; float:left; }
+#giraffe-viewer-search-button { float:left; margin-left:2px; }
+#giraffe-viewer-search-textarea:hover { height:60px; width:120px; }
 
 .giraffe-seq-highlight,
 #giraffe-viewer-topbar-highlight { background-color:#aa3333; color:#fff; }
@@ -53,10 +85,33 @@ svg path { cursor:pointer; }
 }
 .giraffe-tag { color:red !important; }
 
+.giraffe-orf-group { border-top:1px solid #d0d0d0; }
+
 .giraffe-enzyme-list { list-style-type:none; margin:0px; padding:0px; }
 .giraffe-enzyme-list li label {
     float:left; width:100px; margin-right:15px; font-weight:bold;
 }
 .giraffe-enzyme-list li p { margin:15px 0px; padding-left:115px; }
 .giraffe-enzyme-list li { clear:left; }
+
+/* following are default jquery-ui tooltip module CSS. jquery-ui
+ * tooltip is not released yet, so we are including these ourselves */
+.ui-tooltip {
+	padding:8px;
+	position:absolute;
+	z-index:9999;
+	-o-box-shadow: 0 0 5px #aaa;
+	-moz-box-shadow: 0 0 5px #aaa;
+	-webkit-box-shadow: 0 0 5px #aaa;
+	box-shadow: 0 0 5px #aaa;
+}
+/* Fades and background-images don't work well together in IE6, drop the image */
+* html .ui-tooltip {
+	background-image: none;
+}
+body .ui-tooltip { border-width:2px; }
+
+/* giraffe customized tooltip CSS */
+.ui-tooltip { font-size:12px; }
+
 

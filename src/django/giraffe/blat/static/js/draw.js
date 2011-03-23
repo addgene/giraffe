@@ -98,6 +98,7 @@
 		regulatory: 7, terminator: 8, exact_feature: 9,
         orf:       10
 	};
+    this.Feature_Type = ft;
 
 	//// Package-scope utility functions
 	// SVG Object
@@ -166,6 +167,7 @@
 
         this.is_enzyme = function() { return _type == ft.enzyme; }
         this.is_orf = function() { return _type == ft.orf; }
+
 		this.crosses_boundary = function () { return _end < _start };
 
 		// Enzyme-only data access methods
@@ -668,7 +670,7 @@
 				}
 
 				// Arc drawing
-				if ((_this.crosses_boundary() || a1 < a0) && _this.type() != ft.enzyme) { 
+				if ((_this.crosses_boundary() || a1 < a0) && _this.type() != ft.enzyme) {
 					// Compensating for the head may have "taken up" all
 					// the room on the plasmid, in which case no arc needs
 					// to be drawn
@@ -713,8 +715,7 @@
 				// Apply the feature-wide properties to the whole feature
 				_feature_set.attr({"stroke":         _color,
 								   "stroke-linecap": "butt",
-								   "opacity":        _opacity,
-								   "title":          _this.name()});
+								   "opacity":        _opacity});
 
 			} // END CircularFeature::draw()
 
@@ -1229,6 +1230,19 @@
                 }
             }
 
+            if (max_x < cx+outer_radius+label_radius_offset) {
+                max_x = cx+outer_radius+label_radius_offset;
+            }
+            if (min_x > cx-outer_radius-label_radius_offset) {
+                min_x = cx-outer_radius-label_radius_offset;
+            }
+            if (max_y < cy+outer_radius+label_radius_offset) {
+                max_y = cy+outer_radius+label_radius_offset;
+            }
+            if (min_y > cy-outer_radius-label_radius_offset) {
+                min_y = cy-outer_radius-label_radius_offset;
+            }
+
             // Now we have a new bounding box: min_x,min_y to max_x,max_y
 
             var right_x_extend = max_x-cx;
@@ -1652,10 +1666,9 @@
 				_feature_set.push(_arrow_set);
 
 				// Apply the feature-wide properties to the whole feature
-				_feature_set.attr({"stroke":         _color,
+				_feature_set.attr({"stroke": _color,
 								   "stroke-linecap": "butt",
-								   "opacity":        _opacity,
-								   "title":          _this.name()});
+								   "opacity": _opacity});
 
 			} // END LinearFeature::draw()
 
@@ -2026,7 +2039,10 @@
 		function draw_labels(height) {
 			// Calculate the height of a label
 			var label_leading = 1.3;
-			var label_height = features[0].label_size().height * label_leading;
+			var label_height = 0;
+            if (features.length) {
+                label_height = features[0].label_size().height * label_leading;
+            }
 
 			// Finally, draw all the features
             for (var sx = 0; sx < label_pos[0].length; sx++) {

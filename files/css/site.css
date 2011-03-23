@@ -1,0 +1,54 @@
+body {
+	font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;
+	font-size: 14px;
+}
+
+#container { text-align:left; }
+
+#header {
+	background-color:#5c9ccc;
+	color:white;
+	font-size:18px;
+	padding:10px 10px;
+	height:100px;
+}
+
+#links {
+	float:right;
+	text-align:right;
+	font-size:16px;
+}
+
+#header a { color:white; }
+
+#title { font-size:38px; }
+#header p { margin-left: 30px; }
+
+#body { margin-left:30px; }
+
+textarea.sequence {
+	width:800px;height:200px;
+	font-family:courier;
+	font-size:14px;
+}
+
+.button {
+    background-color:#E70;
+	font-weight:bold;
+	padding:10px;
+	font-size:20px;
+	color:white;
+	text-align:center;
+	-moz-border-radius: 16px;
+	-webkit-border-radius: 16px;
+	border-radius: 16px;
+	width:100px;
+}
+
+#example_form { float:right; margin-right:200px; }
+#example_form .button { background-color: #6B6; width:200px; }
+
+.button a { text-decoration:none; color:white; }
+
+
+

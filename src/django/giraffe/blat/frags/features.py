@@ -51,34 +51,22 @@ def _get_frags(db_name,sequence):
 
     return res
 
-def blat(db,sequence):
-    """ Analyze the features of a sequence. """
-    sequence = Sequence.strip(sequence)
-
-    # create sequence record
-    s = Sequence()
-    s.sequence = sequence
-    s.db = db
-    s.save()
-    s.clear_features()
-
+def blat(db,sequence_obj):
     if _debug: 
         t = timer()
         t.next()
-    frags = _get_frags(db.name,sequence)
+    frags = _get_frags(db.name,Sequence.convert_to_dna(sequence_obj.sequence))
     if _debug: print "get_frags took %f seconds" % t.next()
 
     # Translate frags to features and store them into the database
-    seq_length = len(sequence)
+    seq_length = len(sequence_obj.sequence)
     features = frags_to_features(frags, db, seq_length)
     if _debug: print "frags_to_features took %f seconds" % t.next()
 
     # Store features into database
     if _debug: print "Storing %d features" % len(features)
     for feature in features:
-        feature.sequence = s
+        feature.sequence = sequence_obj
         feature.save()
     if _debug: print "Database adds took %f seconds" % t.next()
-
-    return s
 

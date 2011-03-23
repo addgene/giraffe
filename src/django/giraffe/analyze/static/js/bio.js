@@ -39,10 +39,16 @@ window.BioJS = function(){
         ["FLAG","DYKDDDDK"],
         ["FLAG","DYKDHDI"],
         ["FLAG","DYKDHDG"],
+        ["VSVG Tag","YTDIEMNRLGK"],
+        ["SV40 NLS","PKKKRKV"],
+        ["SV40 NLS","PKKKRKVG"],
+        ["T7 Tag", "MASMTGGQQMG"],
+        ["NLS", "KKRKV"],
         ["HA","YPYDVPDYA"],
         ["6xHIS","HHHHHH"],
         ["Myc","EQKLISEEDL"],
         ["TEV","ENLYFQG"],
+        ["TEV","ENPYFQG"],
         ["Myr","MGSNKSKPKDASQRR"],
         ["Myr","MGSSKSKPKDPSQRA"],
         ["V5","GKPIPNPLLGLDST"],
@@ -134,21 +140,108 @@ window.BioJS = function(){
         return this.__translation;
     }
 
-    // Returns substring
-    DNASequence.prototype.substring=function(i,j){
-        return new DNASequence(this.__sequence.substring(i,j));
+    // Returns 1-indexed bp position of the first occurance of the
+    // query sequence, or -1. start, also 1-indexed, can be the start
+    // position to search, or -1.
+    DNASequence.prototype.find=function(query,start){
+        if (query === undefined || query.length == 0) { return -1; }
+        if (this.__sequence_lc === undefined) {
+            this.__sequence_lc = this.__sequence.toLowerCase();
+        }
+        var n;
+        if (start > 0) {
+            n = this.__sequence_lc.indexOf(query.toLowerCase(),start-1);
+        }
+        else {
+            n = this.__sequence_lc.indexOf(query.toLowerCase());
+        }
+        if (n >= 0) { return n+1; }
+        return n;
     }
 
-    // Format HTML 80 chars wide
+    // Returns substring
+    DNASequence.prototype.substring=function(i,j){
+        var a;
+        if (j === undefined) { a = this.__sequence.substring(i); }
+        else { a = this.__sequence.substring(i,j); }
+        return new DNASequence(a);
+    }
+
+    // Format DNA sequence to HTML
     DNASequence.prototype.format_html=function() {
+        var line_width = 80;
         if (this.__html) { return this.__html; }
-        var lines_80 = wrap(this.__sequence,80);
+        var lines_vec = wrap(this.__sequence,line_width);
         s = '';
-        for (var i=0; i<lines_80.length; i++) {
-            s += lines_80[i]+'<br/>';
+        for (var i=0; i<lines_vec.length; i++) {
+            s += lines_vec[i]+'<br/>';
         }
         this.__html = s;
         return this.__html;
+    }
+
+    // Format DNA sequence, with amino acid sequence overlay.
+    // seq_start and seq_end should be 1-indexed base pair numbers in
+    // 5' to 3' direction of *this* sequence, so if are displaying
+    // reverse complement, then end should be smaller than start.
+    DNASequence.prototype.format_html_with_aa=function(seq_start,seq_end) {
+        if (this.__aa_html) { return this.__aa_html; }
+        
+        if (seq_start == undefined) { seq_start = 1; }
+        if (seq_end == undefined) { seq_end = this.__sequence.length+seq_start-1; }
+        var aa = this.translate();
+
+        // line_width MUST BE multiple of 3
+        var line_width = 60;
+        var dna_vec = wrap(this.__sequence,line_width);
+        var aa_vec = wrap(aa.sequence(),Math.floor(line_width/3));
+
+        var left_markers = [];
+        var right_markers = [];
+        s = '';
+        for (var i=0; i<dna_vec.length; i++) {
+            if (i<aa_vec.length) {
+                if (i+1 == dna_vec.length) {
+                    left_markers.push(i*(line_width/3)+1);
+                    right_markers.push(aa.length());
+                    if (seq_start < seq_end) {
+                        left_markers.push(seq_start+i*line_width);
+                        right_markers.push(seq_end);
+                    }
+                    else {
+                        left_markers.push(seq_start-i*line_width);
+                        right_markers.push(seq_end);
+                    }
+                }
+                else {
+                    left_markers.push(i*(line_width/3)+1);
+                    right_markers.push((i+1)*(line_width/3));
+                    if (seq_start < seq_end) {
+                        left_markers.push(seq_start+i*line_width);
+                        right_markers.push(seq_start+(i+1)*line_width-1);
+                    }
+                    else {
+                        left_markers.push(seq_start-i*line_width);
+                        right_markers.push(seq_start-(i+1)*line_width+1);
+                    }
+                }
+                var p = aa_vec[i];
+                var l = p.split('').join('&nbsp;&nbsp;');
+                s += l+'<br/>';
+            }
+            s += '<span class="giraffe-seq-overlay">'+dna_vec[i]+'</span><br/>';
+        }
+
+        var table = '<table><tr>'+
+            '<td class="giraffe-bp-marker giraffe-bp-marker-left">'+
+            left_markers.join('<br/>')+
+            '</td><td>'+s+'</td>'+
+            '<td class="giraffe-bp-marker giraffe-bp-marker-right">'+
+            right_markers.join('<br/>')+
+            '</td></tr></table>';
+
+        this.__aa_html = table;
+        return this.__aa_html;
     }
 
     function ProteinSequence(seq_string) { this.__sequence = seq_string; }
@@ -156,17 +249,32 @@ window.BioJS = function(){
     ProteinSequence.prototype.sequence=function() { return this.__sequence; }
     ProteinSequence.prototype.length=function() { return this.__sequence.length; }
 
-    // Format HTML 80 chars wide, also highlight tags with giraffe-tag
-    // CSS class.
-    ProteinSequence.prototype.format_html=function() {
+    // Format protein to HTML, with bp markers. Also highlight tags
+    // with giraffe-tag CSS class.
+    ProteinSequence.prototype.format_html_with_bp=function() {
+        // We have to construct three columns all in ONE SINGLE row,
+        // left and right most columns for bp markers, and middle for
+        // sequence. This allows 1) user selection (for copy/paste) of
+        // just sequence in the middle w/o bp markers, and 2) using
+        // span to highlight sequence fragments across lines.
+
+        var line_width = 50;
+        var seg_width = 10;
         if (this.__html) { return this.__html; }
         if (this.__sequence === undefined) { return ""; }
+
+        var left_markers = [];
+        var right_markers = [];
 
         var res = '';
         var in_tag = false;
         var tag_length = 0;
         var line = 0;
+        var seg = 0;
         for (var i=0; i<this.__sequence.length; i++) {
+            if (line == 0) { left_markers.push((i+1)); }
+            else if (seg == 0) { res += '&nbsp;'; }
+
             if (!in_tag) {
                 for (var j in PROTEIN_TAGS) {
                     var l = PROTEIN_TAGS[j][1].length;
@@ -180,6 +288,8 @@ window.BioJS = function(){
             }
             res += this.__sequence[i];
             line++;
+            seg++;
+
             if (in_tag) { // found a new tag or was already in new tag
                 tag_length--; 
                 if (tag_length == 0) {
@@ -187,55 +297,144 @@ window.BioJS = function(){
                     res += '</span>';
                 }
             }
-            if (line == 80) {
+            if (line == line_width) {
                 res += '<br/>';
+                right_markers.push ((i+1));
                 line = 0;
+                seg = 0;
             }
+            else if (seg == seg_width) { seg = 0; }
         }
 
         // just to be sure, but we really should never be here...
         if (in_tag) { res += '</span>'; }
-        if (line > 0) { res += '<br/>'; }
 
-        this.__html = res;
+        if (line > 0) { res += '<br/>'; }
+       
+        var table = '<table><tr>'+
+            '<td class="giraffe-bp-marker giraffe-bp-marker-left">'+
+            left_markers.join('<br/>')+
+            '</td><td>'+res+'</td>'+
+            '<td class="giraffe-bp-marker giraffe-bp-marker-right">'+
+            right_markers.join('<br/>')+
+            '</td></tr></table>';
+
+        this.__html = table;
         return this.__html;
     }
 
     // Returns FASTA format of sequence
     function fasta(seq_object,name,html) {
+        var line_width = 80;
         if (html === undefined) { html = true; }
-        var lines_80 = wrap(seq_object.sequence(),80);
+        var lines_vec = wrap(seq_object.sequence(),line_width);
         var s = '';
         if (html) { s = '<p>&gt;'+name+'<br/>'; }
         else { s = '>'+name+'\n'; }
-        for (var i=0; i<lines_80.length; i++) {
-            s += lines_80[i];
+        for (var i=0; i<lines_vec.length; i++) {
+            s += lines_vec[i];
             if (html) { s += '<br/>'; } else { s += '\n'; }
         }
         if (html) { s += '</p>'; }
         return s;
     }
 
-    // Returns GenBank format of sequence. Currently does not handle
-    // feature list, we will work on that.
-    function genbank(seq_object,name,html) {
+    // Returns GenBank format of sequence.
+    //
+    // features array should be an array of objects. Each object
+    // should have these keys:
+    //    label
+    //    type -- must be a valid GenBank feature type
+    //    start,end -- always in 5' to 3', we will adjust for clockwise
+    //    clockwise -- true or false
+    //    clockwise_sequence -- optional, but if type is CDS, then you
+    //                          need to supply this if you want to see
+    //                          a translation shown.
+    //    gene -- optional
+    //    notes -- optional
+    //
+    function genbank(seq_object,name,html,features) {
         if (html === undefined) { html = true; }
+        if (features === undefined) { features = []; }
 
         var sp = "&nbsp;";
         var delim = "<br/>";
         var tab = sp+sp+sp+sp;
         if (!html) { sp = " "; delim = "\n"; tab = "\t"; }
 
-        s =
-            'LOCUS'+__repeat(sp,7)+name+tab+seq_object.length()+' bp '+
+        s = 'LOCUS'+__repeat(sp,7)+name+tab+seq_object.length()+' bp '+
                     tab+'DNA'+tab+'SYN'+delim+
             'DEFINITION'+__repeat(sp,2)+name+delim+
             'ACCESSION'+__repeat(sp,3)+delim+
             'KEYWORDS'+__repeat(sp,4)+delim+
             'SOURCE'+__repeat(sp,6)+delim+
             __repeat(sp,2)+'ORGANISM'+__repeat(sp,2)+
-            'other sequences; artificial sequences; vectors.'+delim+
-            'ORIGIN'+delim;
+            'other sequences; artificial sequences; vectors.'+delim;
+
+        function __gb(p) {
+            // need special formatting: lw=58, first=44
+            var res = [];
+            var line = '';
+            var ctr = 0;
+            for (var i=0; i<p.length; i++) {
+                line += p[i];
+                ctr++;
+                if ((res.length == 0 && ctr >= 44) || ctr >= 58) {
+                    res.push(line);
+                    line = __repeat(sp,21);
+                    ctr = 0;
+                }
+            }
+            if (ctr > 0) { res.push(line); }
+            return res.join(delim);
+        }
+
+        if (features.length) {
+            s += "FEATURES"+__repeat(sp,13)
+                 +"Location/Qualifiers"+delim+__repeat(sp,5)+"source";
+            s += __repeat(sp, 16-"source".length);
+            s += "1.."+seq_object.length()+delim+__repeat(sp,21)
+                +"/organism=\""+name+"\""+delim
+                +__repeat(sp,21)+"/mol_type=\"other DNA\""+delim;
+        }
+
+        for (var i in features) {
+            var type = features[i].type;
+            var tran = undefined;
+            if (type == 'CDS' && features[i].clockwise_sequence &&
+                features[i].clockwise_sequence !== '') {
+                if (features[i].clockwise) {
+                    tran = new BioJS.DNASequence(features[i].clockwise_sequence).translate();
+                }
+                else {
+                    tran = new BioJS.DNASequence(features[i].clockwise_sequence)
+                        .reverse_complement().translate();
+                }
+            }
+            s += __repeat(sp,5)+type
+            var nsp = 16-type.length;
+            if (nsp < 0) nsp = 0;
+            s += __repeat(sp, nsp);
+            if (features[i].clockwise) {
+                s += features[i].start+".."+features[i].end+delim;
+            }
+            else {
+                s += "complement("+features[i].start+".."+features[i].end+")"+delim;
+            }
+            s += __repeat(sp,21)+"/label=\""+features[i].label+"\""+delim;
+            if (features[i].gene && features[i].gene !== '') {
+                s += __repeat(sp,21)+"/gene=\""+features[i].gene+"\""+delim;
+            }
+            if (features[i].notes && features[i].notes !== '') {
+                s += __repeat(sp,21)+"/note=\""+features[i].notes+"\""+delim;
+            }
+            // User annotated CDS may not be in-frame...
+            if (tran) {
+                s += __repeat(sp,21)+"/translation=\""+__gb(tran.sequence())+"\""+delim;
+            }
+        }
+
+        s += 'ORIGIN'+delim;
 
         var lines_10 = wrap(seq_object.sequence(),10);
         for (var i=0,j=0; i<lines_10.length; i++) {

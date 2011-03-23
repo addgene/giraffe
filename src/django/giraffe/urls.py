@@ -12,9 +12,11 @@ urlpatterns = patterns('',
     (r'^admin/', include(django.contrib.admin.site.urls)),
     (r'^blat/', include('giraffe.blat.urls')),
 
-    (r'^test/(\w+)/(\w+)/draw/?$', views.test_draw),
-    (r'^test/(\w+)/(\w+)/analyze/?$', views.test_analyze),
-    (r'^test/$', direct_to_template, { 'template' : 'test/post.html' }),
+    url(r'^test/analyze/(\w+)/(\w+)/?$', views.test_analyze, name='analyzer'),
+    (r'^test/draw/(\w+)/(\w+)/?$', views.test_draw),
+
+    (r'^/test/$', direct_to_template, { 'template' : 'test/post.html' }),
+    (r'^/?$', direct_to_template, { 'template' : 'test/post.html' }),
 )
 
 if settings.DEBUG:
