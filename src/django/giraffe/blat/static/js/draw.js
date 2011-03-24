@@ -83,13 +83,14 @@
 	///////////////////////////////////////////////////////////////////
 	// Package-scope variables
 	var _debug = false;
-	var basic_features = [];
+	var all_features = [];
 	var seq_length;
     var full_sequence = '';
 
     // Helpers to keep track of frequently used features
     var orf_features = [];
     var enzyme_features = [];
+    var std_features = [];
 
 	// Feature Types
 	var ft = { 
@@ -200,21 +201,27 @@
 	///////////////////////////////////////////////////////////////////
 	// JSON Parsing
 	this.read = function (json) {
-		basic_features = []; // package scope
+		all_features = []; // package scope
 		seq_length = json[0]; // package scope
         features_json = json[1];
         if (json.length > 2) { this.sequence = full_sequence = json[2]; }
 		for (var ix = 1; ix < features_json.length; ix++) {
             var f = new Feature(features_json[ix]);
-			basic_features.push(f);
-            if (f.is_enzyme()) { enzyme_features.push(f); }
-            if (f.is_orf()) { orf_features.push(f); }
+			all_features.push(f);
+            if (f.is_enzyme()) { 
+				enzyme_features.push(f); 
+			} else if (f.is_orf()) { 
+				orf_features.push(f); 
+			} else {
+				std_features.push(f);
+			}
 		}
 
         // These stuff are only available if we read the feature list
-        this.basic_features = basic_features;
+        this.all_features = all_features;
         this.enzyme_features = enzyme_features;
         this.orf_features = orf_features;
+        this.std_features = std_features;
 
 		// Now that the features are parsed, calculate how many instances
 		// of each cutter type there are.
@@ -227,8 +234,8 @@
 		var cut_counts = {}; 
 		var f;
 		// Calculate the counts
-		for (var fx in basic_features) {
-			f = basic_features[fx];
+		for (var fx in all_features) {
+			f = all_features[fx];
 			if (f.type() == ft.enzyme) {
 				// Store indices, not Feature objects, because
 				// the objects will change, depending on
@@ -240,8 +247,8 @@
 			}
 		}
 		// Store them for each enzyme feature
-		for (var fx in basic_features) {
-			f = basic_features[fx];
+		for (var fx in all_features) {
+			f = all_features[fx];
 			if (f.type() == ft.enzyme)
 				f.set_other_cutters(cut_counts[f.name()]);
 		}
@@ -1176,8 +1183,8 @@
 		}
 
 		function extend_features() {
-			for (var bfx = 0; bfx < basic_features.length; bfx++) {
-				features.push(new CircularFeature(basic_features[bfx]));
+			for (var bfx = 0; bfx < all_features.length; bfx++) {
+				features.push(new CircularFeature(all_features[bfx]));
 			}
 		}
 
@@ -1936,8 +1943,8 @@
 		}
 
 		function extend_features() {
-			for (var bfx = 0; bfx < basic_features.length; bfx++) {
-				features.push(new LinearFeature(basic_features[bfx]));
+			for (var bfx = 0; bfx < all_features.length; bfx++) {
+				features.push(new LinearFeature(all_features[bfx]));
 			}
 		}
 

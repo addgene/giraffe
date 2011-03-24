@@ -9,7 +9,8 @@
 // Depends on draw.js for the following (at least):
 //    Feature
 //    Feature.other_cutters
-//    basic_features
+//    all_features
+//    std_features
 //    enzyme_features
 //    orf_features
 //
@@ -185,35 +186,35 @@
                         .val(BioJS.fasta(sequence,name,false)));
 
         var features = [];
-        for (var i in gd.basic_features) {
-            if (gd.basic_features[i].is_enzyme()) { continue; }
+        for (var i in gd.all_features) {
+            if (gd.all_features[i].is_enzyme()) { continue; }
             var type = "misc_feature";
-            var label = gd.basic_features[i].name()
+            var label = gd.all_features[i].name()
             var gene = "";
-            if (gd.basic_features[i].type() == gd.Feature_Type.origin) {
+            if (gd.all_features[i].type() == gd.Feature_Type.origin) {
                 type = "rep_origin";
             }
-            else if (gd.basic_features[i].type() == gd.Feature_Type.gene) {
+            else if (gd.all_features[i].type() == gd.Feature_Type.gene) {
                 type = "gene";
-                gene = gd.basic_features[i].name();
+                gene = gd.all_features[i].name();
             }
-            else if (gd.basic_features[i].is_orf()) {
+            else if (gd.all_features[i].is_orf()) {
                 type = "CDS";
             }
-            else if (gd.basic_features[i].type() == gd.Feature_Type.promoter) {
+            else if (gd.all_features[i].type() == gd.Feature_Type.promoter) {
                 type = "promoter";
             }
-            else if (gd.basic_features[i].type() == gd.Feature_Type.terminator) {
+            else if (gd.all_features[i].type() == gd.Feature_Type.terminator) {
                 type = "terminator";
             }
             var f = {
                 label : label,
                 gene : gene,
                 type : type,
-                start : gd.basic_features[i].start(),
-                end : gd.basic_features[i].end(),
-                clockwise : gd.basic_features[i].clockwise(),
-                clockwise_sequence : gd.basic_features[i].clockwise_sequence()
+                start : gd.all_features[i].start(),
+                end : gd.all_features[i].end(),
+                clockwise : gd.all_features[i].clockwise(),
+                clockwise_sequence : gd.all_features[i].clockwise_sequence()
             }
             features.push(f); 
         }
@@ -245,8 +246,8 @@
               '</p>');
 
 		// Table dom
-        var dom_tab_id = 'giraffe-table';
-		var dom_tab = $('<div id="'+dom_tab_id+'" class="giraffe-analyze-table"></div>');
+        var dom_tab_id = 'giraffe-'+Math.floor(Math.random()*100000000);
+		var dom_tab = $('<div id="'+dom_tab_id+'"></div>');
 
         $(dom)
             .append(help)
@@ -316,7 +317,7 @@
             var cuts = [];
             var all_of_this = all[i].other_cutters();
             for (var c in all_of_this) {
-                cuts.push(gd.basic_features[all_of_this[c]].cut());
+                cuts.push(gd.all_features[all_of_this[c]].cut());
             }
             for (var c in cuts) {
                 cuts[c] = '<a href="#" seq-title="'+all[i].name()
@@ -360,11 +361,11 @@
                 var cuts = [];
                 var all_of_this = all[i].other_cutters();
                 all_of_this.sort(function(a,b){
-                    return gd.basic_features[a].start() -
-                        gd.basic_features[b].start();
+                    return gd.all_features[a].start() -
+                        gd.all_features[b].start();
                 });
                 for (var c in all_of_this) {
-                    cuts.push(gd.basic_features[all_of_this[c]].cut());
+                    cuts.push(gd.all_features[all_of_this[c]].cut());
                 }
                 var digests = []
                 for (var j=0; j<cuts.length; j++) {
@@ -438,10 +439,10 @@
 
             // does this ORF cover, or is the same as, a gene?
             var gene_desc = '';
-            for (var j in gd.basic_features) {
-                if (gd.basic_features[j].type() == gd.Feature_Type.gene &&
-                    gd.basic_features[j].clockwise() == f.clockwise()) {
-                    var g = gd.basic_features[j];
+            for (var j in gd.all_features) {
+                if (gd.all_features[j].type() == gd.Feature_Type.gene &&
+                    gd.all_features[j].clockwise() == f.clockwise()) {
+                    var g = gd.all_features[j];
                     var f_end = f.end();
                     if (f.end() < f.start()) { f_end = f_end+seqlen; }
                     var g_end = g.end();
