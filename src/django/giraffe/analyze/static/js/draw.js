@@ -85,8 +85,18 @@
 	//
 	if (typeof Object.create !== 'function') {
 		Object.create = function (o) {
-			function F() {}
+			// Empty function object, to be used as a placeholder
+			function F() {}; 
+
+			// Set the prototype property of this function to point to o
 			F.prototype = o;
+
+			// Now, all objects created with F as a constructor will have their
+			// internal __proto__ prototype pointer pointing to o, which means 
+			// that they will, effectively, use o as a "parent" for any properies
+			// that they do not explicitly define.
+
+			// return just such an object
 			return new F();
 		};
 	}
@@ -427,11 +437,10 @@
 		///////////////////////////////////////////////////////////////////
 		// Circular Feature class
 		function CircularFeature(basic_feature) {
-			// Clone the basic feature, to extend it later
-			function Clone() {}; // empty function to use as a hanger for prototype
-			Clone.prototype = basic_feature;
-			var _this = new Clone(); // Make a new "this" pointer to return at
-			                         // the end
+
+			// Create a prototypal descendent of the basic_feature to expand
+			var _this = Object.create(basic_feature);
+
 			// The result of this function will be a CircularFeature object
 			
 			// Visual properties
@@ -1444,11 +1453,9 @@
 
 		// TODO: MAJOR CODE REORGANIZATION: MERGE COMMON ELEMENTS INTO ONE CLASS
 		function LinearFeature(basic_feature) {
-			// Clone the basic feature, to extend it later
-			function Clone() {}; // empty function to use as a hanger for prototype
-			Clone.prototype = basic_feature;
-			var _this = new Clone(); // Make a new "this" pointer to return at
-			                         // the end
+			
+			// Create a prototypal descendent of the basic_feature to expand
+			var _this = Object.create(basic_feature);
 			// The result of this function will be a LinearFeature object
 
 			// The visual object to modify when accessing the feature.
