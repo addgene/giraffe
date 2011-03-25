@@ -2,7 +2,7 @@
 //    jquery-ui 1.8.6
 //    jquery 1.4.2
 //    jquery.ui.tooltip (part of jquery UI 1.9)
-//    giraffe/blat/draw.js
+//    draw.js
 //
 // Restriction: can only have one instance of this per DOM
 //
