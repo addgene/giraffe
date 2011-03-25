@@ -290,6 +290,8 @@
 	function Map(options) {
 		// Return a new object literal with a bunch of common properties
 		return {
+			width: 800,
+			height: 800,
 			draw_features: function (features) {
 				var fx;
 
@@ -315,10 +317,8 @@
 
 		// Paper setup - not the final width, but how we will draw the
 		// map, we will scale later on
-		var map_width = 800;
-		var map_height = 800;
-		var cx = map_width/2;
-		var cy = map_height/2;
+		var cx = _map.width/2;
+		var cy = _map.height/2;
 
 		// Where to draw the map
 		var map_dom_id = 'giraffe-draw-map';
@@ -1238,10 +1238,10 @@
             label_letter_height = 15;
             label_letter_width = 12;
           
-            var min_x = map_width/2;
-            var max_x = map_width/2;
-            var min_y = map_width/2;
-            var max_y = map_width/2;
+            var min_x = _map.width/2;
+            var max_x = _map.width/2;
+            var min_y = _map.width/2;
+            var max_y = _map.width/2;
             for (var section=0; section<label_f_c.length; section++) {
                 var list_max_letters = 0;
                 for (var i=0; i<label_f_c[section].length; i++) {
@@ -1300,8 +1300,8 @@
             var bb_width = max_x-min_x;
             var bb_height = max_y-min_y;
 
-		    map_width = bb_width;
-		    map_height = bb_height;
+		    _map.width = bb_width;
+		    _map.height = bb_height;
             cx = left_x_extend;
             cy = top_y_extend;
 		}
@@ -1320,7 +1320,7 @@
 
 			set_bounding_box(label_radius);
         
-			paper = ScaleRaphael(map_dom_id, map_width, map_height); // global
+			paper = ScaleRaphael(map_dom_id, _map.width, _map.height); // global
             for (var fx in features) {
                 features[fx].initialize();
             }
@@ -1341,8 +1341,8 @@
 			draw_labels(label_radius); // Draw only the necessary labels
 
 			// Rescale
-			if (final_map_width != map_width ||
-				final_map_height != map_height) {
+			if (final_map_width != _map.width ||
+				final_map_height != _map.height) {
 				// "center" parameter just adds unnecessary CSS to the container
 				// object to give it an absolute position: not what we need
 				paper.changeSize(final_map_width,final_map_height,false,false)
@@ -1374,14 +1374,12 @@
 
 		// Paper setup - not the final width, but how we will draw the
 		// map, we will scale later on
-		var map_width = 800;
-		var map_height = 800;
-		var cx = map_width/2;
-		var cy = map_height/2;
+		var cx = _map.width/2;
+		var cy = _map.height/2;
 
 		var plasmid_y = cy;
-		var plasmid_width = map_width * 0.9;
-		var plasmid_left = (map_width - plasmid_width) / 2;
+		var plasmid_width = _map.width * 0.9;
+		var plasmid_left = (_map.width - plasmid_width) / 2;
 		var plasmid_right = plasmid_left + plasmid_width;
 
 		// Where to draw the map
@@ -2132,14 +2130,14 @@
             label_letter_height = 15;
             label_letter_width = 8;
           
-            var min_y = map_height/2;
-            var max_y = map_height/2;
+            var min_y = _map.height/2;
+            var max_y = _map.height/2;
 			// By default, plasmid will scale to width of map, so unless we
 			// actually have lists that go off the page, no reason to adjust
 			// them. i.e., never make them smaller than they orignially were,
 			// because there is never a need to "zoom in."
             var min_x = 0;
-            var max_x = map_width;
+            var max_x = _map.width;
 
 			// Iterate over every list in a level
             for (var sx = 0; sx < label_pos[0].length; sx++) {
@@ -2180,8 +2178,8 @@
             // Now we have a new bounding box (height only): min_y to max_y
 			
 			// Extend or compress the box dimensions to encompas this new size
-		    map_width = max_x - min_x;
-		    map_height = max_y - min_y;
+		    _map.width = max_x - min_x;
+		    _map.height = max_y - min_y;
 
 			// Shift all the reference points to compensate for the re-zooming
             cy -= min_y;
@@ -2213,7 +2211,7 @@
 			assign_label_lists();
 			set_bounding_box(label_height);
         
-			paper = ScaleRaphael(map_dom_id, map_width, map_height); // global
+			paper = ScaleRaphael(map_dom_id, _map.width, _map.height); // global
             for (var fx in features) {
                 features[fx].initialize();
             }
@@ -2223,12 +2221,12 @@
 			draw_labels(label_height); // Draw only the necessary labels
 
 			// Rescale
-			if (final_map_width != map_width ||
-				final_map_height != map_height) {
+			if (final_map_width != _map.width ||
+				final_map_height != _map.height) {
 				
 				// Make sure not to add additional height to the map, once we've
 				// trimmed it off
-				final_map_height = final_map_width * (map_height/map_width);
+				final_map_height = final_map_width * (_map.height/_map.width);
 
 				// "center" parameter just adds unnecessary CSS to the container
 				// object to give it an absolute position: not what we need
