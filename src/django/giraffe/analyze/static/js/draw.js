@@ -78,33 +78,26 @@
 //    linear feature drawing, which makes its own extended clones of objects
 
 // Protect scope, but ensure that GiraffeDraw() is global
-(function(){window.GiraffeDraw = function () {
-
-	///////////////////////////////////////////////////////////////////
+(function(){
+ 	
+ 	///////////////////////////////////////////////////////////////////
 	// Package-scope variables
-	var _debug = false;
-	var all_features = [];
-	var seq_length;
-    var full_sequence = '';
-
-    // Helpers to keep track of frequently used features
-    var orf_features = [];
-    var enzyme_features = [];
-    var std_features = [];
+	var _debug, ft, svg, colors;
+	
+	_debug = false;
 
 	// Feature Types
-	var ft = { 
+	ft = { 
 		feature:    1, promoter:   2, primer:        3,
 		enzyme:     4, gene:       5, origin:        6,
 		regulatory: 7, terminator: 8, exact_feature: 9,
         orf:       10
 	};
-    this.Feature_Type = ft;
 
 	//// Package-scope utility functions
 	// SVG Object
 	// For dealing with the SVG syntax
-	var svg = {
+	svg = {
 		move: function (x, y) {
 			return this.to_path(['M', x, y]);
 		},
@@ -125,7 +118,7 @@
 	};
 
 	// Feature Colors
-	var colors = {
+	colors = {
 		bg_text: "#aaa",
 		plasmid: "#000",
 		feature: "#f00",
@@ -135,7 +128,24 @@
 		orf:     "#00c8c8",
 	};
 
+ 
+ window.GiraffeDraw = function () {
 
+ 	///////////////////////////////////////////////////////////////////
+ 	// One GD per sequence
+	// sequence-scope variables
+	var seq_length;
+    var full_sequence = '';
+
+    // Helpers to keep track of frequently used features
+	var all_features = [];
+    var orf_features = [];
+    var enzyme_features = [];
+    var std_features = [];
+
+    this.Feature_Type = ft;
+
+	
 	///////////////////////////////////////////////////////////////////
 	// Basic Feature class (private, internal class)
 	function Feature(feat) {
