@@ -205,7 +205,7 @@
 		seq_length = json[0]; // package scope
         features_json = json[1];
         if (json.length > 2) { this.sequence = full_sequence = json[2]; }
-		for (var ix = 1; ix < features_json.length; ix++) {
+		for (var ix = 0; ix < features_json.length; ix++) {
             var f = new Feature(features_json[ix]);
 			all_features.push(f);
             if (f.is_enzyme()) { 
