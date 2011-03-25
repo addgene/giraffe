@@ -288,14 +288,24 @@
 	///////////////////////////////////////////////////////////////////
 	// Generic Map prototype class
 	function Map(options) {
+		// Return a new object literal with a bunch of common properties
+		return {
+			draw_features: function (features) {
+				var fx;
 
-
-		return _this;
+				for (fx = 0; fx < features.length; fx++) {
+					features[fx].draw();
+				}
+			}
+		}
 	}
 
 	///////////////////////////////////////////////////////////////////
 	// Circular Map Drawing Class
 	this.CircularMap = function(options) {
+
+		// Inherit the common Map functions
+		var _map = Object.create(new Map())
 
 		// Map-specific canvas element
 		var paper;
@@ -1121,12 +1131,6 @@
 			return max_rad;
 		}
 
-		function draw_features() {
-			for (var fx in features) {
-				features[fx].draw();
-			}
-		}
-
 		// Make sure that the appropriate cutters are shown
 		function show_hide_cutters() {
 			for (var fx in features) {
@@ -1333,7 +1337,7 @@
 			paper.clear();
 
 			draw_plasmid();
-			draw_features(); // Draw all the features initially
+			_map.draw_features(features); // Draw all the features initially
 			draw_labels(label_radius); // Draw only the necessary labels
 
 			// Rescale
@@ -1359,6 +1363,9 @@
 	// Linear Map Drawing Class
 	this.LinearMap = function (options) {
 	
+		// Inherit the common Map functions
+		var _map = Object.create(new Map())
+
 		// Map-specific canvas element
 		var paper;
 
@@ -1983,13 +1990,6 @@
 			}
 		}
 
-		// XXX copy-and-pasted: eliminate redundancy
-		function draw_features() {
-			for (var fx in features) {
-				features[fx].draw();
-			}
-		}
-
 		// Make sure that the appropriate cutters are shown
 		function show_hide_cutters() {
 			for (var fx in features) {
@@ -2219,7 +2219,7 @@
             }
 
 			draw_plasmid();
-			draw_features(); // Draw all the features initially
+			_map.draw_features(features); // Draw all the features initially
 			draw_labels(label_height); // Draw only the necessary labels
 
 			// Rescale
