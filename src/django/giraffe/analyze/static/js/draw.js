@@ -79,7 +79,18 @@
 
 // Protect scope, but ensure that GiraffeDraw() is global
 (function(){
- 	
+
+ 	///////////////////////////////////////////////////////////////////
+	// Crockford-stype prototypal inheritence
+	//
+	if (typeof Object.create !== 'function') {
+		Object.create = function (o) {
+			function F() {}
+			F.prototype = o;
+			return new F();
+		};
+	}
+
  	///////////////////////////////////////////////////////////////////
 	// Package-scope variables
 	var _debug, ft, svg, colors;
