@@ -15,78 +15,88 @@ window.GiraffeTable = function ($,gd,dom) {
 	    feature_table,
 		orf_table;
 
-	// Initialize feature, ORF, and enzyme tables
- 	feature_table = $('<table></table>');
- 	enzyme_table = $('<table></table>');
- 	orf_table = $('<table></table>');
-
-	feature_table
-		.append('<thead><tr><th>Feature</th><th>Type</th><th>Start</th><th>End<th></tr></thead>')
-	orf_table
-		.append('<thead><tr><th>ORF Frame</th><th>Start</th><th>End<th></tr></thead>')
-	enzyme_table
-		.append('<thead><tr><th>Enzyme</th><th>Cut</th></tr></thead>')
-
- 	$(dom)
-		.append(feature_table)
-		.append(orf_table)
-		.append(enzyme_table);
-
-	$(dom).children().append('<tbody></tbody>');
-
-	// Appearance and visuals
-	$(dom).children().addClass('giraffe-table');
-	feature_table.addClass('giraffe-table-feature');
-	enzyme_table.addClass('giraffe-table-enzyme');
-	orf_table.addClass('giraffe-table-orf');
-
-	// Read the features in for each table
+	// Read the features in for each table, only displaying the table
+	// if there are features for it
 
 	// Standard features
-	for (var fx = 0; fx < gd.std_features.length; fx++) {
-		var f = gd.std_features[fx],
-			row = feature_table.children('tbody').append('<tr></tr>');
+	if (gd.std_features.length > 0) {
+		
+		// Initialize table
+		feature_table = $('<table></table>')
+			.append('<thead><tr><th>Feature</th><th>Type</th><th>Start</th><th>End<th></tr></thead>')
+			.append('<tbody></tbody>')
+			.addClass('giraffe-table-feature');
 
-		row.append('<td>' + f.name() + '</td>');
-		row.append('<td>' + type_code_to_name(f.type(), gd) + '</td>');
+		for (var fx = 0; fx < gd.std_features.length; fx++) {
+			var f = gd.std_features[fx],
+				row = feature_table.children('tbody').append('<tr></tr>');
 
-		if (f.clockwise()) {
-			row.append('<td>' + f.start() + '</td>');
-			row.append('<td>' + f.end() + '</td>');
-		} else {
-			row.append('<td>' + f.end() + '</td>');
-			row.append('<td>' + f.start() + '</td>');
+			row.append('<td>' + f.name() + '</td>');
+			row.append('<td>' + type_code_to_name(f.type(), gd) + '</td>');
+
+			if (f.clockwise()) {
+				row.append('<td>' + f.start() + '</td>');
+				row.append('<td>' + f.end() + '</td>');
+			} else {
+				row.append('<td>' + f.end() + '</td>');
+				row.append('<td>' + f.start() + '</td>');
+			}
 		}
+
+		$(dom).append(feature_table);
 	}
 
 	// ORFs
- 	for (var fx = 0; fx < gd.orf_features.length; fx++) {
-		var f = gd.orf_features[fx],
-			row = orf_table.children('tbody').append('<tr></tr>');
+	if (gd.orf_features.length > 0) {
 
-		row.append('<td>' + f.name().replace(/ORF\s+[fF]rame\s+/, '') + '</td>');
+		// Initialize table
+		orf_table = $('<table></table>')
+			.append('<thead><tr><th>ORF Frame</th><th>Start</th><th>End<th></tr></thead>')
+			.append('<tbody></tbody>')
+			.addClass('giraffe-table-orf');
 
-		if (f.clockwise()) {
-			row.append('<td>' + f.start() + '</td>');
-			row.append('<td>' + f.end() + '</td>');
-		} else {
-			row.append('<td>' + f.end() + '</td>');
-			row.append('<td>' + f.start() + '</td>');
+		for (var fx = 0; fx < gd.orf_features.length; fx++) {
+
+			var f = gd.orf_features[fx],
+				row = orf_table.children('tbody').append('<tr></tr>');
+
+			row.append('<td>' + f.name().replace(/ORF\s+[fF]rame\s+/, '') + '</td>');
+
+			if (f.clockwise()) {
+				row.append('<td>' + f.start() + '</td>');
+				row.append('<td>' + f.end() + '</td>');
+			} else {
+				row.append('<td>' + f.end() + '</td>');
+				row.append('<td>' + f.start() + '</td>');
+			}
 		}
+
+		$(dom).append(orf_table);
 	}
 
 	// Enzymes
- 	for (var fx = 0; fx < gd.enzyme_features.length; fx++) {
-		var f = gd.enzyme_features[fx],
-			row;
+	if (gd.enzyme_features.length > 0) {
 
-		if (f.default_show_feature() && f.cut_count() == 1) {
-			row = enzyme_table.children('tbody').append('<tr></tr>');
-			row.append('<td>' + f.name() + '</td>');
-			row.append('<td>' + f.cut() + '</td>');
+		enzyme_table = $('<table></table>')
+			.append('<thead><tr><th>Enzyme</th><th>Cut</th></tr></thead>')
+			.append('<tbody></tbody>')
+			.addClass('giraffe-table-enzyme');
+
+		for (var fx = 0; fx < gd.enzyme_features.length; fx++) {
+			var f = gd.enzyme_features[fx],
+				row;
+
+			if (f.default_show_feature() && f.cut_count() == 1) {
+				row = enzyme_table.children('tbody').append('<tr></tr>');
+				row.append('<td>' + f.name() + '</td>');
+				row.append('<td>' + f.cut() + '</td>');
+			}
 		}
+
+		$(dom).append(enzyme_table);
 	}
 
-
+	// Set general appearance properties
+	$(dom).children().addClass('giraffe-table');
 	
 }})();
