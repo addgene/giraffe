@@ -292,6 +292,7 @@
 		return {
 			width: 800,
 			height: 800,
+			features: [],
 			draw_features: function (features) {
 				var fx;
 
@@ -311,9 +312,6 @@
 
 		// Map-specific canvas element
 		var paper;
-
-		// Map-specific feature list
-		var features = [];
 
 		// Paper setup - not the final width, but how we will draw the
 		// map, we will scale later on
@@ -610,7 +608,7 @@
                 // it's a multi-cutter
                 if (_this.type() == ft.enzyme) {
 					for (var fx in _this.other_cutters()) {
-						var f = features[_this.other_cutters()[fx]];
+						var f = _map.features[_this.other_cutters()[fx]];
 						sets.push(f.feature_set());
 						lines.push(f.label_set()[0]);
 					}
@@ -1050,8 +1048,8 @@
 				conflicts = 0; // Assume you have no conflicts until you find some
 
 				// Clear the record of who pushed whom
-				for (var fx in features) {
-					features[fx].pushed_features = [];
+				for (var fx in _map.features) {
+					_map.features[fx].pushed_features = [];
 				}
 
 				var biggest_size = 0;
@@ -1061,8 +1059,8 @@
 
 				// Go through the feature list twice, to make sure that features
 				// that cross the boundary are resolved
-				for (var fx = 0; fx < 2 * features.length; fx++) {
-					var f = features[fx % features.length];
+				for (var fx = 0; fx < 2 * _map.features.length; fx++) {
+					var f = _map.features[fx % _map.features.length];
 					if (f.radius == rad && f.type() != ft.enzyme) { 
 						var new_size = f.size_degrees();
 						var overlap = -(furthest_point - f.start_degrees());
@@ -1076,7 +1074,7 @@
 						// then the compensation for last feature that crosses 
 						// the boundary will force every other feature off of its 
 						// level.
-						if (edge_crosses_boundary && fx <= features.length)
+						if (edge_crosses_boundary && fx <= _map.features.length)
 							overlap += 360;
 
 						if (overlap <= min_overlap_cutoff) { 
@@ -1133,8 +1131,8 @@
 
 		// Make sure that the appropriate cutters are shown
 		function show_hide_cutters() {
-			for (var fx in features) {
-				var f = features[fx];
+			for (var fx in _map.features) {
+				var f = _map.features[fx];
                 if (f.default_show_feature()) {
                     // Only draw enzymes if they are in the list of
                     // cutters to show - i.e. 1 cutter, 2 cutters,
@@ -1171,8 +1169,8 @@
             // should be within a label list, so to minimize
             // intersecting lines.
 			label_f_c = [[], [], [], [], [], [], [], []];
-			for (var fx = features.length - 1; fx >= 0; fx--) {
-				features[fx].set_label_list();
+			for (var fx = _map.features.length - 1; fx >= 0; fx--) {
+				_map.features[fx].set_label_list();
 			}
         }
 
@@ -1218,14 +1216,14 @@
 			}
 	 
 			// Finally draw labels
-			for (var fx = features.length - 1; fx >= 0; fx--) {
-				features[fx].draw_label();
+			for (var fx = _map.features.length - 1; fx >= 0; fx--) {
+				_map.features[fx].draw_label();
 			}
 		}
 
 		function extend_features() {
 			for (var bfx = 0; bfx < all_features.length; bfx++) {
-				features.push(new CircularFeature(all_features[bfx]));
+				_map.features.push(new CircularFeature(all_features[bfx]));
 			}
 		}
 
@@ -1321,8 +1319,8 @@
 			set_bounding_box(label_radius);
         
 			paper = ScaleRaphael(map_dom_id, _map.width, _map.height); // global
-            for (var fx in features) {
-                features[fx].initialize();
+            for (var fx in _map.features) {
+                _map.features[fx].initialize();
             }
 
             // figure out the real height of labels
@@ -1337,7 +1335,7 @@
 			paper.clear();
 
 			draw_plasmid();
-			_map.draw_features(features); // Draw all the features initially
+			_map.draw_features(_map.features); // Draw all the features initially
 			draw_labels(label_radius); // Draw only the necessary labels
 
 			// Rescale
@@ -1356,7 +1354,7 @@
 		// Export the main properties as part of the CircularMap object
 		this.paper = paper;
 		this.draw = draw;
-		this.features = features;
+		this.features = _map.features;
 	}; // End CircularMap()
 
 	///////////////////////////////////////////////////////////////////
