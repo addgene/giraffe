@@ -293,11 +293,11 @@
 			width: 800,
 			height: 800,
 			features: [],
-			draw_features: function (features) {
+			draw_features: function () {
 				var fx;
 
-				for (fx = 0; fx < features.length; fx++) {
-					features[fx].draw();
+				for (fx = 0; fx < this.features.length; fx++) {
+					this.features[fx].draw();
 				}
 			}
 		}
@@ -1335,7 +1335,7 @@
 			paper.clear();
 
 			draw_plasmid();
-			_map.draw_features(_map.features); // Draw all the features initially
+			_map.draw_features(); // Draw all the features initially
 			draw_labels(label_radius); // Draw only the necessary labels
 
 			// Rescale
@@ -2213,7 +2213,7 @@
             }
 
 			draw_plasmid();
-			_map.draw_features(_map.features); // Draw all the features initially
+			_map.draw_features(); // Draw all the features initially
 			draw_labels(label_height); // Draw only the necessary labels
 
 			// Rescale
