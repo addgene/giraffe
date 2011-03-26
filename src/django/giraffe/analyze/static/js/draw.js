@@ -78,33 +78,47 @@
 //    linear feature drawing, which makes its own extended clones of objects
 
 // Protect scope, but ensure that GiraffeDraw() is global
-(function(){window.GiraffeDraw = function () {
+(function(){
 
-	///////////////////////////////////////////////////////////////////
+ 	///////////////////////////////////////////////////////////////////
+	// Crockford-stype prototypal inheritence
+	//
+	if (typeof Object.create !== 'function') {
+		Object.create = function (o) {
+			// Empty function object, to be used as a placeholder
+			function F() {}; 
+
+			// Set the prototype property of this function to point to o
+			F.prototype = o;
+
+			// Now, all objects created with F as a constructor will have their
+			// internal __proto__ prototype pointer pointing to o, which means 
+			// that they will, effectively, use o as a "parent" for any properies
+			// that they do not explicitly define.
+
+			// return just such an object
+			return new F();
+		};
+	}
+
+ 	///////////////////////////////////////////////////////////////////
 	// Package-scope variables
-	var _debug = false;
-	var all_features = [];
-	var seq_length;
-    var full_sequence = '';
-
-    // Helpers to keep track of frequently used features
-    var orf_features = [];
-    var enzyme_features = [];
-    var std_features = [];
+	var _debug, ft, svg, colors;
+	
+	_debug = false;
 
 	// Feature Types
-	var ft = { 
+	ft = { 
 		feature:    1, promoter:   2, primer:        3,
 		enzyme:     4, gene:       5, origin:        6,
 		regulatory: 7, terminator: 8, exact_feature: 9,
         orf:       10
 	};
-    this.Feature_Type = ft;
 
 	//// Package-scope utility functions
 	// SVG Object
 	// For dealing with the SVG syntax
-	var svg = {
+	svg = {
 		move: function (x, y) {
 			return this.to_path(['M', x, y]);
 		},
@@ -125,7 +139,7 @@
 	};
 
 	// Feature Colors
-	var colors = {
+	colors = {
 		bg_text: "#aaa",
 		plasmid: "#000",
 		feature: "#f00",
@@ -135,7 +149,24 @@
 		orf:     "#00c8c8",
 	};
 
+ 
+ window.GiraffeDraw = function () {
 
+ 	///////////////////////////////////////////////////////////////////
+ 	// One GD per sequence
+	// sequence-scope variables
+	var seq_length;
+    var full_sequence = '';
+
+    // Helpers to keep track of frequently used features
+	var all_features = [];
+    var orf_features = [];
+    var enzyme_features = [];
+    var std_features = [];
+
+    this.Feature_Type = ft;
+
+	
 	///////////////////////////////////////////////////////////////////
 	// Basic Feature class (private, internal class)
 	function Feature(feat) {
@@ -254,23 +285,55 @@
 		}
 	}
 
+	///////////////////////////////////////////////////////////////////
+	// Generic Map prototype class
+	function Map(options) {
+		// Return a new object literal with a bunch of common properties
+		return {
+			width: 800,
+			height: 800,
+			features: [],
+
+			extend_features: function (FeatureType) {
+				var bfx;
+
+				for (bfx = 0; bfx < all_features.length; bfx++) {
+					this.features.push(new FeatureType(all_features[bfx]));
+				}
+			},
+
+			initialize_features: function() { 
+				var fx;
+
+				for (fx = 0; fx < this.features.length; fx++) {
+					this.features[fx].initialize();
+				}
+			}, 
+
+			draw_features: function () {
+				var fx;
+
+				for (fx = 0; fx < this.features.length; fx++) {
+					this.features[fx].draw();
+				}
+			}
+		}
+	}
 
 	///////////////////////////////////////////////////////////////////
 	// Circular Map Drawing Class
 	this.CircularMap = function(options) {
 
+		// Inherit the common Map functions
+		var _map = Object.create(new Map())
+
 		// Map-specific canvas element
 		var paper;
 
-		// Map-specific feature list
-		var features = [];
-
 		// Paper setup - not the final width, but how we will draw the
 		// map, we will scale later on
-		var map_width = 800;
-		var map_height = 800;
-		var cx = map_width/2;
-		var cy = map_height/2;
+		var cx = _map.width/2;
+		var cy = _map.height/2;
 
 		// Where to draw the map
 		var map_dom_id = 'giraffe-draw-map';
@@ -406,11 +469,10 @@
 		///////////////////////////////////////////////////////////////////
 		// Circular Feature class
 		function CircularFeature(basic_feature) {
-			// Clone the basic feature, to extend it later
-			function Clone() {}; // empty function to use as a hanger for prototype
-			Clone.prototype = basic_feature;
-			var _this = new Clone(); // Make a new "this" pointer to return at
-			                         // the end
+
+			// Create a prototypal descendent of the basic_feature to expand
+			var _this = Object.create(basic_feature);
+
 			// The result of this function will be a CircularFeature object
 			
 			// Visual properties
@@ -563,7 +625,7 @@
                 // it's a multi-cutter
                 if (_this.type() == ft.enzyme) {
 					for (var fx in _this.other_cutters()) {
-						var f = features[_this.other_cutters()[fx]];
+						var f = _map.features[_this.other_cutters()[fx]];
 						sets.push(f.feature_set());
 						lines.push(f.label_set()[0]);
 					}
@@ -1003,8 +1065,8 @@
 				conflicts = 0; // Assume you have no conflicts until you find some
 
 				// Clear the record of who pushed whom
-				for (var fx in features) {
-					features[fx].pushed_features = [];
+				for (var fx in _map.features) {
+					_map.features[fx].pushed_features = [];
 				}
 
 				var biggest_size = 0;
@@ -1014,8 +1076,8 @@
 
 				// Go through the feature list twice, to make sure that features
 				// that cross the boundary are resolved
-				for (var fx = 0; fx < 2 * features.length; fx++) {
-					var f = features[fx % features.length];
+				for (var fx = 0; fx < 2 * _map.features.length; fx++) {
+					var f = _map.features[fx % _map.features.length];
 					if (f.radius == rad && f.type() != ft.enzyme) { 
 						var new_size = f.size_degrees();
 						var overlap = -(furthest_point - f.start_degrees());
@@ -1029,7 +1091,7 @@
 						// then the compensation for last feature that crosses 
 						// the boundary will force every other feature off of its 
 						// level.
-						if (edge_crosses_boundary && fx <= features.length)
+						if (edge_crosses_boundary && fx <= _map.features.length)
 							overlap += 360;
 
 						if (overlap <= min_overlap_cutoff) { 
@@ -1084,16 +1146,10 @@
 			return max_rad;
 		}
 
-		function draw_features() {
-			for (var fx in features) {
-				features[fx].draw();
-			}
-		}
-
 		// Make sure that the appropriate cutters are shown
 		function show_hide_cutters() {
-			for (var fx in features) {
-				var f = features[fx];
+			for (var fx in _map.features) {
+				var f = _map.features[fx];
                 if (f.default_show_feature()) {
                     // Only draw enzymes if they are in the list of
                     // cutters to show - i.e. 1 cutter, 2 cutters,
@@ -1130,8 +1186,8 @@
             // should be within a label list, so to minimize
             // intersecting lines.
 			label_f_c = [[], [], [], [], [], [], [], []];
-			for (var fx = features.length - 1; fx >= 0; fx--) {
-				features[fx].set_label_list();
+			for (var fx = _map.features.length - 1; fx >= 0; fx--) {
+				_map.features[fx].set_label_list();
 			}
         }
 
@@ -1177,14 +1233,8 @@
 			}
 	 
 			// Finally draw labels
-			for (var fx = features.length - 1; fx >= 0; fx--) {
-				features[fx].draw_label();
-			}
-		}
-
-		function extend_features() {
-			for (var bfx = 0; bfx < all_features.length; bfx++) {
-				features.push(new CircularFeature(all_features[bfx]));
+			for (var fx = _map.features.length - 1; fx >= 0; fx--) {
+				_map.features[fx].draw_label();
 			}
 		}
 
@@ -1197,10 +1247,10 @@
             label_letter_height = 15;
             label_letter_width = 12;
           
-            var min_x = map_width/2;
-            var max_x = map_width/2;
-            var min_y = map_width/2;
-            var max_y = map_width/2;
+            var min_x = _map.width/2;
+            var max_x = _map.width/2;
+            var min_y = _map.width/2;
+            var max_y = _map.width/2;
             for (var section=0; section<label_f_c.length; section++) {
                 var list_max_letters = 0;
                 for (var i=0; i<label_f_c[section].length; i++) {
@@ -1259,15 +1309,15 @@
             var bb_width = max_x-min_x;
             var bb_height = max_y-min_y;
 
-		    map_width = bb_width;
-		    map_height = bb_height;
+		    _map.width = bb_width;
+		    _map.height = bb_height;
             cx = left_x_extend;
             cy = top_y_extend;
 		}
 
 		function draw() { // Draw the circular map
             // Extend basic features to get list of circular features
-			extend_features();
+			_map.extend_features(CircularFeature);
             // Hide the right cutters
             show_hide_cutters();
             // Resolve conflicts on the circle, push some overlapping
@@ -1279,10 +1329,8 @@
 
 			set_bounding_box(label_radius);
         
-			paper = ScaleRaphael(map_dom_id, map_width, map_height); // global
-            for (var fx in features) {
-                features[fx].initialize();
-            }
+			paper = ScaleRaphael(map_dom_id, _map.width, _map.height); // global
+			_map.initialize_features();
 
             // figure out the real height of labels
 			var label = paper.text(0,0,'M');
@@ -1296,12 +1344,12 @@
 			paper.clear();
 
 			draw_plasmid();
-			draw_features(); // Draw all the features initially
+			_map.draw_features(); // Draw all the features initially
 			draw_labels(label_radius); // Draw only the necessary labels
 
 			// Rescale
-			if (final_map_width != map_width ||
-				final_map_height != map_height) {
+			if (final_map_width != _map.width ||
+				final_map_height != _map.height) {
 				// "center" parameter just adds unnecessary CSS to the container
 				// object to give it an absolute position: not what we need
 				paper.changeSize(final_map_width,final_map_height,false,false)
@@ -1315,29 +1363,28 @@
 		// Export the main properties as part of the CircularMap object
 		this.paper = paper;
 		this.draw = draw;
-		this.features = features;
+		this.features = _map.features;
 	}; // End CircularMap()
 
 	///////////////////////////////////////////////////////////////////
 	// Linear Map Drawing Class
 	this.LinearMap = function (options) {
 	
+		// Inherit the common Map functions
+		var _map = Object.create(new Map())
+
 		// Map-specific canvas element
 		var paper;
 
-		// Map-specific feature list
-		var features = [];
 
 		// Paper setup - not the final width, but how we will draw the
 		// map, we will scale later on
-		var map_width = 800;
-		var map_height = 800;
-		var cx = map_width/2;
-		var cy = map_height/2;
+		var cx = _map.width/2;
+		var cy = _map.height/2;
 
 		var plasmid_y = cy;
-		var plasmid_width = map_width * 0.9;
-		var plasmid_left = (map_width - plasmid_width) / 2;
+		var plasmid_width = _map.width * 0.9;
+		var plasmid_left = (_map.width - plasmid_width) / 2;
 		var plasmid_right = plasmid_left + plasmid_width;
 
 		// Where to draw the map
@@ -1423,11 +1470,9 @@
 
 		// TODO: MAJOR CODE REORGANIZATION: MERGE COMMON ELEMENTS INTO ONE CLASS
 		function LinearFeature(basic_feature) {
-			// Clone the basic feature, to extend it later
-			function Clone() {}; // empty function to use as a hanger for prototype
-			Clone.prototype = basic_feature;
-			var _this = new Clone(); // Make a new "this" pointer to return at
-			                         // the end
+			
+			// Create a prototypal descendent of the basic_feature to expand
+			var _this = Object.create(basic_feature);
 			// The result of this function will be a LinearFeature object
 
 			// The visual object to modify when accessing the feature.
@@ -1546,7 +1591,7 @@
                 // it's a multi-cutter
                 if (_this.type() == ft.enzyme) {
 					for (var fx in _this.other_cutters()) {
-						var f = features[_this.other_cutters()[fx]];
+						var f = _map.features[_this.other_cutters()[fx]];
 						sets.push(f.feature_set());
 						lines.push(f.label_set()[0]);
 					}
@@ -1880,16 +1925,16 @@
 				conflicts = 0; // Assume you have no conflicts until you find some
 
 				// Clear the record of who pushed whom
-				for (var fx in features) {
-					features[fx].pushed_features = [];
+				for (var fx in _map.features) {
+					_map.features[fx].pushed_features = [];
 				}
 
 				var biggest_size = 0;
 				var biggest_feature;
 				var furthest_point = plasmid_left; // Start at a complete lower bound
 
-				for (var fx = 0; fx < features.length; fx++) {
-					var f = features[fx];
+				for (var fx = 0; fx < _map.features.length; fx++) {
+					var f = _map.features[fx];
 					if (f.y == y && f.type() != ft.enzyme) { 
 						var new_size = f.real_size();
 						var overlap = furthest_point - f.real_start();
@@ -1942,23 +1987,10 @@
 			return max_dist;
 		}
 
-		function extend_features() {
-			for (var bfx = 0; bfx < all_features.length; bfx++) {
-				features.push(new LinearFeature(all_features[bfx]));
-			}
-		}
-
-		// XXX copy-and-pasted: eliminate redundancy
-		function draw_features() {
-			for (var fx in features) {
-				features[fx].draw();
-			}
-		}
-
 		// Make sure that the appropriate cutters are shown
 		function show_hide_cutters() {
-			for (var fx in features) {
-				var f = features[fx];
+			for (var fx in _map.features) {
+				var f = _map.features[fx];
                 if (f.default_show_feature()) {
                     // Only draw enzymes if they are in the list of
                     // cutters to show - i.e. 1 cutter, 2 cutters,
@@ -1998,8 +2030,8 @@
 			}
 
 			// Figure out which list each feature goes in
-            for (var fx in features) {
-				var f = features[fx];
+            for (var fx in _map.features) {
+				var f = _map.features[fx];
 
 				// Which nth of the plasmid is the feature in?
 				var section = Math.floor(nlists*(f.real_center() - plasmid_left)/
@@ -2047,8 +2079,8 @@
 			// Calculate the height of a label
 			var label_leading = 1.3;
 			var label_height = 0;
-            if (features.length) {
-                label_height = features[0].label_size().height * label_leading;
+            if (_map.features.length) {
+                label_height = _map.features[0].label_size().height * label_leading;
             }
 
 			// Finally, draw all the features
@@ -2097,14 +2129,14 @@
             label_letter_height = 15;
             label_letter_width = 8;
           
-            var min_y = map_height/2;
-            var max_y = map_height/2;
+            var min_y = _map.height/2;
+            var max_y = _map.height/2;
 			// By default, plasmid will scale to width of map, so unless we
 			// actually have lists that go off the page, no reason to adjust
 			// them. i.e., never make them smaller than they orignially were,
 			// because there is never a need to "zoom in."
             var min_x = 0;
-            var max_x = map_width;
+            var max_x = _map.width;
 
 			// Iterate over every list in a level
             for (var sx = 0; sx < label_pos[0].length; sx++) {
@@ -2145,8 +2177,8 @@
             // Now we have a new bounding box (height only): min_y to max_y
 			
 			// Extend or compress the box dimensions to encompas this new size
-		    map_width = max_x - min_x;
-		    map_height = max_y - min_y;
+		    _map.width = max_x - min_x;
+		    _map.height = max_y - min_y;
 
 			// Shift all the reference points to compensate for the re-zooming
             cy -= min_y;
@@ -2166,7 +2198,7 @@
 
 		function draw() { // Draw the linear map
             // Extend basic features to get list of linear features
-			extend_features();
+			_map.extend_features(LinearFeature);
 
             // Hide the right cutters
             show_hide_cutters();
@@ -2178,22 +2210,20 @@
 			assign_label_lists();
 			set_bounding_box(label_height);
         
-			paper = ScaleRaphael(map_dom_id, map_width, map_height); // global
-            for (var fx in features) {
-                features[fx].initialize();
-            }
+			paper = ScaleRaphael(map_dom_id, _map.width, _map.height); // global
+			_map.initialize_features();
 
 			draw_plasmid();
-			draw_features(); // Draw all the features initially
+			_map.draw_features(); // Draw all the features initially
 			draw_labels(label_height); // Draw only the necessary labels
 
 			// Rescale
-			if (final_map_width != map_width ||
-				final_map_height != map_height) {
+			if (final_map_width != _map.width ||
+				final_map_height != _map.height) {
 				
 				// Make sure not to add additional height to the map, once we've
 				// trimmed it off
-				final_map_height = final_map_width * (map_height/map_width);
+				final_map_height = final_map_width * (_map.height/_map.width);
 
 				// "center" parameter just adds unnecessary CSS to the container
 				// object to give it an absolute position: not what we need
@@ -2209,7 +2239,7 @@
 		// Export the main properties as part of the LinearMap object
 		this.paper = paper;
 		this.draw = draw;
-		this.features = features;
+		this.features = _map.features;
 	}; // End LinearMap()
 
 	return this;
