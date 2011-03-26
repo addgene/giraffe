@@ -293,6 +293,15 @@
 			width: 800,
 			height: 800,
 			features: [],
+
+			extend_features: function (FeatureType) {
+				var bfx;
+
+				for (bfx = 0; bfx < all_features.length; bfx++) {
+					this.features.push(new FeatureType(all_features[bfx]));
+				}
+			},
+
 			draw_features: function () {
 				var fx;
 
@@ -1221,12 +1230,6 @@
 			}
 		}
 
-		function extend_features() {
-			for (var bfx = 0; bfx < all_features.length; bfx++) {
-				_map.features.push(new CircularFeature(all_features[bfx]));
-			}
-		}
-
 		function set_bounding_box(label_radius) {
 			// Figure out outter edge of label lists
             //
@@ -1306,7 +1309,7 @@
 
 		function draw() { // Draw the circular map
             // Extend basic features to get list of circular features
-			extend_features();
+			_map.extend_features(CircularFeature);
             // Hide the right cutters
             show_hide_cutters();
             // Resolve conflicts on the circle, push some overlapping
@@ -1978,12 +1981,6 @@
 			return max_dist;
 		}
 
-		function extend_features() {
-			for (var bfx = 0; bfx < all_features.length; bfx++) {
-				_map.features.push(new LinearFeature(all_features[bfx]));
-			}
-		}
-
 		// Make sure that the appropriate cutters are shown
 		function show_hide_cutters() {
 			for (var fx in _map.features) {
@@ -2195,7 +2192,7 @@
 
 		function draw() { // Draw the linear map
             // Extend basic features to get list of linear features
-			extend_features();
+			_map.extend_features(LinearFeature);
 
             // Hide the right cutters
             show_hide_cutters();
