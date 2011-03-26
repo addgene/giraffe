@@ -1367,8 +1367,6 @@
 		// Map-specific canvas element
 		var paper;
 
-		// Map-specific feature list
-		var features = [];
 
 		// Paper setup - not the final width, but how we will draw the
 		// map, we will scale later on
@@ -1584,7 +1582,7 @@
                 // it's a multi-cutter
                 if (_this.type() == ft.enzyme) {
 					for (var fx in _this.other_cutters()) {
-						var f = features[_this.other_cutters()[fx]];
+						var f = _map.features[_this.other_cutters()[fx]];
 						sets.push(f.feature_set());
 						lines.push(f.label_set()[0]);
 					}
@@ -1918,16 +1916,16 @@
 				conflicts = 0; // Assume you have no conflicts until you find some
 
 				// Clear the record of who pushed whom
-				for (var fx in features) {
-					features[fx].pushed_features = [];
+				for (var fx in _map.features) {
+					_map.features[fx].pushed_features = [];
 				}
 
 				var biggest_size = 0;
 				var biggest_feature;
 				var furthest_point = plasmid_left; // Start at a complete lower bound
 
-				for (var fx = 0; fx < features.length; fx++) {
-					var f = features[fx];
+				for (var fx = 0; fx < _map.features.length; fx++) {
+					var f = _map.features[fx];
 					if (f.y == y && f.type() != ft.enzyme) { 
 						var new_size = f.real_size();
 						var overlap = furthest_point - f.real_start();
@@ -1982,14 +1980,14 @@
 
 		function extend_features() {
 			for (var bfx = 0; bfx < all_features.length; bfx++) {
-				features.push(new LinearFeature(all_features[bfx]));
+				_map.features.push(new LinearFeature(all_features[bfx]));
 			}
 		}
 
 		// Make sure that the appropriate cutters are shown
 		function show_hide_cutters() {
-			for (var fx in features) {
-				var f = features[fx];
+			for (var fx in _map.features) {
+				var f = _map.features[fx];
                 if (f.default_show_feature()) {
                     // Only draw enzymes if they are in the list of
                     // cutters to show - i.e. 1 cutter, 2 cutters,
@@ -2029,8 +2027,8 @@
 			}
 
 			// Figure out which list each feature goes in
-            for (var fx in features) {
-				var f = features[fx];
+            for (var fx in _map.features) {
+				var f = _map.features[fx];
 
 				// Which nth of the plasmid is the feature in?
 				var section = Math.floor(nlists*(f.real_center() - plasmid_left)/
@@ -2078,8 +2076,8 @@
 			// Calculate the height of a label
 			var label_leading = 1.3;
 			var label_height = 0;
-            if (features.length) {
-                label_height = features[0].label_size().height * label_leading;
+            if (_map.features.length) {
+                label_height = _map.features[0].label_size().height * label_leading;
             }
 
 			// Finally, draw all the features
@@ -2210,12 +2208,12 @@
 			set_bounding_box(label_height);
         
 			paper = ScaleRaphael(map_dom_id, _map.width, _map.height); // global
-            for (var fx in features) {
-                features[fx].initialize();
+            for (var fx in _map.features) {
+                _map.features[fx].initialize();
             }
 
 			draw_plasmid();
-			_map.draw_features(features); // Draw all the features initially
+			_map.draw_features(_map.features); // Draw all the features initially
 			draw_labels(label_height); // Draw only the necessary labels
 
 			// Rescale
@@ -2240,7 +2238,7 @@
 		// Export the main properties as part of the LinearMap object
 		this.paper = paper;
 		this.draw = draw;
-		this.features = features;
+		this.features = _map.features;
 	}; // End LinearMap()
 
 	return this;
