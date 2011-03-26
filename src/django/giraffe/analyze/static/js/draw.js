@@ -302,6 +302,14 @@
 				}
 			},
 
+			initialize_features: function() { 
+				var fx;
+
+				for (fx = 0; fx < this.features.length; fx++) {
+					this.features[fx].initialize();
+				}
+			}, 
+
 			draw_features: function () {
 				var fx;
 
@@ -1322,9 +1330,7 @@
 			set_bounding_box(label_radius);
         
 			paper = ScaleRaphael(map_dom_id, _map.width, _map.height); // global
-            for (var fx in _map.features) {
-                _map.features[fx].initialize();
-            }
+			_map.initialize_features();
 
             // figure out the real height of labels
 			var label = paper.text(0,0,'M');
@@ -2205,9 +2211,7 @@
 			set_bounding_box(label_height);
         
 			paper = ScaleRaphael(map_dom_id, _map.width, _map.height); // global
-            for (var fx in _map.features) {
-                _map.features[fx].initialize();
-            }
+			_map.initialize_features();
 
 			draw_plasmid();
 			_map.draw_features(); // Draw all the features initially
