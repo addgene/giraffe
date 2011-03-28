@@ -31,7 +31,9 @@
 //    and uses circular map)
 // 
 
-(function(){window.GiraffeAnalyze = function ($,gd,options) {
+(function(){
+
+window.GiraffeAnalyze = function ($,gd,options) {
     var dom_id = 'giraffe-analyze';
     if ('dom_id' in options) { dom_id = options['dom_id']; }
     var name = 'Sequence';
@@ -1020,8 +1022,8 @@
 
     full_widget();
 
-}})();
-(function () { 
+}
+
 // Private utility function with no external or closure use
 function type_code_to_name(code, gd) {
 	for (var type in gd.Feature_Type) {
@@ -1122,5 +1124,7 @@ window.GiraffeTable = function ($,gd,dom) {
 	// Set general appearance properties
 	$(dom).children().addClass('giraffe-table');
 	
-}})();
+}
+
+})();
 
