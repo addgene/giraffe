@@ -288,7 +288,9 @@
 	///////////////////////////////////////////////////////////////////
 	// Generic Map prototype class
 	function Map(options) {
-		var cutters_to_show;
+		var cutters_to_show, 
+			final_width,
+			final_height;
 	
 		// Cutters to show
 		cutters_to_show = [1];
@@ -296,10 +298,22 @@
 			cutters_to_show = options['cutters'];
 		}
 
+		// Final size: to be scaled down to this at the end
+		final_width = 640;
+		final_height = 640;
+		if ('map_width' in options) {
+			final_width = parseInt(options['map_width'])
+		}
+		if ('map_height' in options) {
+			final_height = parseInt(options['map_height'])
+		}
+
 		// Return a new object literal with a bunch of common properties
 		return {
 			width: 800,
 			height: 800,
+			final_width: final_width,
+			final_height: final_height,
 			features: [],
 
 			extend_features: function (FeatureType) {
@@ -374,16 +388,6 @@
 		var map_dom_id = 'giraffe-draw-map';
 		if ('map_dom_id' in options) {
 			map_dom_id = options['map_dom_id'];
-		}
-
-		// Final size
-		var final_map_width = 640;
-		var final_map_height = 640;
-		if ('map_width' in options) {
-			final_map_width = parseInt(options['map_width'])
-		}
-		if ('map_height' in options) {
-			final_map_height = parseInt(options['map_height'])
 		}
 
 		// Global plasmid info
@@ -1350,11 +1354,11 @@
 			draw_labels(label_radius); // Draw only the necessary labels
 
 			// Rescale
-			if (final_map_width != _map.width ||
-				final_map_height != _map.height) {
+			if (_map.final_width != _map.width ||
+				_map.final_height != _map.height) {
 				// "center" parameter just adds unnecessary CSS to the container
 				// object to give it an absolute position: not what we need
-				paper.changeSize(final_map_width,final_map_height,false,false)
+				paper.changeSize(_map.final_width,_map.final_height,false,false)
 			}
 		}
 
@@ -1393,16 +1397,6 @@
 		var map_dom_id = 'giraffe-draw-map';
 		if ('map_dom_id' in options) {
 			map_dom_id = options['map_dom_id'];
-		}
-
-		// Final size
-		var final_map_width = 640;
-		var final_map_height = 640;
-		if ('map_width' in options) {
-			final_map_width = parseInt(options['map_width'])
-		}
-		if ('map_height' in options) {
-			final_map_height = parseInt(options['map_height'])
 		}
 
 		// Heights of levels
@@ -2204,16 +2198,16 @@
 			draw_labels(label_height); // Draw only the necessary labels
 
 			// Rescale
-			if (final_map_width != _map.width ||
-				final_map_height != _map.height) {
+			if (_map.final_width != _map.width ||
+				_map.final_height != _map.height) {
 				
 				// Make sure not to add additional height to the map, once we've
 				// trimmed it off
-				final_map_height = final_map_width * (_map.height/_map.width);
+				_map.final_height = _map.final_width * (_map.height/_map.width);
 
 				// "center" parameter just adds unnecessary CSS to the container
 				// object to give it an absolute position: not what we need
-				paper.changeSize(final_map_width,final_map_height,false,true)
+				paper.changeSize(_map.final_width,_map.final_height,false,true)
 			}
 		}
 		
