@@ -288,6 +288,14 @@
 	///////////////////////////////////////////////////////////////////
 	// Generic Map prototype class
 	function Map(options) {
+		var cutters_to_show;
+	
+		// Cutters to show
+		cutters_to_show = [1];
+		if ('cutters' in options) {
+			cutters_to_show = options['cutters'];
+		}
+
 		// Return a new object literal with a bunch of common properties
 		return {
 			width: 800,
@@ -310,6 +318,33 @@
 				}
 			}, 
 
+			// Make sure that the appropriate cutters are shown
+			show_hide_cutters: function () {
+				for (var fx in this.features) {
+					var f = this.features[fx];
+					if (f.default_show_feature()) {
+						// Only draw enzymes if they are in the list of
+						// cutters to show - i.e. 1 cutter, 2 cutters,
+						// etc.
+						if (f.type() == ft.enzyme) {
+							if (cutters_to_show.indexOf(f.cut_count()) < 0) {
+								f.hide();
+								f.clear_label();
+							} else {
+								f.show();
+								f.show_label();
+							}
+						}
+					}
+					else {
+						// If the enzyme is not set to be shown by
+						// default, don't show it
+						f.hide();
+						f.clear_label();
+					}
+				}
+			},
+
 			draw_features: function () {
 				var fx;
 
@@ -325,7 +360,7 @@
 	this.CircularMap = function(options) {
 
 		// Inherit the common Map functions
-		var _map = Object.create(new Map())
+		var _map = Object.create(new Map(options))
 
 		// Map-specific canvas element
 		var paper;
@@ -385,12 +420,6 @@
         if ('feature_click_callback' in options) {
             feature_click_callback = options['feature_click_callback'];
         }
-
-		// Cutters to show
-		var cutters_to_show = [1];
-		if ('cutters' in options) {
-			cutters_to_show = options['cutters'];
-		}
 
 		// Animation properties
 		var fade_time = 0;
@@ -1146,33 +1175,6 @@
 			return max_rad;
 		}
 
-		// Make sure that the appropriate cutters are shown
-		function show_hide_cutters() {
-			for (var fx in _map.features) {
-				var f = _map.features[fx];
-                if (f.default_show_feature()) {
-                    // Only draw enzymes if they are in the list of
-                    // cutters to show - i.e. 1 cutter, 2 cutters,
-                    // etc.
-                    if (f.type() == ft.enzyme) {
-					    if (cutters_to_show.indexOf(f.cut_count()) < 0) {
-						    f.hide();
-						    f.clear_label();
-					    } else {
-						    f.show();
-						    f.show_label();
-					    }
-				    }
-                }
-                else {
-                    // If the enzyme is not set to be shown by
-                    // default, don't show it
-                    f.hide();
-                    f.clear_label();
-                }
-			}
-		}
-
 		// Global label list: keeps track of which label should be in each
 		// label list, and where the label line should point to, so we can
 		// use this information to figure out where to put the label and
@@ -1319,7 +1321,7 @@
             // Extend basic features to get list of circular features
 			_map.extend_features(CircularFeature);
             // Hide the right cutters
-            show_hide_cutters();
+            _map.show_hide_cutters();
             // Resolve conflicts on the circle, push some overlapping
             // features to other radii
 			var max_radius = resolve_conflicts();
@@ -1371,7 +1373,7 @@
 	this.LinearMap = function (options) {
 	
 		// Inherit the common Map functions
-		var _map = Object.create(new Map())
+		var _map = Object.create(new Map(options))
 
 		// Map-specific canvas element
 		var paper;
@@ -1431,12 +1433,6 @@
         if ('feature_click_callback' in options) {
             feature_click_callback = options['feature_click_callback'];
         }
-
-		// Cutters to show
-		var cutters_to_show = [1];
-		if ('cutters' in options) {
-			cutters_to_show = options['cutters'];
-		}
 
 		// Animation properties
 		var fade_time = 0;
@@ -1987,32 +1983,6 @@
 			return max_dist;
 		}
 
-		// Make sure that the appropriate cutters are shown
-		function show_hide_cutters() {
-			for (var fx in _map.features) {
-				var f = _map.features[fx];
-                if (f.default_show_feature()) {
-                    // Only draw enzymes if they are in the list of
-                    // cutters to show - i.e. 1 cutter, 2 cutters,
-                    // etc.
-                    if (f.type() == ft.enzyme) {
-					    if (cutters_to_show.indexOf(f.cut_count()) < 0) {
-						    f.hide();
-						    f.clear_label();
-					    } else {
-						    f.show();
-						    f.show_label();
-					    }
-				    }
-                } else {
-                    // If the enzyme is not set to be shown by
-                    // default, don't show it
-                    f.hide();
-                    f.clear_label();
-                }
-			}
-		}
-
 		var label_pos, label_lists;
 		function assign_label_lists() {
 			var label_overlap_cutoff = -1; // pixel
@@ -2201,7 +2171,7 @@
 			_map.extend_features(LinearFeature);
 
             // Hide the right cutters
-            show_hide_cutters();
+            _map.show_hide_cutters();
             // Resolve conflicts on the line, push some overlapping
             // features to other radii
 			var max_height = resolve_conflicts();
