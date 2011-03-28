@@ -1896,20 +1896,36 @@
 				loser.y = new_y; 
 
 				if (_debug) console.warn(loser.name() + " pushed by " + winner.name());
-				
+
 				// Since loser was pushed, un-push all the 
-				// features it caused to be pushed, as long as
-				// those features were not in conflict with the winner
+				// features that it pushed, as long as
+				// those features are not in conflict with the winner,
+				// or with their own, previously pushed features, which are
+				// now unpushed
 				for (var pfx in loser.pushed_features) {
 					var pf = loser.pushed_features[pfx];
-					// Check for conflict with other the winner feature itself.
-					// If there's no conflict, we can pushh it back safely.
+					// Check for conflict with the winner feature itself
+					// If there's no conflict, we can push it back safely.
 					if (winner.real_end() - pf.real_start() <= min_overlap_cutoff ||
 						pf.real_end() - winner.real_start() <= min_overlap_cutoff) {
-						if (_debug)
-							console.warn(pf.name() + " unpushed, because " 
-								+ loser.name() + " pushed by " + winner.name());
-						pf.y = y;
+
+						// Check for conflict with previously pushed features
+						// that may have been unpushed
+						var can_push = true;
+						for (var ppfx in pf.pushed_features) {
+							if (pf.pushed_features[ppfx].y == y) {
+								can_push = false;
+								break;
+							}
+						}
+
+						// Finally!
+						if (can_push) {
+							if (_debug)
+								console.warn(pf.name() + " unpushed, because " 
+									+ loser.name() + " pushed by " + winner.name());
+							pf.y = y;
+						}
 					}
 				}
 			}
