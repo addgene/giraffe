@@ -575,13 +575,13 @@
 
 			// Degree conversion, for overlap calculation:
 			// for these functions, the sequence starts at 90 degrees and goes down.
-			_this.start_degrees = function() {
+			_this.real_start = function() {
 				var sd;
 				// Take the minimum head size into account. Only need to do this 
 				// when the head is drawn and pointing clockwise, to
 				// "push the start back."
 				if (_draw_head && _this.clockwise()) { 
-					sd = convert.pos_to_angle(_this.end()) + _this.size_degrees();
+					sd = convert.pos_to_angle(_this.end()) + _this.real_size();
 				} else { // Headless feature, or head is pointing the wrong way.
 						 // Just give its typical start position
 					sd = convert.pos_to_angle(_this.start());
@@ -590,10 +590,10 @@
 				return normalize(sd);
 			};
 
-			_this.center_degrees = function() {
+			_this.real_center = function() {
 				var cd;
 
-				cd = _this.start_degrees() - _this.size_degrees()/2.0;
+				cd = _this.real_start() - _this.real_size()/2.0;
 
 				if (cd < plasmid_start - 360)
 					cd += 360;
@@ -603,13 +603,13 @@
 				return normalize(cd);
 			};
 
-			_this.end_degrees = function() {
+			_this.real_end = function() {
 				var ed;
 				// Take the minimum head size into account. Only need to do this 
 				// when the head is drawn and pointing counterclockwise, to 
 				// "push the end forward."
 				if (_draw_head && !_this.clockwise()) { // Take the minimum head size into account
-					ed = convert.pos_to_angle(_this.start()) - _this.size_degrees();
+					ed = convert.pos_to_angle(_this.start()) - _this.real_size();
 				} else { // Headless feature, or head is pointing the wrong way.
 						 // Just give its typical end position
 					ed = convert.pos_to_angle(_this.end());
@@ -618,7 +618,7 @@
 				return normalize(ed);
 			};
 
-			_this.size_degrees = function() {
+			_this.real_size = function() {
 				var szd; // size in degrees
 				// Normal definition of size
 				if (_this.crosses_boundary()) 
@@ -781,7 +781,7 @@
 					var xy1 = convert.polar_to_rect(_this.radius, a0);
 
 					// The arc has no fill-color: it's just a thick line
-					var large_angle = _this.size_degrees() > 180 ? 1 : 0;
+					var large_angle = _this.real_size() > 180 ? 1 : 0;
 
 					var arc = paper.path(svg.move(xy0.x, xy0.y) +
 										 svg.arc(_this.radius, xy1.x, xy1.y,
@@ -839,7 +839,7 @@
 				if (!_this.should_draw_label()) { return; }
 
 				// Figure out the center of the feature
-				var a_c = _this.center_degrees(); 
+				var a_c = _this.real_center(); 
 				var adjust_a_c = a_c;
 				if (adjust_a_c < 0) { adjust_a_c += 360; }
 
@@ -860,7 +860,7 @@
 					_this.clear_label();
 
 				// Figure out the center of the feature
-				var a_c = _this.center_degrees();
+				var a_c = _this.real_center();
 				var adjust_a_c = a_c;
 				if (adjust_a_c < 0) { adjust_a_c += 360; }
 
@@ -1063,8 +1063,8 @@
 					var pf = loser.pushed_features[pfx];
 					// Check for conflict with the winner feature itself
 					// If there's no conflict, we can push it back safely.
-					if (pf.start_degrees() - winner.end_degrees() <= min_overlap_cutoff ||
-						winner.start_degrees() - pf.end_degrees() <= min_overlap_cutoff) {
+					if (pf.real_start() - winner.real_end() <= min_overlap_cutoff ||
+						winner.real_start() - pf.real_end() <= min_overlap_cutoff) {
 
 						// Check for conflict with previously pushed features
 						// that may have been unpushed
@@ -1108,13 +1108,13 @@
 				for (var fx = 0; fx < 2 * _map.features.length; fx++) {
 					var f = _map.features[fx % _map.features.length];
 					if (f.radius == rad && f.type() != ft.enzyme) { 
-						var new_size = f.size_degrees();
-						var overlap = -(furthest_point - f.start_degrees());
+						var new_size = f.real_size();
+						var overlap = -(furthest_point - f.real_start());
 						
 						// Only the first time around, make sure that features
 						// that cross the boundary are treated as though their
-						// end_degrees were much further along (i.e., much more
-						// negative, even though the result of end_degrees() will 
+						// real_end were much further along (i.e., much more
+						// negative, even though the result of real_end() will 
 						// be normalized.
 						// If you do this for more than the first time around,
 						// then the compensation for last feature that crosses 
@@ -1128,7 +1128,7 @@
 							// the indicators
 							biggest_size = new_size;
 							biggest_feature = f;
-							furthest_point = f.end_degrees();
+							furthest_point = f.real_end();
 							edge_crosses_boundary = f.crosses_boundary();
 
 						// since we go around twice, it is now possible
@@ -1149,7 +1149,7 @@
 								// Update the new top dog
 								biggest_size = new_size;
 								biggest_feature = f;
-								furthest_point = f.end_degrees();
+								furthest_point = f.real_end();
 								edge_crosses_boundary = f.crosses_boundary();
 
 							} else { // The original feature is top dog. move the new
