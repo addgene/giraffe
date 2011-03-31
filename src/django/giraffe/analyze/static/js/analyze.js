@@ -33,6 +33,10 @@
 
 (function(){
 
+function random_dom_id() {
+	return 'giraffe-'+Math.floor(Math.random()*100000000);
+}
+
 window.GiraffeAnalyze = function ($,gd,options) {
     var dom_id = 'giraffe-analyze';
     if ('dom_id' in options) { dom_id = options['dom_id']; }
@@ -256,7 +260,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
               '</p>');
 
 		// Table dom
-        dom_table_id = 'giraffe-'+Math.floor(Math.random()*100000000);
+        dom_table_id = random_dom_id();
 		dom_table = $('<div id="'+dom_table_id+'"></div>');
 
         $(dom)
@@ -268,9 +272,9 @@ window.GiraffeAnalyze = function ($,gd,options) {
 		gt = GiraffeTable($, gd, dom_table);
 
 		// Circular map pane
-        dom_map_id_c = 'giraffe-'+Math.floor(Math.random()*100000000);
+        dom_map_id_c = random_dom_id();
         dom_map_c = $('<div id="'+dom_map_id_c+'" class="giraffe-analyze-map giraffe-analyze-circular-map"></div>');
-		dom_control_id_c = 'giraffe-'+Math.floor(Math.random()*100000000);
+		dom_control_id_c = random_dom_id();
 		dom_control_c = $('<div id="' + dom_control_id_c + '" class="giraffe-analyze-map-control"></div>');
         $(panes.pane(0))
             .append(dom_map_c)
@@ -287,9 +291,9 @@ window.GiraffeAnalyze = function ($,gd,options) {
 		gc_c = GiraffeControl($, gd_c, dom_control_c);
 
 		// Linear map pane
-        dom_map_id_l = 'giraffe-'+Math.floor(Math.random()*100000000);
+        dom_map_id_l = random_dom_id();
         dom_map_l = $('<div id="'+dom_map_id_l+'" class="giraffe-analyze-map giraffe-analyze-linear-map"></div>');
-		dom_control_id_l = 'giraffe-'+Math.floor(Math.random()*100000000);
+		dom_control_id_l = random_dom_id();
 		dom_control_l = $('<div id="' + dom_control_id_c + '" class="giraffe-analyze-map-control"></div>');
         $(panes.pane(1))
             .append(dom_map_l)
@@ -671,22 +675,22 @@ window.GiraffeAnalyze = function ($,gd,options) {
     // the sequence viewer.
     function analyzer_tabs(dom) {
         // Create each tab
-        var dom_id_sequence = 'giraffe-'+Math.floor(Math.random()*100000000);
+        var dom_id_sequence = random_dom_id();
         var dom_tab_sequence = $('<div id="'+dom_id_sequence+'"></div>')
             .addClass('giraffe-tab');
-        var dom_id_map = 'giraffe-'+Math.floor(Math.random()*100000000);
+        var dom_id_map = random_dom_id();
         var dom_tab_map = $('<div id="'+dom_id_map+'"></div>')
             .addClass('giraffe-tab');
-        var dom_id_blast = 'giraffe-'+Math.floor(Math.random()*100000000);
+        var dom_id_blast = random_dom_id();
         var dom_tab_blast = $('<div id="'+dom_id_blast+'"></div>')
             .addClass('giraffe-tab');
-        var dom_id_align = 'giraffe-'+Math.floor(Math.random()*100000000);
+        var dom_id_align = random_dom_id();
         var dom_tab_align = $('<div id="'+dom_id_align+'"></div>')
             .addClass('giraffe-tab');
-        var dom_id_digest = 'giraffe-'+Math.floor(Math.random()*100000000);
+        var dom_id_digest = random_dom_id();
         var dom_tab_digest = $('<div id="'+dom_id_digest+'"></div>')
             .addClass('giraffe-tab');
-        var dom_id_translate = 'giraffe-'+Math.floor(Math.random()*100000000);
+        var dom_id_translate = random_dom_id();
         var dom_tab_translate = $('<div id="'+dom_id_translate+'"></div>')
             .addClass('giraffe-tab');
         // Main tab bar
@@ -1007,8 +1011,8 @@ window.GiraffeAnalyze = function ($,gd,options) {
         var dom_row = $('<tr></tr>');
         $(dom_table).append(dom_row);
 
-        var dom_id_viewer = 'giraffe-'+Math.floor(Math.random()*100000000);
-        var dom_id_tabs = 'giraffe-'+Math.floor(Math.random()*100000000);
+        var dom_id_viewer = random_dom_id();
+        var dom_id_tabs = random_dom_id();
 
         var dom_viewer = $('<td id="'+dom_id_viewer+'"></td>');
         var dom_tabs = $('<td id="'+dom_id_tabs+'"></td>');
