@@ -240,7 +240,15 @@ window.GiraffeAnalyze = function ($,gd,options) {
     function map_tab(dom) {
         panes = Switch_Panes(['Circular Map', 'Linear Map']);
 
-        var help =
+		var help, 
+			dom_table_id, dom_table, // DOMs
+			dom_map_id_c, dom_map_c,
+			dom_control_id_c, dom_control_c,
+			dom_map_id_l, dom_map_l,
+			dom_control_id_l, dom_control_l,
+			gt, gd_c, gd_l, gc_c, gc_l; // GriaffeDraw/Table/Controls
+
+        help =
             $('<p id="giraffe-map-help" '+
               ' class="giraffe-help giraffe-hide '+
                       'ui-widget ui-corner-all ui-widget-content">'+
@@ -248,51 +256,58 @@ window.GiraffeAnalyze = function ($,gd,options) {
               '</p>');
 
 		// Table dom
-        var dom_tab_id = 'giraffe-'+Math.floor(Math.random()*100000000);
-		var dom_tab = $('<div id="'+dom_tab_id+'"></div>');
+        dom_table_id = 'giraffe-'+Math.floor(Math.random()*100000000);
+		dom_table = $('<div id="'+dom_table_id+'"></div>');
 
         $(dom)
             .append(help)
             .append(panes.links)
             .append(panes.panes)
-			.append(dom_tab);
+			.append(dom_table);
 
-		var gt = GiraffeTable($, gd, dom_tab);
-		
+		gt = GiraffeTable($, gd, dom_table);
 
 		// Circular map pane
-        var dom_id_c = 'giraffe-'+Math.floor(Math.random()*100000000);
-        var dom_map_c = $('<div id="'+dom_id_c+'" class="giraffe-analyze-map giraffe-analyze-circular-map"></div>');
+        dom_map_id_c = 'giraffe-'+Math.floor(Math.random()*100000000);
+        dom_map_c = $('<div id="'+dom_map_id_c+'" class="giraffe-analyze-map giraffe-analyze-circular-map"></div>');
+		dom_control_id_c = 'giraffe-'+Math.floor(Math.random()*100000000);
+		dom_control_c = $('<div id="' + dom_control_id_c + '" class="giraffe-analyze-map-control"></div>');
         $(panes.pane(0))
-            .append(dom_map_c);
+            .append(dom_map_c)
+            .append(dom_control_c);
 
-        gd.CircularMap({
-            'map_dom_id' : dom_id_c,
+        gd_c = gd.CircularMap({
+            'map_dom_id' : dom_map_id_c,
             'plasmid_name' : name,
             'cutters': [1],
             'map_width' : map_width,
             'map_height' : map_height,
             'feature_click_callback' : map_feature_click_callback
         });
+		gc_c = GiraffeControl($, gd_c, dom_control_c);
 
-        var dom_id_l = 'giraffe-'+Math.floor(Math.random()*100000000);
-        var dom_map_l = $('<div id="'+dom_id_l+'" class="giraffe-analyze-map giraffe-analyze-linear-map"></div>');
+		// Linear map pane
+        dom_map_id_l = 'giraffe-'+Math.floor(Math.random()*100000000);
+        dom_map_l = $('<div id="'+dom_map_id_l+'" class="giraffe-analyze-map giraffe-analyze-linear-map"></div>');
+		dom_control_id_l = 'giraffe-'+Math.floor(Math.random()*100000000);
+		dom_control_l = $('<div id="' + dom_control_id_c + '" class="giraffe-analyze-map-control"></div>');
         $(panes.pane(1))
-            .append(dom_map_l);
+            .append(dom_map_l)
+            .append(dom_control_l);
 
-        gd.LinearMap({
-            'map_dom_id' : dom_id_l,
+        gd_l = gd.LinearMap({
+            'map_dom_id' : dom_map_id_l,
             'plasmid_name' : name,
             'cutters': [1],
             'map_width' : map_width,
             'map_height' : map_height,
             'feature_click_callback' : map_feature_click_callback
         });
+		gc_l = GiraffeControl($, gd_l, dom_control_l);
 
         panes.hide_all();
         if (starts_with_linear_map) { panes.show(1); }
         else { panes.show(0); }
-
 
         $('svg path, svg text').mouseover(function(){ $(help).show(); });
         $('svg path, svg text').mouseout(function(){ $(help).hide(); });
@@ -1124,6 +1139,102 @@ window.GiraffeTable = function ($,gd,dom) {
 	// Set general appearance properties
 	$(dom).children().addClass('giraffe-table');
 	
+}
+
+window.GiraffeControl = function ($,gd_map,dom) {	
+ 	var control_html;
+
+	control_html = $('<form action="" id="feature-options">\
+		<fieldset><legend>Feature Options</legend>\
+			<table><tbody>\
+			<tr><td><fieldset><legend class="enzymes">Restriction Enzymes</legend>\
+			<label>Show <br />\
+				<select name="all-enzyme" multiple="multiple" size="3"> \
+					<option selected="selected">1-cutters</option>\
+					<option>2-cutters</option>\
+					<option>3-cutters</option>\
+				</select>\
+			</label>\
+			<label>Hide in table\
+				<input type="checkbox" checked="checked"\
+					   name="hide-enzyme-rows" value="hide" />\
+			</label>\
+			</fieldset></td>\
+			<td><fieldset><legend class="features-genes">Generic Features</legend>\
+				<label>Label\
+				<input type="checkbox" checked="checked"\
+					   name="all-feature" value="label" />\
+				</label><br />\
+				<label>Show\
+				<input type="checkbox" checked="checked"\
+					   name="all-feature" value="show" />\
+				</label>\
+			</fieldset></td>\
+			<td><fieldset><legend class="features-genes">Genes</legend>\
+				<label>Label\
+				<input type="checkbox" checked="checked"\
+					   name="all-gene" value="label" />\
+				</label><br />\
+				<label>Show\
+				<input type="checkbox" checked="checked"\
+					   name="all-gene" value="show" />\
+				</label>\
+			</fieldset></td>\
+			<td><fieldset><legend class="origins-regulatory">Regulatory</legend>\
+				<label>Label\
+				<input type="checkbox" checked="checked"\
+					   name="all-regulatory" value="label" />\
+				</label><br />\
+				<label>Show\
+				<input type="checkbox" checked="checked"\
+					   name="all-regulatory" value="show" />\
+				</label>\
+			</fieldset></td></tr>\
+			<tr><td><fieldset><legend class="promoters-primers-terminators">Promoters</legend>\
+				<label>Label\
+				<input type="checkbox" checked="checked"\
+					   name="all-promoter" value="label" />\
+				</label><br />\
+				<label>Show\
+				<input type="checkbox" checked="checked"\
+					   name="all-promoter" value="show" />\
+				</label>\
+			</fieldset></td>\
+			<td><fieldset><legend class="promoters-primers-terminators">Primers</legend>\
+				<label>Label\
+				<input type="checkbox" checked="checked"\
+					   name="all-primer" value="label" />\
+				</label><br />\
+				<label>Show\
+				<input type="checkbox" checked="checked"\
+					   name="all-primer" value="show" />\
+				</label>\
+			</fieldset></td>\
+			<td><fieldset><legend class="promoters-primers-terminators">Terminators</legend>\
+				<label>Label\
+				<input type="checkbox" checked="checked"\
+					   name="all-terminator" value="label" />\
+				</label><br />\
+				<label>Show\
+				<input type="checkbox" checked="checked"\
+					   name="all-terminator" value="show" />\
+				</label>\
+			</fieldset></td>\
+			<td><fieldset><legend class="origins-regulatory">Origins</legend>\
+				<label>Label\
+				<input type="checkbox" checked="checked"\
+					   name="all-origin" value="label" />\
+				</label><br />\
+				<label>Show\
+				<input type="checkbox" checked="checked"\
+					   name="all-origin" value="show" />\
+				</label>\
+			</fieldset></td></tr>\
+			</tbody></table>\
+		</fieldset>\
+	</form>');
+
+	$(dom).append(control_html);
 }
 
 })();
