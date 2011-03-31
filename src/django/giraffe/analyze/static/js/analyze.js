@@ -1241,8 +1241,192 @@ window.GiraffeControl = function ($,gd_map,dom) {
 		</fieldset>\
 	</form>');
 
-	$(dom).append(control_html);
-}
+	$(dom).append(controls);
+
+/*
+	function register_control_handlers() {
+
+		// Clicks to individual features' Show checkboxes
+		$('.feature-list>tbody input[value="show"]').click(function (event) {
+			var value = $(this).attr("checked");
+			var idx = parseInt($(this).attr("name").match(/\d+/));
+			var label_checkbox = $(this).parent().parent().next()
+			                            .children().children().first();
+			if (value) {
+				features[idx].show();
+				label_checkbox.removeAttr("disabled");
+				if (label_checkbox.attr("checked")) {
+					features[idx].show_label();
+					if (!features[idx].label_drawn())
+						features[idx].draw_label(label_radius);
+				} else
+					features[idx].hide_label();
+			} else {
+				features[idx].hide();
+				label_checkbox.attr("disabled", "disabled");
+				$(this).closest("table").find('thead input[value="show"]')
+				       .removeAttr("checked");
+			}
+
+			return;
+		});
+
+		// Clicks to individual features' Label checkboxes
+		$('.feature-list>tbody input[value="label"]').click(function (event) {
+			var value = $(this).attr("checked");
+			var idx = parseInt($(this).attr("name").match(/\d+/));
+			if (value) {
+				features[idx].show_label();
+				if (!features[idx].label_drawn())
+					features[idx].draw_label(label_radius);
+			} else {
+				$(this).closest("table").find('thead input[value="label"]')
+				       .removeAttr("checked");
+				features[idx].hide_label();
+			}
+
+			return;
+		});
+
+		// Changes to the Restriction Enzyme selection
+		$('#feature-options select[name="all-enzyme"]').change(function (event) {
+			var opts = [];
+
+			// Parse out selected options
+			$(this).find("option:selected").each(function () {
+				opts.push(parseInt($(this).text().match(/\d+/)));
+			});
+
+			// Change which cutters to show, and redraw the labels, as this affects
+			// many features at once
+			cutters_to_show = opts;
+			show_hide_cutters();
+			draw_labels(label_radius);
+
+			set_checkboxes();
+
+		}).change(); // Run it as soon as you register it
+
+
+		// Make enzyme row hiding checkbox work
+		$('#feature-options input[name="hide-enzyme-rows"]').click(function (event) {
+			hide_enzyme_rows = $(this).attr("checked");
+			// Show the rows if we need to
+			if (hide_enzyme_rows) {
+				set_checkboxes();
+
+				// Only a reasonable number of rows are being shown: disable
+				// the "show-all-enzymes" checkbox
+				$('#the-enzyme-list>thead input[value="show"]').
+					removeAttr("disabled");
+			} else {
+				// Show all rows
+				$('#the-enzyme-list>tbody tr').removeClass("hidden-row");
+
+				// All rows are being shown: disable the "show-all-enzymes"
+				// checkbox
+				$('#the-enzyme-list>thead input[value="show"]').
+					attr("disabled", "disabled");
+			}
+		});
+
+		// Make feature-type checkboxes work
+		$('#feature-options input[name^="all"]').click(function (event) {
+			// Figure out the filetype
+			var type_str = $(this).attr("name").match(/all-(\w+)/)[1];
+			var type = ft[type_str];
+
+			// Is it the label or the whole feature?
+			var label_only = $(this).attr("value") == "label";
+			// Do we show or hide?
+			var value = $(this).attr("checked");
+
+			for (var fx in features) {
+				if (features[fx].type() == type) {
+					if (label_only) {
+						if (value)
+							features[fx].show_label();
+						else
+							features[fx].hide_label();
+					} else { // Whole thing
+						// Find the label checkbox
+						var label_checkbox = $(this).parent().siblings()
+													.children().first();
+						if (value) {
+							features[fx].show();
+							label_checkbox.removeAttr("disabled");
+							if (label_checkbox.attr("checked"))
+								features[fx].show_label();
+						} else {
+							features[fx].hide();
+							label_checkbox.attr("disabled", "disabled");
+						}
+					}
+				}
+			}
+
+			draw_labels(label_radius);
+			set_checkboxes();
+		});
+
+		// Make show-all and label-all checkboxes work
+		$('.feature-list>thead input').click(function (ix) {
+			// Is it the label or the whole feature?
+			var value = $(this).attr("value");
+			// Do we show or hide?
+			var checked = $(this).attr("checked");
+
+			// Go down the table and click on every non-hidden-row
+			// check box with the same value whose checked status
+			// is not the same as this box's
+			$(this).closest("table").find("tbody tr").not(".hidden-row")
+			       .find('input[value="' + value + '"]').not("[disabled]")
+			       .not('[checked = "' + checked + '"]').each(function (ix) {
+				// XXX NOT SURE WHY THIS WORKS
+				if (checked)
+					$(this).attr("checked", checked);
+				else
+					$(this).removeAttr("checked", checked);
+				$(this).click();
+				if (checked)
+					$(this).attr("checked", checked);
+				else
+					$(this).removeAttr("checked", checked);
+			});
+		});
+
+
+		// Update checkboxes to reflect current status
+		function set_checkboxes() { 
+			$('.feature-list>tbody input[value="show"]').each(function (ix) {
+				var idx = parseInt($(this).attr("name").match(/\d+/));
+				var is_enzyme = $(this).attr("name").search(/enzyme/) >= 0;
+				var label_checkbox = $(this).parent().parent().next()
+											.children().children().first();
+
+				var row = $(this).closest("tr");
+				var f = features[idx];
+				if (f.visible()) {
+					if (hide_enzyme_rows && is_enzyme)
+						row.removeClass("hidden-row");
+					$(this).attr("checked", "checked")
+					label_checkbox.removeAttr("disabled");
+					if (f.labeled()) 
+						label_checkbox.attr("checked", "checked");
+					else
+						label_checkbox.removeAttr("checked");
+				} else {
+					$(this).removeAttr("checked");
+					label_checkbox.attr("disabled", "disabled");
+					if (hide_enzyme_rows && is_enzyme)
+						row.addClass("hidden-row");
+				}
+			});
+		}
+
+	};
+*/
+};
 
 })();
 
