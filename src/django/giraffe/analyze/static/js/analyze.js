@@ -1156,92 +1156,92 @@ window.GiraffeControl = function ($,gd_map,dom) {
 			<table><tbody>\
 			<tr><td><fieldset><legend class="enzymes">Restriction Enzymes</legend>\
 			<label>Show <br />\
-				<select name="all-enzyme" multiple="multiple" size="3"> \
-					<option selected="selected">1-cutters</option>\
-					<option>2-cutters</option>\
-					<option>3-cutters</option>\
-				</select>\
+			<select name="all-enzyme" multiple="multiple" size="3"> \
+				<option selected="selected">1-cutters</option>\
+				<option>2-cutters</option>\
+				<option>3-cutters</option>\
+			</select>\
 			</label>\
-			<label>Hide in table\
-				<input type="checkbox" checked="checked"\
-					   name="hide-enzyme-rows" value="hide" />\
-			</label>\
+			<label>\
+			<input type="checkbox" checked="checked"\
+				   name="hide-enzyme-rows" value="hide" />\
+			Hide in table</label>\
 			</fieldset></td>\
 			<td><fieldset><legend class="features-genes">Generic Features</legend>\
-				<label>Label\
+				<label>\
 				<input type="checkbox" checked="checked"\
 					   name="all-feature" value="label" />\
-				</label><br />\
-				<label>Show\
+				Label</label><br />\
+				<label>\
 				<input type="checkbox" checked="checked"\
 					   name="all-feature" value="show" />\
-				</label>\
+				Show</label>\
 			</fieldset></td>\
 			<td><fieldset><legend class="features-genes">Genes</legend>\
-				<label>Label\
+				<label>\
 				<input type="checkbox" checked="checked"\
 					   name="all-gene" value="label" />\
-				</label><br />\
-				<label>Show\
+				Label</label><br />\
+				<label>\
 				<input type="checkbox" checked="checked"\
 					   name="all-gene" value="show" />\
-				</label>\
+				Show</label>\
 			</fieldset></td>\
 			<td><fieldset><legend class="origins-regulatory">Regulatory</legend>\
-				<label>Label\
+				<label>\
 				<input type="checkbox" checked="checked"\
 					   name="all-regulatory" value="label" />\
-				</label><br />\
-				<label>Show\
+				Label</label><br />\
+				<label>\
 				<input type="checkbox" checked="checked"\
 					   name="all-regulatory" value="show" />\
-				</label>\
+				Show</label>\
 			</fieldset></td></tr>\
 			<tr><td><fieldset><legend class="promoters-primers-terminators">Promoters</legend>\
-				<label>Label\
+				<label>\
 				<input type="checkbox" checked="checked"\
 					   name="all-promoter" value="label" />\
-				</label><br />\
-				<label>Show\
+				Label</label><br />\
+				<label>\
 				<input type="checkbox" checked="checked"\
 					   name="all-promoter" value="show" />\
-				</label>\
+				Show</label>\
 			</fieldset></td>\
 			<td><fieldset><legend class="promoters-primers-terminators">Primers</legend>\
-				<label>Label\
+				<label>\
 				<input type="checkbox" checked="checked"\
 					   name="all-primer" value="label" />\
-				</label><br />\
-				<label>Show\
+				Label</label><br />\
+				<label>\
 				<input type="checkbox" checked="checked"\
 					   name="all-primer" value="show" />\
-				</label>\
+				Show</label>\
 			</fieldset></td>\
 			<td><fieldset><legend class="promoters-primers-terminators">Terminators</legend>\
-				<label>Label\
+				<label>\
 				<input type="checkbox" checked="checked"\
 					   name="all-terminator" value="label" />\
-				</label><br />\
-				<label>Show\
+				Label</label><br />\
+				<label>\
 				<input type="checkbox" checked="checked"\
 					   name="all-terminator" value="show" />\
-				</label>\
+				Show</label>\
 			</fieldset></td>\
 			<td><fieldset><legend class="origins-regulatory">Origins</legend>\
-				<label>Label\
+				<label>\
 				<input type="checkbox" checked="checked"\
 					   name="all-origin" value="label" />\
-				</label><br />\
-				<label>Show\
+				Label</label><br />\
+				<label>\
 				<input type="checkbox" checked="checked"\
 					   name="all-origin" value="show" />\
-				</label>\
+				Show</label>\
 			</fieldset></td></tr>\
 			</tbody></table>\
-			<label>Show extra features\
+			<label>\
 			<input type="checkbox"\
 				   name="extra-features" value="show" />\
-			</label>\
+			Show extra features</label>\
 		</fieldset>\
 	</form>');
 
