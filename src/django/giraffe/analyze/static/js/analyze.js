@@ -244,12 +244,17 @@ window.GiraffeAnalyze = function ($,gd,options) {
     function map_tab(dom) {
         panes = Switch_Panes(['Circular Map', 'Linear Map']);
 
-		var help, 
-			dom_table_id, dom_table, // DOMs
-			dom_map_id_c, dom_map_c,
-			dom_control_id_c, dom_control_c,
-			dom_map_id_l, dom_map_l,
-			dom_control_id_l, dom_control_l,
+		var help, // DOMs
+			dom_table_id = random_dom_id(), 
+			dom_table, 
+			dom_map_id_c = random_dom_id(), 
+			dom_map_c,
+			dom_control_id_c = random_dom_id(), 
+			dom_control_c,
+			dom_map_id_l = random_dom_id(), 
+			dom_map_l,
+			dom_control_id_l = random_dom_id(), 
+			dom_control_l,
 			gt, gd_c, gd_l, gc_c, gc_l; // GriaffeDraw/Table/Controls
 
         help =
@@ -260,7 +265,6 @@ window.GiraffeAnalyze = function ($,gd,options) {
               '</p>');
 
 		// Table dom
-        dom_table_id = random_dom_id();
 		dom_table = $('<div id="'+dom_table_id+'"></div>');
 
         $(dom)
@@ -272,7 +276,6 @@ window.GiraffeAnalyze = function ($,gd,options) {
 		gt = GiraffeTable($, gd, dom_table);
 
 		// Circular map pane
-        dom_map_id_c = random_dom_id();
         dom_map_c = $('<div id="'+dom_map_id_c+'" class="giraffe-analyze-map giraffe-analyze-circular-map"></div>');
 		dom_control_id_c = random_dom_id();
 		dom_control_c = $('<div id="' + dom_control_id_c + '" class="giraffe-analyze-map-control"></div>');
