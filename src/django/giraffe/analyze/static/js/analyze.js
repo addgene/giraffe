@@ -1238,6 +1238,10 @@ window.GiraffeControl = function ($,gd_map,dom) {
 				</label>\
 			</fieldset></td></tr>\
 			</tbody></table>\
+			<label>Show extra features\
+			<input type="checkbox"\
+				   name="extra-features" value="show" />\
+			</label>\
 		</fieldset>\
 	</form>');
 
