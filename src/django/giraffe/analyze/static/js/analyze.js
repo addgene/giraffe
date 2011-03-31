@@ -1146,12 +1146,12 @@ window.GiraffeTable = function ($,gd,dom) {
 	// Set general appearance properties
 	$(dom).children().addClass('giraffe-table');
 	
-}
+};
 
 window.GiraffeControl = function ($,gd_map,dom) {	
- 	var control_html;
+ 	var controls;
 
-	control_html = $('<form action="" id="feature-options">\
+	controls = $('<form action="" class="giraffe-controls">\
 		<fieldset><legend>Feature Options</legend>\
 			<table><tbody>\
 			<tr><td><fieldset><legend class="enzymes">Restriction Enzymes</legend>\
