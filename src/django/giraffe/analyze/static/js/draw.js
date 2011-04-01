@@ -361,6 +361,7 @@
 
 		_this.redraw_cutters = function (new_cutters_to_show) {
 			cutters_to_show = new_cutters_to_show;
+			this.show_hide_cutters();
 			this.draw_features();
 		}
 
