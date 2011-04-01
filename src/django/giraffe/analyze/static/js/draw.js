@@ -1387,17 +1387,7 @@
 			paper = ScaleRaphael(map_dom_id, _this.width, _this.height); // global
 			_this.initialize_features();
 
-            // figure out the real height of labels
-			var label = paper.text(0,0,'M');
-			label.attr({"font-size": label_font_size});
-            // if dom is not visible, then getBBox().height may be 0,
-            // so then, just use the guessed value
-            if (label.getBBox().height != 0) {
-			    label_letter_height = label.getBBox().height; // global
-			    label_letter_width = label.getBBox().width; // global
-            }
-			paper.clear();
-
+   
 			_this.draw_plasmid();
 			_this.draw_features(); // Draw all the features initially
 			_this.draw_labels(); // Draw only the necessary labels
