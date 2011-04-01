@@ -316,11 +316,11 @@
 			_this.final_height = parseInt(options['map_height'])
 		}
 
-		_this.extend_features = function (FeatureType) {
+		_this.extend_features = function () {
 			var bfx;
 
 			for (bfx = 0; bfx < all_features.length; bfx++) {
-				this.features.push(new FeatureType(all_features[bfx], this));
+				this.features.push(new this.FeatureType(all_features[bfx], this));
 			}
 		}
 
@@ -420,6 +420,7 @@
 
 		// Inherit the common Map functions
 		var _this = Object.create(new Map(options));
+		_this.FeatureType = CircularFeature;
 
 		// Map-specific canvas element
 		var paper;
@@ -1371,7 +1372,7 @@
 
 		_this.draw = function() { // Draw the circular map
             // Extend basic features to get list of circular features
-			_this.extend_features(CircularFeature);
+			_this.extend_features();
             // Hide the right cutters
             _this.show_hide_cutters();
             // Resolve conflicts on the circle, push some overlapping
@@ -1420,6 +1421,7 @@
 	
 		// Inherit the common Map functions
 		var _this = Object.create(new Map(options));
+		_this.FeatureType = LinearFeature;
 
 		// Map-specific canvas element
 		var paper;
