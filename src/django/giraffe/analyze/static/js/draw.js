@@ -301,6 +301,15 @@
 			cutters_to_show = options['cutters'];
 		}
 
+		// Where to draw the map
+		_this.map_dom_id = 'giraffe-draw-map';
+		if ('map_dom_id' in options) {
+			_this.map_dom_id = options['map_dom_id'];
+		}
+
+		_this.paper  = {}; // To be used for RaphaelJS;
+		_this.label_offset = 0;
+
 		_this.features = [];
 
 		_this.width = 800;
@@ -373,6 +382,32 @@
 			}
 		}
 
+		_this.draw = function() { // Draw the map
+
+            // Extend basic features to get list of circular features
+			this.extend_features();
+            // Hide the right cutters
+            this.show_hide_cutters();
+            // Resolve conflicts on the circle, push some overlapping
+            // features to other radii
+			this.max_extent = this.resolve_conflicts();
+			this.label_pos = this.max_extent + this.label_offset; 
+            // Determine which labels are in which lists
+            this.set_label_lists();
+
+			this.set_bounding_box();
+        
+			this.paper = ScaleRaphael(this.map_dom_id, this.width, this.height); // global
+			this.initialize_features();
+
+   
+			this.draw_plasmid();
+			this.draw_features(); // Draw all the features initially
+			this.draw_labels(); // Draw only the necessary labels
+
+			this.rescale();
+		}
+
 		// Centralized mechanism for exposing public properties of maps
 		_this.expose = function() {
 
@@ -422,19 +457,13 @@
 		var _this = Object.create(new Map(options));
 		_this.FeatureType = CircularFeature;
 
-		// Map-specific canvas element
+		// Shortcut to paper access
 		var paper;
 
 		// Paper setup - not the final width, but how we will draw the
 		// map, we will scale later on
 		var cx = _this.width/2;
 		var cy = _this.height/2;
-
-		// Where to draw the map
-		var map_dom_id = 'giraffe-draw-map';
-		if ('map_dom_id' in options) {
-			map_dom_id = options['map_dom_id'];
-		}
 
 		// Global plasmid info
 		var plasmid_start = 90; // degrees
@@ -444,9 +473,9 @@
 		var plasmid_radius = 200;
 		var inner_radius = plasmid_radius - radius_spacing; 
 		var outer_radius = plasmid_radius + radius_spacing;
-		var label_radius_offset = 10;
+		_this.label_offset = 10;
 		if ('label_offset' in options) {
-			label_radius_offset = parseInt(options['label_offset']);
+			_this.label_offset = parseInt(options['label_offset']);
 		}
 
 		// Feature visual properties
@@ -610,6 +639,7 @@
 			_this.label_set = function() { return _label_set };
 
             _this.initialize = function() {
+				paper = map.paper;
 			    _feature_set = paper.set();
 			    _arrow_set = paper.set();
 			    _label_set = paper.set();
@@ -1342,17 +1372,17 @@
                 }
             }
 
-            if (max_x < cx+outer_radius+label_radius_offset) {
-                max_x = cx+outer_radius+label_radius_offset;
+            if (max_x < cx+outer_radius+_this.label_offset) {
+                max_x = cx+outer_radius+_this.label_offset;
             }
-            if (min_x > cx-outer_radius-label_radius_offset) {
-                min_x = cx-outer_radius-label_radius_offset;
+            if (min_x > cx-outer_radius-_this.label_offset) {
+                min_x = cx-outer_radius-_this.label_offset;
             }
-            if (max_y < cy+outer_radius+label_radius_offset) {
-                max_y = cy+outer_radius+label_radius_offset;
+            if (max_y < cy+outer_radius+_this.label_offset) {
+                max_y = cy+outer_radius+_this.label_offset;
             }
-            if (min_y > cy-outer_radius-label_radius_offset) {
-                min_y = cy-outer_radius-label_radius_offset;
+            if (min_y > cy-outer_radius-_this.label_offset) {
+                min_y = cy-outer_radius-_this.label_offset;
             }
 
             // Now we have a new bounding box: min_x,min_y to max_x,max_y
@@ -1379,32 +1409,7 @@
 			}
 		}
 
-		_this.draw = function() { // Draw the circular map
-            // Extend basic features to get list of circular features
-			_this.extend_features();
-            // Hide the right cutters
-            _this.show_hide_cutters();
-            // Resolve conflicts on the circle, push some overlapping
-            // features to other radii
-			_this.max_extent = _this.resolve_conflicts();
-			_this.label_pos = _this.max_extent + label_radius_offset; 
-            // Determine which labels are in which lists
-            _this.set_label_lists();
 
-			_this.set_bounding_box();
-        
-			paper = ScaleRaphael(map_dom_id, _this.width, _this.height); // global
-			_this.initialize_features();
-
-   
-			_this.draw_plasmid();
-			_this.draw_features(); // Draw all the features initially
-			_this.draw_labels(); // Draw only the necessary labels
-
-			_this.rescale();
-		}
-
-		_this.paper = paper;
 		return _this;
 	}; // End CircMap()
 
@@ -1416,7 +1421,7 @@
 		var _this = Object.create(new Map(options));
 		_this.FeatureType = LinearFeature;
 
-		// Map-specific canvas element
+		// Shortcut to paper access
 		var paper;
 
 
@@ -1431,16 +1436,16 @@
 		var plasmid_right = plasmid_left + plasmid_width;
 
 		// Where to draw the map
-		var map_dom_id = 'giraffe-draw-map';
+		_this.map_dom_id = 'giraffe-draw-map';
 		if ('map_dom_id' in options) {
-			map_dom_id = options['map_dom_id'];
+			_this.map_dom_id = options['map_dom_id'];
 		}
 
 		// Heights of levels
 		var y_spacing = 20; // spacing
-		var label_y_offset = 50;
+		_this.label_offset = 50;
 		if ('label_offset' in options) {
-			label_y_offset = parseInt(options['label_offset']);
+			_this.label_offset = parseInt(options['label_offset']);
 		}
 
 		// Feature visual properties
@@ -1556,6 +1561,7 @@
 			_this.label_set = function() { return _label_set };
 
             _this.initialize = function() {
+				paper = map.paper;
 			    _feature_set = paper.set();
 			    _arrow_set = paper.set();
 			    _label_set = paper.set();
@@ -2231,31 +2237,7 @@
 			}
 		}
 
-		_this.draw = function () { // Draw the linear map
-            // Extend basic features to get list of linear features
-			_this.extend_features();
-
-            // Hide the right cutters
-            _this.show_hide_cutters();
-            // Resolve conflicts on the line, push some overlapping
-            // features to other radii
-			_this.max_extent = _this.resolve_conflicts();
-			_this.label_pos = _this.max_extent + label_y_offset; 
-
-			_this.set_label_lists();
-			_this.set_bounding_box();
-        
-			paper = ScaleRaphael(map_dom_id, _this.width, _this.height); // global
-			_this.initialize_features();
-
-			_this.draw_plasmid();
-			_this.draw_features(); // Draw all the features initially
-			_this.draw_labels(); // Draw only the necessary labels
-
-			_this.rescale();
-		}
 		
-		_this.paper = paper;
 		return _this;
 	}; // End LinMap()
 
