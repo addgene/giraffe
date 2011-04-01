@@ -396,22 +396,9 @@
 			// Return a function that mimics <func>, but will always
 			// call <func> with the <new_this> context
 			function change_context(func, new_this) {
-				var arg_string = new Array(func.length), 
-					caller,
-					sx;
-
-				// Make a generic argument list for as
-				// many arguments as the orignal function has
-				for (sx = 0; sx < arg_string.length; sx++) {
-					arg_string[sx] = 'a' + sx;
-				}
-				arg_string = arg_string.join(',');
-
-				caller = new Function(arg_string,
-					"func.apply(new_this, arguments);");
-
-				return caller;
-
+				return (function () {
+					func.apply(new_this, arguments);
+				});
 			}
 
 			// Export the main properties as part of a Map-like object
