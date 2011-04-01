@@ -166,24 +166,8 @@
 
     this.Feature_Type = ft;
 
-	// Utility function for creating wrapper closures around Map classes
-	function map_maker(MapType) {
-		 return function(options) {
-			var _this;
-
-			// Create a map object
-			_this = MapType(options);
-
-			// Draw it
-			_this.draw();
-
-			// Expose only the parts of it we care about
-			return _this.expose();
-		};
-	};
-	
-	this.CircularMap = map_maker(CircMap);
-	this.LinearMap = map_maker(LinMap);
+	this.CircularMap = Map.make(CircMap);
+	this.LinearMap = Map.make(LinMap);
 
 	///////////////////////////////////////////////////////////////////
 	// JSON Parsing
@@ -393,6 +377,7 @@
 		// Centralized mechanism for exposing public properties of maps
 		_this.expose = function() {
 
+
 			// Return a function that mimics <func>, but will always
 			// call <func> with the <new_this> context
 			function change_context(func, new_this) {
@@ -413,6 +398,20 @@
 		return _this;
 	};
 
+	// Utility function for creating wrapper closures around Map classes
+	Map.make = function (MapType) {
+		 return function(options) {
+			// Create a map object
+			var _this = MapType(options);
+
+			// Draw it
+			_this.draw();
+
+			// Expose only the parts of it we care about
+			return _this.expose();
+		};
+	};
+	
 	///////////////////////////////////////////////////////////////////
 	// Circular Map Drawing Class
 	function CircMap(options) {
