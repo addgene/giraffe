@@ -1377,12 +1377,12 @@
             _this.show_hide_cutters();
             // Resolve conflicts on the circle, push some overlapping
             // features to other radii
-			var max_radius = _this.resolve_conflicts();
-			var label_radius = max_radius + label_radius_offset; 
+			var max_extent = _this.resolve_conflicts();
+			var label_pos = max_extent + label_radius_offset; 
             // Determine which labels are in which lists
             _this.set_label_lists();
 
-			_this.set_bounding_box(label_radius);
+			_this.set_bounding_box(label_pos);
         
 			paper = ScaleRaphael(map_dom_id, _this.width, _this.height); // global
 			_this.initialize_features();
@@ -1400,7 +1400,7 @@
 
 			_this.draw_plasmid();
 			_this.draw_features(); // Draw all the features initially
-			_this.draw_labels(label_radius); // Draw only the necessary labels
+			_this.draw_labels(label_pos); // Draw only the necessary labels
 
 			// Rescale
 			if (_this.final_width != _this.width ||
@@ -2231,18 +2231,18 @@
             _this.show_hide_cutters();
             // Resolve conflicts on the line, push some overlapping
             // features to other radii
-			var max_height = _this.resolve_conflicts();
-			var label_height = max_height + label_y_offset; 
+			var max_extent = _this.resolve_conflicts();
+			var label_pos = max_extent + label_y_offset; 
 
 			_this.set_label_lists();
-			_this.set_bounding_box(label_height);
+			_this.set_bounding_box(label_pos);
         
 			paper = ScaleRaphael(map_dom_id, _this.width, _this.height); // global
 			_this.initialize_features();
 
 			_this.draw_plasmid();
 			_this.draw_features(); // Draw all the features initially
-			_this.draw_labels(label_height); // Draw only the necessary labels
+			_this.draw_labels(label_pos); // Draw only the necessary labels
 
 			// Rescale
 			if (_this.final_width != _this.width ||
