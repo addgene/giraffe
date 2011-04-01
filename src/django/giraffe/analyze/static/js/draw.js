@@ -1246,7 +1246,7 @@
 			}
         }
 
-		_this.draw_labels = function(label_radius) {
+		_this.draw_labels = function() {
 
             // lower x, y starting position for each label list
             label_list_pos = [[0,0], [0,0], [0,0], [0,0],
@@ -1258,7 +1258,7 @@
 			for (var i=0; i<label_f_c.length; i++) {
 				label_f_c[i].sort(function(a,b){return (a[0]-b[0])})
 				var section_angle = _this.label_list_section_angle(i);
-				var xy1 = convert.polar_to_rect(label_radius, section_angle);
+				var xy1 = convert.polar_to_rect(_this.label_pos, section_angle);
 
                 // for each section, we also shift the x coordinate to
                 // be further away from the circle, so that as much as
@@ -1293,7 +1293,7 @@
 			}
 		}
 
-		_this.set_bounding_box = function (label_radius) {
+		_this.set_bounding_box = function () {
 			// Figure out outter edge of label lists
             //
             // Just an educated guess based on 13pt font. we will use
@@ -1318,7 +1318,7 @@
                 var list_height = (label_f_c[section].length+1)*label_letter_height;
                 var list_width = list_max_letters*label_letter_width;
 				var section_angle = _this.label_list_section_angle(section);
-				var xy = convert.polar_to_rect(label_radius,section_angle);
+				var xy = convert.polar_to_rect(_this.label_pos,section_angle);
 
 				if (section == 0 || section == 1) {
                     // upper right
@@ -1377,12 +1377,12 @@
             _this.show_hide_cutters();
             // Resolve conflicts on the circle, push some overlapping
             // features to other radii
-			var max_extent = _this.resolve_conflicts();
-			var label_pos = max_extent + label_radius_offset; 
+			_this.max_extent = _this.resolve_conflicts();
+			_this.label_pos = _this.max_extent + label_radius_offset; 
             // Determine which labels are in which lists
             _this.set_label_lists();
 
-			_this.set_bounding_box(label_pos);
+			_this.set_bounding_box();
         
 			paper = ScaleRaphael(map_dom_id, _this.width, _this.height); // global
 			_this.initialize_features();
@@ -1400,7 +1400,7 @@
 
 			_this.draw_plasmid();
 			_this.draw_features(); // Draw all the features initially
-			_this.draw_labels(label_pos); // Draw only the necessary labels
+			_this.draw_labels(); // Draw only the necessary labels
 
 			// Rescale
 			if (_this.final_width != _this.width ||
@@ -2102,7 +2102,7 @@
 
 		}
 
-		_this.draw_labels = function (height) {
+		_this.draw_labels = function () {
 			// Calculate the height of a label
 			var label_leading = 1.3;
 			var label_height = 0;
@@ -2135,10 +2135,10 @@
 					for (var ix = 0; ix < num_labels; ix++) {
 						var curr_height;
 						if (lx) { // Bottom list: top to bottom
-							curr_height = plasmid_y + height + 
+							curr_height = plasmid_y + _this.label_pos + 
 								(ix) * label_height;
 						} else { // Top list: bottom to top
-							curr_height = plasmid_y - height - 
+							curr_height = plasmid_y - _this.label_pos - 
 								(num_labels - 1 - ix) * label_height;
 						}
 						ll[ix].draw_label(curr_height, label_pos[lx][sx]);
@@ -2147,7 +2147,7 @@
 			}
 		}
 
-		_this.set_bounding_box = function (height) {
+		_this.set_bounding_box = function () {
             // Figure out outer edge of label lists
             //
             // Just an educated guess based on 13pt font. we will use
@@ -2179,7 +2179,7 @@
 					}
 
 					if (lx == 0) { // Top lists: move top and right
-						var list_top = plasmid_y - height - 
+						var list_top = plasmid_y - _this.label_pos - 
 							label_letter_height * (ll.length + 1);
 						if (list_top < min_y)
 							min_y = list_top;
@@ -2189,7 +2189,7 @@
 							max_x = list_right;
 
 					} else if (lx == 1) { // Bot lists: move bot and left
-						var list_bot = plasmid_y + height + 
+						var list_bot = plasmid_y + _this.label_pos + 
 							label_letter_height * (ll.length + 1);
 						if (list_bot > max_y)
 							max_y = list_bot;
@@ -2231,18 +2231,18 @@
             _this.show_hide_cutters();
             // Resolve conflicts on the line, push some overlapping
             // features to other radii
-			var max_extent = _this.resolve_conflicts();
-			var label_pos = max_extent + label_y_offset; 
+			_this.max_extent = _this.resolve_conflicts();
+			_this.label_pos = _this.max_extent + label_y_offset; 
 
 			_this.set_label_lists();
-			_this.set_bounding_box(label_pos);
+			_this.set_bounding_box();
         
 			paper = ScaleRaphael(map_dom_id, _this.width, _this.height); // global
 			_this.initialize_features();
 
 			_this.draw_plasmid();
 			_this.draw_features(); // Draw all the features initially
-			_this.draw_labels(label_pos); // Draw only the necessary labels
+			_this.draw_labels(); // Draw only the necessary labels
 
 			// Rescale
 			if (_this.final_width != _this.width ||
