@@ -2225,7 +2225,7 @@
 
 		_this.draw = function () { // Draw the linear map
             // Extend basic features to get list of linear features
-			_this.extend_features(LinearFeature);
+			_this.extend_features();
 
             // Hide the right cutters
             _this.show_hide_cutters();
