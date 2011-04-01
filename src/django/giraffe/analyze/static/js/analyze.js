@@ -1247,6 +1247,25 @@ window.GiraffeControl = function ($,gd_map,dom) {
 
 	$(dom).append(controls);
 
+	// Changes to the Restriction Enzyme selection
+	controls.find('select[name="all-enzyme"]').change(function (event) {
+		var opts = [];
+
+		// Parse out selected options
+		$(this).find("option:selected").each(function () {
+			opts.push(parseInt($(this).text().match(/\d+/)));
+		});
+
+		gd_map.redraw_cutters(opts);
+
+   /*     // Change which cutters to show, and redraw the labels, as this affects*/
+		//// many features at once
+		//cutters_to_show = opts;
+		//show_hide_cutters();
+		/*draw_labels(label_radius);*/
+
+	}).change(); // Run it as soon as you register it
+
 /*
 	function register_control_handlers() {
 

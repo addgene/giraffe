@@ -307,96 +307,123 @@
 	///////////////////////////////////////////////////////////////////
 	// Generic Map prototype class
 	function Map(options) {
+		
 		var cutters_to_show, 
 			final_width,
-			final_height;
+			final_height,
+			_this = {};
 	
 		// Cutters to show
-		cutters_to_show = [1];
+		_this.cutters_to_show = [1];
 		if ('cutters' in options) {
 			cutters_to_show = options['cutters'];
 		}
 
+		_this.features = [];
+
+		_this.width = 800;
+		_this.height = 800;
+
 		// Final size: to be scaled down to this at the end
-		final_width = 640;
-		final_height = 640;
+		_this.final_width = 640;
+		_this.final_height = 640;
 		if ('map_width' in options) {
-			final_width = parseInt(options['map_width'])
+			_this.final_width = parseInt(options['map_width'])
 		}
 		if ('map_height' in options) {
-			final_height = parseInt(options['map_height'])
+			_this.final_height = parseInt(options['map_height'])
 		}
 
-		// Return a new object literal with a bunch of common properties
-		return {
-			width: 800,
-			height: 800,
-			final_width: final_width,
-			final_height: final_height,
-			features: [],
+		_this.extend_features = function (FeatureType) {
+			var bfx;
 
-			extend_features: function (FeatureType) {
-				var bfx;
+			for (bfx = 0; bfx < all_features.length; bfx++) {
+				this.features.push(new FeatureType(all_features[bfx], this));
+			}
+		}
 
-				for (bfx = 0; bfx < all_features.length; bfx++) {
-					this.features.push(new FeatureType(all_features[bfx], this));
-				}
-			},
+		_this.initialize_features = function() { 
+			var fx;
 
-			initialize_features: function() { 
-				var fx;
+			for (fx = 0; fx < this.features.length; fx++) {
+				this.features[fx].initialize();
+			}
+		} 
 
-				for (fx = 0; fx < this.features.length; fx++) {
-					this.features[fx].initialize();
-				}
-			}, 
-
-			// Make sure that the appropriate cutters are shown
-			show_hide_cutters: function () {
-				for (var fx in this.features) {
-					var f = this.features[fx];
-					if (f.default_show_feature()) {
-						// Only draw enzymes if they are in the list of
-						// cutters to show - i.e. 1 cutter, 2 cutters,
-						// etc.
-						if (f.type() == ft.enzyme) {
-							if (cutters_to_show.indexOf(f.cut_count()) < 0) {
-								f.hide();
-								f.clear_label();
-							} else {
-								f.show();
-								f.show_label();
-							}
+		// Make sure that the appropriate cutters are shown
+		_this.show_hide_cutters = function () {
+			for (var fx in this.features) {
+				var f = this.features[fx];
+				if (f.default_show_feature()) {
+					// Only draw enzymes if they are in the list of
+					// cutters to show - i.e. 1 cutter, 2 cutters,
+					// etc.
+					if (f.type() == ft.enzyme) {
+						if (cutters_to_show.indexOf(f.cut_count()) < 0) {
+							f.hide();
+							f.clear_label();
+						} else {
+							f.show();
+							f.show_label();
 						}
 					}
-					else {
-						// If the enzyme is not set to be shown by
-						// default, don't show it
-						f.hide();
-						f.clear_label();
-					}
 				}
-			},
-
-			draw_features: function () {
-				var fx;
-
-				for (fx = 0; fx < this.features.length; fx++) {
-					this.features[fx].draw();
-				}
-			},
-
-			// Centralized mechanism for exposing public properties of maps
-			expose: function() {
-				// Export the main properties as part of a Map-like object
-				// descendant classes inheret this ability, and because of the
-				// this pointer, will return /Their own/ draw and features objects
-				return { 
-					draw: this.draw,
-					features: this.features
+				else {
+					// If the enzyme is not set to be shown by
+					// default, don't show it
+					f.hide();
+					f.clear_label();
 				}
 			}
 		}
+
+		_this.redraw_cutters = function (new_cutters_to_show) {
+			cutters_to_show = new_cutters_to_show;
+			this.draw_features();
+		}
+
+		_this.draw_features = function () {
+			var fx;
+
+			for (fx = 0; fx < this.features.length; fx++) {
+				this.features[fx].draw();
+			}
+		}
+
+		// Centralized mechanism for exposing public properties of maps
+		_this.expose = function() {
+
+			// Return a function that mimics <func>, but will always
+			// call <func> with the <new_this> context
+			function change_context(func, new_this) {
+				var arg_string = new Array(func.length), 
+					caller,
+					sx;
+
+				// Make a generic argument list for as
+				// many arguments as the orignal function has
+				for (sx = 0; sx < arg_string.length; sx++) {
+					arg_string[sx] = 'a' + sx;
+				}
+				arg_string = arg_string.join(',');
+
+				caller = new Function(arg_string,
+					"func.apply(new_this, arguments);");
+
+				return caller;
+
+			}
+
+			// Export the main properties as part of a Map-like object
+			// descendant classes inheret this ability, and because of the
+			// this pointer, will return /Their own/ draw and features objects
+			return { 
+				draw: change_context(this.draw, this),
+				redraw_cutters: change_context(this.redraw_cutters, this)
+			}
+		}
+
+		return _this;
 	};
 
 	///////////////////////////////////////////////////////////////////
