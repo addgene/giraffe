@@ -1370,6 +1370,15 @@
             cy = top_y_extend;
 		}
 
+		_this.rescale = function() { // Rescale
+			if (_this.final_width != _this.width ||
+				_this.final_height != _this.height) {
+				// "center" parameter just adds unnecessary CSS to the container
+				// object to give it an absolute position: not what we need
+				paper.changeSize(_this.final_width,_this.final_height,false,false)
+			}
+		}
+
 		_this.draw = function() { // Draw the circular map
             // Extend basic features to get list of circular features
 			_this.extend_features();
@@ -1392,13 +1401,7 @@
 			_this.draw_features(); // Draw all the features initially
 			_this.draw_labels(); // Draw only the necessary labels
 
-			// Rescale
-			if (_this.final_width != _this.width ||
-				_this.final_height != _this.height) {
-				// "center" parameter just adds unnecessary CSS to the container
-				// object to give it an absolute position: not what we need
-				paper.changeSize(_this.final_width,_this.final_height,false,false)
-			}
+			_this.rescale();
 		}
 
 		_this.paper = paper;
@@ -2213,6 +2216,21 @@
 
 		}
 
+		_this.rescale = function() { 
+			// Rescale
+			if (_this.final_width != _this.width ||
+				_this.final_height != _this.height) {
+				
+				// Make sure not to add additional height to the map, once we've
+				// trimmed it off
+				_this.final_height = _this.final_width * (_this.height/_this.width);
+
+				// "center" parameter just adds unnecessary CSS to the container
+				// object to give it an absolute position: not what we need
+				paper.changeSize(_this.final_width,_this.final_height,false,true)
+			}
+		}
+
 		_this.draw = function () { // Draw the linear map
             // Extend basic features to get list of linear features
 			_this.extend_features();
@@ -2234,18 +2252,7 @@
 			_this.draw_features(); // Draw all the features initially
 			_this.draw_labels(); // Draw only the necessary labels
 
-			// Rescale
-			if (_this.final_width != _this.width ||
-				_this.final_height != _this.height) {
-				
-				// Make sure not to add additional height to the map, once we've
-				// trimmed it off
-				_this.final_height = _this.final_width * (_this.height/_this.width);
-
-				// "center" parameter just adds unnecessary CSS to the container
-				// object to give it an absolute position: not what we need
-				paper.changeSize(_this.final_width,_this.final_height,false,true)
-			}
+			_this.rescale();
 		}
 		
 		_this.paper = paper;
