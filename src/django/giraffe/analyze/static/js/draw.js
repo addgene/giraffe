@@ -166,8 +166,6 @@
 
     this.Feature_Type = ft;
 
-	this.CircularMap = Map.make(CircMap);
-	this.LinearMap = Map.make(LinMap);
 
 	///////////////////////////////////////////////////////////////////
 	// JSON Parsing
@@ -411,6 +409,9 @@
 			return _this.expose();
 		};
 	};
+
+	this.CircularMap = Map.make(CircMap);
+	this.LinearMap = Map.make(LinMap);
 	
 	///////////////////////////////////////////////////////////////////
 	// Circular Map Drawing Class
