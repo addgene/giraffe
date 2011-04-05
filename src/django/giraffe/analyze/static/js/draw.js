@@ -371,7 +371,15 @@
 		_this.redraw_cutters = function (new_cutters_to_show) {
 			cutters_to_show = new_cutters_to_show;
 			this.show_hide_cutters();
+            this.set_label_lists();
+
+			this.set_bounding_box();
+			this.paper.clear();
+			this.initialize_features();
+
+			this.draw_plasmid();
 			this.draw_features();
+			this.draw_labels();
 		}
 
 		_this.draw_features = function () {
