@@ -370,16 +370,16 @@
 
 		_this.redraw_cutters = function (new_cutters_to_show) {
 			cutters_to_show = new_cutters_to_show;
-			this.show_hide_cutters();
-            this.set_label_lists();
+   /*         this.show_hide_cutters();*/
+            //this.set_label_lists();
 
-			this.set_bounding_box();
-			this.paper.clear();
-			this.initialize_features();
+			//this.set_bounding_box();
+			//this.paper.clear();
+			//this.initialize_features();
 
-			this.draw_plasmid();
-			this.draw_features();
-			this.draw_labels();
+			//this.draw_plasmid();
+			//this.draw_features();
+			/*this.draw_labels();*/
 		}
 
 		_this.draw_features = function () {
@@ -391,11 +391,18 @@
 		}
 
 		_this.draw = function() { // Draw the map
-
-            // Extend basic features to get list of circular features
+            // Extend basic features to get list of circular features:
+			// do this only once, the first time the map is created.
 			this.extend_features();
+
+			this.redraw();
+		}
+
+		_this.redraw = function() { // Redraw the map
+
             // Hide the right cutters
             this.show_hide_cutters();
+
             // Resolve conflicts on the circle, push some overlapping
             // features to other radii
 			this.max_extent = this.resolve_conflicts();
@@ -408,7 +415,6 @@
 			this.paper = ScaleRaphael(this.map_dom_id, this.width, this.height); // global
 			this.initialize_features();
 
-   
 			this.draw_plasmid();
 			this.draw_features(); // Draw all the features initially
 			this.draw_labels(); // Draw only the necessary labels
@@ -418,7 +424,6 @@
 
 		// Centralized mechanism for exposing public properties of maps
 		_this.expose = function() {
-
 
 			// Return a function that mimics <func>, but will always
 			// call <func> with the <new_this> context
@@ -432,8 +437,9 @@
 			// descendant classes inheret this ability, and because of the
 			// this pointer, will return /Their own/ draw and features objects
 			return { 
-				draw: change_context(this.draw, this),
-				redraw_cutters: change_context(this.redraw_cutters, this)
+				redraw: change_context(this.redraw, this),
+				redraw_cutters: change_context(this.redraw_cutters, this),
+				dom_id: this.map_dom_id
 			}
 		}
 
@@ -2163,8 +2169,8 @@
             label_letter_height = 15;
             label_letter_width = 8;
           
-            var min_y = _this.height/2;
-            var max_y = _this.height/2;
+            var min_y = plasmid_y;
+            var max_y = plasmid_y;
 			// By default, plasmid will scale to width of map, so unless we
 			// actually have lists that go off the page, no reason to adjust
 			// them. i.e., never make them smaller than they orignially were,
