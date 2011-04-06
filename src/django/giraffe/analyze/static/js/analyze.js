@@ -1258,7 +1258,6 @@ window.GiraffeControl = function ($,gd_map,dom) {
 		});
 
 		gd_map.redraw_cutters(opts);
-		clean_redraw();
 	});
 
 /*
