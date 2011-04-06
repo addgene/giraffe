@@ -1047,10 +1047,16 @@ window.GiraffeAnalyze = function ($,gd,options) {
 }
 
 // Private utility function with no external or closure use
+function title_case(str) {
+	str = str.replace(/\W/, ' ');
+	return str[0].toUpperCase() + str.slice(1);
+}
+
+// Private utility function with no external or closure use
 function type_code_to_name(code, gd) {
 	for (var type in gd.Feature_Type) {
 		if (code == gd.Feature_Type[type]) {
-			return type[0].toUpperCase() + type.slice(1);
+			return title_case(type);
 		}
 	}
 
@@ -1150,7 +1156,107 @@ window.GiraffeTable = function ($,gd,dom) {
 
 window.GiraffeControl = function ($,gd_map,dom) {	
  	var controls,
-		_debug = false;
+		_debug = false,
+		control_feat_types = ["generic-features", "genes",
+		                      "regulatory", "promotors", 
+		                      "primers", "terminators", "origins"];
+
+	/*
+	// General layout
+	controls = $('<form action=""></form>')
+		.addClass('giraffe-controls')
+		.append('<fieldset></fieldset>')
+		.children()
+			.append('<legend>Feature Options</legend>')
+			.append('<table><tbody></tbody></table>')
+			.append('<label>Show extra features</label>')
+			.children('label')
+				.prepend('<input type="checkbox" name="extra-features" value="show" />')
+			.end()
+		.end();
+
+	// Table of fieldsets
+	controls
+		.find('tbody')
+			.append(function (index, html) {
+				var fx,
+					el,
+					cutter_options = 3,
+					feat_name;
+
+				// Table in two rows
+				el = $(this)
+					.append('<tr></tr>')
+					.append('<tr></tr>');
+
+				return el.html();
+
+				el
+					.children()
+						.first()
+							.append('<td><fieldset></fieldset></td>')
+							.find('fieldset')
+								.addClass('giraffe-controls-enzyme')
+								.append('<legend>Restriction enzymes</legend>')
+								.append('<label>Show<br /></label>')
+								.children('label')
+									.append('<select></select>')
+									.children()
+										.attr({
+											name: 'all-enzyme',
+											multiple: 'multiple',
+											size: cutter_options
+										})
+										.append(function (index, html) {
+											var ox;
+											for (ox = 0; ox < cutter_options; ox++) {
+												html += '<option>' + ox + '-cutters</option>';
+											}
+											return html;
+										})
+										.children()
+											.first()
+												.attr('selected', 'selected')
+											.end()
+										.end()
+									.end()
+								.end()
+
+				for (fx = 0; fx < control_feat_types.length; fx++) {
+					feat_name = control_feat_types[fx];
+
+					el
+						.children()
+							// Pick which row, top or bottom
+							.eq(Math.floor(fx/control_feat_types.length))
+								.append('<td><fieldset></fieldset></td>')
+								.find('fieldset')
+									.addClass('giraffe-controls-' + feat_name)
+										.append('<legend>' +
+												title_case(feat_name) +  '</legend>')
+										.append('<label>Label</label>')
+										.append('<label>Show</label>')
+										.children('label')
+											.each(function (index, el) {
+												$(this).append('<input></input>)')
+												       .children()
+												       .attr({
+												       		type: 'checkbox',
+												       		name: 'all-' + feat_name,
+												       		checked: 'checked',
+												       		value: $(this).text().toLowerCase() 
+														})
+											})
+											.first()
+												.after('<br />');
+
+				}
+
+				return el.html();
+			})
+		.end()
+
+	*/
 
 	controls = $('<form action="" class="giraffe-controls">\
 		<fieldset><legend>Feature Options</legend>\
