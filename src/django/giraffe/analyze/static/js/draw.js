@@ -2187,7 +2187,7 @@
             // Just an educated guess based on 13pt font. we will use
             // this to compute height of label lists. These are
             // conservative.
-            label_letter_height = 15;
+            label_letter_height = 17;
             label_letter_width = 8;
           
             var min_y = plasmid_y;
