@@ -370,16 +370,6 @@
 
 		_this.redraw_cutters = function (new_cutters_to_show) {
 			cutters_to_show = new_cutters_to_show;
-   /*         this.show_hide_cutters();*/
-            //this.set_label_lists();
-
-			//this.set_bounding_box();
-			//this.paper.clear();
-			//this.initialize_features();
-
-			//this.draw_plasmid();
-			//this.draw_features();
-			/*this.draw_labels();*/
 		}
 
 		_this.draw_features = function () {
@@ -448,7 +438,8 @@
 
 	// Utility function for creating wrapper closures around Map classes
 	Map.make = function (MapType) {
-		 return function(options) {
+
+		return function(options) {
 			// Create a map object
 			var _this = MapType(options);
 
@@ -1136,7 +1127,7 @@
 
 		// Move features that overlap to other radii.
 		_this.resolve_conflicts = function () {
-			var conflicts;
+			var conflicts = 0;
 			var rad = plasmid_radius; // current radius
 			var rx = 1;               // radius counter
 			var max_rad = plasmid_radius;
@@ -1149,7 +1140,15 @@
 				// Do it
 				loser.radius = new_rad; 
 
-				if (_debug) console.warn(loser.name() + " pushed by " + winner.name());
+				if (_debug) {
+					console.warn(
+						loser.name() + 
+						" (" + loser.real_start() + ", " + loser.real_end() + ")" +
+						" pushed by " + 
+						winner.name() + 
+						" (" + winner.real_start() + ", " + winner.real_end() + ")"
+					);
+				}
 				
 				// Since loser was pushed, un-push all the 
 				// features that it pushed, as long as
@@ -1198,27 +1197,31 @@
 				var biggest_size = 0;
 				var biggest_feature;
 				var furthest_point = plasmid_start; // Start at a complete lower bound
-				var edge_crosses_boundary = false;
 
 				// Go through the feature list twice, to make sure that features
 				// that cross the boundary are resolved
 				for (var fx = 0; fx < 2 * _this.features.length; fx++) {
 					var f = _this.features[fx % _this.features.length];
+
 					if (f.radius == rad && f.type() != ft.enzyme) { 
-						var new_size = f.real_size();
-						var overlap = -(furthest_point - f.real_start());
 						
-						// Only the first time around, make sure that features
-						// that cross the boundary are treated as though their
-						// real_end were much further along (i.e., much more
-						// negative, even though the result of real_end() will 
-						// be normalized.
-						// If you do this for more than the first time around,
-						// then the compensation for last feature that crosses 
-						// the boundary will force every other feature off of its 
-						// level.
-						if (edge_crosses_boundary && fx <= _this.features.length)
-							overlap += 360;
+						// When you cross the plasmid start boundary every time 
+						// but the first, update the furthest_point so that its
+						// now expressed in numbers that will make sense to 
+						// features on the other side of the boundary
+						if (fx >= _this.features.length && furthest_point <= 0)
+							furthest_point += 360;
+
+						// Calculate the effective furthest point: first, convert from 
+						// a true angle to a number taht starts at 0 (not plasmid_start)
+						// and goes up to 360 (or over). Then limit that number to 360, so
+						// that we're always dealing with numbers in the same period,
+						// and then convert back.
+						var eff_furthest_point = plasmid_start - 
+							((plasmid_start - furthest_point) % 360);
+
+						var new_size = f.real_size();
+						var overlap = -(eff_furthest_point - f.real_start());
 
 						if (overlap <= min_overlap_cutoff) { 
 							// We've cleared all potential conflicts: reset
@@ -1226,12 +1229,11 @@
 							biggest_size = new_size;
 							biggest_feature = f;
 							furthest_point = f.real_end();
-							edge_crosses_boundary = f.crosses_boundary();
 
 						// since we go around twice, it is now possible
 						// for a feature to "conflict with itself," so we
 						// explicitly prevent this
-						} else if ( !(biggest_feature === f) && 
+						} else if (biggest_feature != f && 
 								   biggest_size > min_overlap_feature_size &&
 								   new_size > min_overlap_feature_size &&
 								  (overlap <= 0 || 
@@ -1242,12 +1244,13 @@
 														   // move the original to the
 														   // new radius
 								push(f, biggest_feature);
+								if (_debug)
+									console.warn(fx + ", " + rx + ": overlap=" + overlap);
 
 								// Update the new top dog
 								biggest_size = new_size;
 								biggest_feature = f;
 								furthest_point = f.real_end();
-								edge_crosses_boundary = f.crosses_boundary();
 
 							} else { // The original feature is top dog. move the new
 									 // feature to the new radius
@@ -2011,7 +2014,7 @@
 							biggest_feature = f;
 							furthest_point = f.real_end();
 						// explicitly prevent conflicts with self
-						} else if ( !(biggest_feature === f) && 
+						} else if (biggest_feature != f && 
 								   biggest_size > min_overlap_feature_size &&
 								   new_size > min_overlap_feature_size &&
 								  (overlap <= 0 || 
