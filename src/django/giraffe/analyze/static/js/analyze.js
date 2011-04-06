@@ -1149,7 +1149,8 @@ window.GiraffeTable = function ($,gd,dom) {
 };
 
 window.GiraffeControl = function ($,gd_map,dom) {	
- 	var controls;
+ 	var controls,
+		_debug = false;
 
 	controls = $('<form action="" class="giraffe-controls">\
 		<fieldset><legend>Feature Options</legend>\
@@ -1249,7 +1250,6 @@ window.GiraffeControl = function ($,gd_map,dom) {
 
 	function clean_redraw() {
 		$('#' + gd_map.dom_id).empty();
-		console.warn(gd_map.dom_id);
 		gd_map.redraw();
 	}
 
