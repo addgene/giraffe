@@ -370,6 +370,7 @@
 
 		_this.redraw_cutters = function (new_cutters_to_show) {
 			cutters_to_show = new_cutters_to_show;
+			this.redraw();
 		}
 
 		_this.draw_features = function () {
@@ -385,10 +386,29 @@
 			// do this only once, the first time the map is created.
 			this.extend_features();
 
-			this.redraw();
+			this.update();
 		}
 
-		_this.redraw = function() { // Redraw the map
+		_this.clear = function () {
+			var map_dom,
+				kids,
+				kx;
+
+			// Since we don't want to depend on jQuery, use the raw DOM (ugh!)
+			map_dom = document.getElementById(this.map_dom_id);
+			kids = map_dom.childNodes;
+
+			for (kx = 0; kx < kids.length; kx++) {
+				map_dom.removeChild(kids[kx]);
+			}
+		}
+
+		_this.redraw = function () {
+			this.clear();
+			this.update();
+		}
+
+		_this.update = function() { // Redraw the map
 
             // Hide the right cutters
             this.show_hide_cutters();
@@ -427,9 +447,7 @@
 			// descendant classes inheret this ability, and because of the
 			// this pointer, will return /Their own/ draw and features objects
 			return { 
-				redraw: change_context(this.redraw, this),
 				redraw_cutters: change_context(this.redraw_cutters, this),
-				dom_id: this.map_dom_id
 			}
 		}
 
