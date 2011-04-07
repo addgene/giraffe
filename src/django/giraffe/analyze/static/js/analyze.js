@@ -1377,7 +1377,7 @@ window.GiraffeControl = function ($,gd_map,dom) {
 	});
 
 	// Changes to the feature types
-	controls.find('input[value="show"]').click(function (event) {
+	controls.find('input[value="show"][name!="extra-features"]').click(function (event) {
 		var feat_type_name,
 			label_checkbox;
 
@@ -1401,6 +1401,15 @@ window.GiraffeControl = function ($,gd_map,dom) {
 			gd_map.show_feature_label_type(feat_type_name);
 		} else {
 			gd_map.hide_feature_label_type(feat_type_name);
+		}
+	});
+
+	// The "extra features" checkbox
+	controls.find('input[name="extra-features"]').click(function (event) {
+		if ($(this).attr("checked")) {
+			gd_map.show_extra_features();
+		} else {
+			gd_map.hide_extra_features();
 		}
 	});
 

@@ -312,6 +312,7 @@
 		_this.label_offset = 0;
 
 		_this.features = [];
+		_this.show_all_features = false;
 
 		_this.width = 800;
 		_this.height = 800;
@@ -348,7 +349,7 @@
 
 			for (fx = 0; fx< this.features.length; fx++) {
 				f = this.features[fx];
-				if (f.default_show_feature()) {
+				if (f.default_show_feature() || this.show_all_features) {
 					// Only draw enzymes if they are in the list of
 					// cutters to show - i.e. 1 cutter, 2 cutters,
 					// etc.
@@ -374,6 +375,16 @@
 		_this.redraw_cutters = function (new_cutters_to_show) {
 			cutters_to_show = new_cutters_to_show;
 			this.redraw(false);
+		}
+
+		_this.show_extra_features = function () {
+			this.show_all_features = true;
+			this.redraw(true);
+		}
+
+		_this.hide_extra_features = function () {
+			this.show_all_features = false;
+			this.redraw(true);
 		}
 
 		// any number of arguments will work. accessed via arguments object
@@ -489,7 +500,9 @@
 				show_feature_type: change_context(this.show_feature_type, this),
 				hide_feature_type: change_context(this.hide_feature_type, this),
 				show_feature_label_type: change_context(this.show_feature_label_type, this),
-				hide_feature_label_type: change_context(this.hide_feature_label_type, this)
+				hide_feature_label_type: change_context(this.hide_feature_label_type, this),
+				show_extra_features: change_context(this.show_extra_features, this),
+				hide_extra_features: change_context(this.hide_extra_features, this),
 			}
 		}
 
