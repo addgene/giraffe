@@ -200,10 +200,11 @@
 	// Private function
 	// Calculate cut counts of all restriction enzyme
 	function cut_counts() {
-		var cut_counts = {}; 
-		var f;
+		var cut_counts = {}, 
+			f, fx;
+
 		// Calculate the counts
-		for (var fx in all_features) {
+		for (fx = 0; fx < all_features.length; fx++) {
 			f = all_features[fx];
 			if (f.type() == ft.enzyme) {
 				// Store indices, not Feature objects, because
@@ -216,7 +217,7 @@
 			}
 		}
 		// Store them for each enzyme feature
-		for (var fx in all_features) {
+		for (fx = 0; fx < all_features.length; fx++) {
 			f = all_features[fx];
 			if (f.type() == ft.enzyme)
 				f.set_other_cutters(cut_counts[f.name()]);
@@ -343,8 +344,10 @@
 
 		// Make sure that the appropriate cutters are shown
 		_this.show_hide_cutters = function () {
-			for (var fx in this.features) {
-				var f = this.features[fx];
+			var fx, f;
+
+			for (fx = 0; fx< this.features.length; fx++) {
+				f = this.features[fx];
 				if (f.default_show_feature()) {
 					// Only draw enzymes if they are in the list of
 					// cutters to show - i.e. 1 cutter, 2 cutters,
@@ -790,16 +793,18 @@
 			// Actions for interactivity
 			// Generic fading animation/property setting mechanism
 			var _fade = function (props, line_props) {
-				var sets = paper.set();
-				var lines = paper.set();
+				var sets = paper.set(),
+				    lines = paper.set(),
+					fx, f;
+
 				sets.push(_feature_set);
 				lines.push(_label_set[0]); // label line
 
                 // Cutters: highlight other examples of this enzyme if
                 // it's a multi-cutter
                 if (_this.type() == ft.enzyme) {
-					for (var fx in _this.other_cutters()) {
-						var f = _map.features[_this.other_cutters()[fx]];
+					for (fx = 0; fx < _this.other_cutters().length; fx++) {
+						f = _map.features[_this.other_cutters()[fx]];
 						sets.push(f.feature_set());
 						lines.push(f.label_set()[0]);
 					}
@@ -1184,85 +1189,37 @@
 
 		// Move features that overlap to other radii.
 		_this.resolve_conflicts = function () {
-			var conflicts = 0;
-			var rad = plasmid_radius; // current radius
-			var rx = 1;               // radius counter
-			var max_rad = plasmid_radius;
+			var conflicts = 0,
+			    rad = plasmid_radius, // current radius
+			    rx = 1,               // radius counter
+			    max_rad = plasmid_radius,
+				fx, f,
+				biggest_size, biggest_feature, furthest_point,
+				new_rad, new_size
+				eff_furthest_point, overlap;
 
- 			// reset radiuses
-			for (var fx = 0; fx < this.features.length; fx++) 
+ 			// reset radii in case this is being done any time but the first
+			for (fx = 0; fx < this.features.length; fx++) 
 				this.features[fx].radius = plasmid_radius;
-
-			function push(winner, loser) {
-				// Record that the push happened
-				winner.pushed_features.push(loser); 
-				conflicts++;
-
-				// Do it
-				loser.radius = new_rad; 
-
-				if (_debug) {
-					console.warn(
-						loser.name() + 
-						" (" + loser.real_start() + ", " + loser.real_end() + ")" +
-						" pushed by " + 
-						winner.name() + 
-						" (" + winner.real_start() + ", " + winner.real_end() + ")"
-					);
-				}
-				
-				// Since loser was pushed, un-push all the 
-				// features that it pushed, as long as
-				// those features are not in conflict with the winner,
-				// or with their own, previously pushed features, which are
-				// now unpushed
-				for (var pfx in loser.pushed_features) {
-					var pf = loser.pushed_features[pfx];
-					// Check for conflict with the winner feature itself
-					// If there's no conflict, we can push it back safely.
-					if (pf.real_start() - winner.real_end() <= min_overlap_cutoff ||
-						winner.real_start() - pf.real_end() <= min_overlap_cutoff) {
-
-						// Check for conflict with previously pushed features
-						// that may have been unpushed
-						var can_push = true;
-						for (var ppfx in pf.pushed_features) {
-							if (pf.pushed_features[ppfx].radius == rad) {
-								can_push = false;
-								break;
-							}
-						}
-
-						// Finally!
-						if (can_push) {
-							if (_debug)
-								console.warn(pf.name() + " unpushed, because " 
-									+ loser.name() + " pushed by " + winner.name());
-							pf.radius = rad;
-						}
-					}
-				}
-			}
 
 			do {
 				// Keep alternating between inside and outside the plasmid.
-				var new_rad = rad + Math.pow(-1, rx) * rx * radius_spacing;
+				new_rad = rad + Math.pow(-1, rx) * rx * radius_spacing;
 
 				conflicts = 0; // Assume you have no conflicts until you find some
 
 				// Clear the record of who pushed whom
-				for (var fx in this.features) {
+				for (fx = 0; fx < this.features.length; fx++) {
 					this.features[fx].pushed_features = [];
 				}
 
-				var biggest_size = 0;
-				var biggest_feature;
-				var furthest_point = plasmid_start; // Start at a complete lower bound
+				biggest_size = 0;
+				furthest_point = plasmid_start; // Start at a complete lower bound
 
 				// Go through the feature list twice, to make sure that features
 				// that cross the boundary are resolved
-				for (var fx = 0; fx < 2 * this.features.length; fx++) {
-					var f = this.features[fx % this.features.length];
+				for (fx = 0; fx < 2 * this.features.length; fx++) {
+					f = this.features[fx % this.features.length];
 
 
 					if ( (f.radius == rad) && (f.type() != ft.enzyme) && (f.visible())) { 
@@ -1279,11 +1236,11 @@
 						// and goes up to 360 (or over). Then limit that number to 360, so
 						// that we're always dealing with numbers in the same period,
 						// and then convert back.
-						var eff_furthest_point = plasmid_start - 
+						eff_furthest_point = plasmid_start - 
 							((plasmid_start - furthest_point) % 360);
 
-						var new_size = f.real_size();
-						var overlap = -(eff_furthest_point - f.real_start());
+						new_size = f.real_size();
+						overlap = -(eff_furthest_point - f.real_start());
 
 						if (overlap <= min_overlap_cutoff) { 
 							// We've cleared all potential conflicts: reset
@@ -1335,6 +1292,61 @@
 			} while (conflicts > 0); // Keep adding levels of resolution
 
 			return max_rad;
+
+			function push(winner, loser) {
+				var ppfx, pfx, pf,
+					can_push;
+
+				// Record that the push happened
+				winner.pushed_features.push(loser); 
+				conflicts++;
+
+				// Do it
+				loser.radius = new_rad; 
+
+				if (_debug) {
+					console.warn(
+						loser.name() + 
+						" (" + loser.real_start() + ", " + loser.real_end() + ")" +
+						" pushed by " + 
+						winner.name() + 
+						" (" + winner.real_start() + ", " + winner.real_end() + ")"
+					);
+				}
+				
+				// Since loser was pushed, un-push all the 
+				// features that it pushed, as long as
+				// those features are not in conflict with the winner,
+				// or with their own, previously pushed features, which are
+				// now unpushed
+				for (pfx = 0; pfx < loser.pushed_features.length; pfx++) {
+					pf = loser.pushed_features[pfx];
+
+					// Check for conflict with the winner feature itself
+					// If there's no conflict, we can push it back safely.
+					if (pf.real_start() - winner.real_end() <= min_overlap_cutoff ||
+						winner.real_start() - pf.real_end() <= min_overlap_cutoff) {
+
+						// Check for conflict with previously pushed features
+						// that may have been unpushed
+						can_push = true;
+						for (ppfx = 0; ppfx < pf.pushed_features.length; ppfx++) {
+							if (pf.pushed_features[ppfx].radius == rad) {
+								can_push = false;
+								break;
+							}
+						}
+
+						// Finally!
+						if (can_push) {
+							if (_debug)
+								console.warn(pf.name() + " unpushed, because " 
+									+ loser.name() + " pushed by " + winner.name());
+							pf.radius = rad;
+						}
+					}
+				}
+			}
 		}
 
 		// Global label list: keeps track of which label should be in each
@@ -1697,16 +1709,18 @@
 			// Actions for interactivity
 			// Generic fading animation/property setting mechanism
 			var _fade = function (props, line_props) {
-				var sets = paper.set();
-				var lines = paper.set();
+				var sets = paper.set(),
+				    lines = paper.set(),
+					fx, f;
+
 				sets.push(_feature_set);
 				lines.push(_label_set[0]); // label line
 
                 // Cutters: highlight other examples of this enzyme if
                 // it's a multi-cutter
                 if (_this.type() == ft.enzyme) {
-					for (var fx in _this.other_cutters()) {
-						var f = _map.features[_this.other_cutters()[fx]];
+					for (fx = 0; fx < _this.other_cutters().length; fx++) {
+						f = _map.features[_this.other_cutters()[fx]];
 						sets.push(f.feature_set());
 						lines.push(f.label_set()[0]);
 					}
@@ -2001,78 +2015,37 @@
 		}
 
 		_this.resolve_conflicts = function () {
-			var conflicts;
-			var y = 0; // current radius
-			var yx = 1;               // radius counter
-			var max_dist = 0;
+			var conflicts,
+			    y = 0, // current radius
+			    yx = 1,               // radius counter
+			    max_dist = 0, new_dist, new_y,
+				biggest_size, biggest_feature, furthest_point, 
+				new_size, overlap,
+				fx, f;
 
  			// reset radiuses
-			for (var fx = 0; fx < this.features.length; fx++) 
+			for (fx = 0; fx < this.features.length; fx++) 
 				this.features[fx].y = 0;
-
-			function push(winner, loser) {
-				// Record that the push happened
-				winner.pushed_features.push(loser); 
-				conflicts++;
-
-				// Do it
-				loser.y = new_y; 
-
-				if (_debug) console.warn(loser.name() + " pushed by " + winner.name());
-
-				// Since loser was pushed, un-push all the 
-				// features that it pushed, as long as
-				// those features are not in conflict with the winner,
-				// or with their own, previously pushed features, which are
-				// now unpushed
-				for (var pfx in loser.pushed_features) {
-					var pf = loser.pushed_features[pfx];
-					// Check for conflict with the winner feature itself
-					// If there's no conflict, we can push it back safely.
-					if (winner.real_end() - pf.real_start() <= min_overlap_cutoff ||
-						pf.real_end() - winner.real_start() <= min_overlap_cutoff) {
-
-						// Check for conflict with previously pushed features
-						// that may have been unpushed
-						var can_push = true;
-						for (var ppfx in pf.pushed_features) {
-							if (pf.pushed_features[ppfx].y == y) {
-								can_push = false;
-								break;
-							}
-						}
-
-						// Finally!
-						if (can_push) {
-							if (_debug)
-								console.warn(pf.name() + " unpushed, because " 
-									+ loser.name() + " pushed by " + winner.name());
-							pf.y = y;
-						}
-					}
-				}
-			}
 
 			do {
 				// Keep alternating between inside and outside the plasmid.
-				var new_y = y + Math.pow(-1, yx) * yx * y_spacing;
+				new_y = y + Math.pow(-1, yx) * yx * y_spacing;
 
 				conflicts = 0; // Assume you have no conflicts until you find some
 
 				// Clear the record of who pushed whom 
-				for (var fx in this.features) {
+				for (fx = 0; fx < this.features.length; fx++) {
 					this.features[fx].pushed_features = [];
 				}
 
-				var biggest_size = 0;
-				var biggest_feature;
-				var furthest_point = plasmid_left; // Start at a complete lower bound
+				biggest_size = 0;
+				furthest_point = plasmid_left; // Start at a complete lower bound
 
-				for (var fx = 0; fx < this.features.length; fx++) {
-					var f = this.features[fx];
+				for (fx = 0; fx < this.features.length; fx++) {
+					f = this.features[fx];
 					if (f.y == y && f.type() != ft.enzyme && f.visible()) { 
-						var new_size = f.real_size();
-						var overlap = furthest_point - f.real_start();
+						new_size = f.real_size();
+						overlap = furthest_point - f.real_start();
 						if (overlap <= min_overlap_cutoff) { 
 							// We've cleared all potential conflicts: reset
 							// the indicators
@@ -2109,7 +2082,7 @@
 
 				// Keep track of the biggest distance from the plasmid 
 				// reached
-				var new_dist = Math.abs(y);
+				new_dist = Math.abs(y);
 				if (new_dist > max_dist)
 					max_dist = new_dist;
 
@@ -2120,33 +2093,84 @@
 			} while (conflicts > 0); // Keep adding levels of resolution
 
 			return max_dist;
+
+			function push(winner, loser) {
+				var ppfx, pfx, pf,
+					can_push;
+
+
+				// Record that the push happened
+				winner.pushed_features.push(loser); 
+				conflicts++;
+
+				// Do it
+				loser.y = new_y; 
+
+				if (_debug) console.warn(loser.name() + " pushed by " + winner.name());
+
+				// Since loser was pushed, un-push all the 
+				// features that it pushed, as long as
+				// those features are not in conflict with the winner,
+				// or with their own, previously pushed features, which are
+				// now unpushed
+				for (pfx = 0; pfx < loser.pushed_features.length; pfx++) {
+					pf = loser.pushed_features[pfx];
+					// Check for conflict with the winner feature itself
+					// If there's no conflict, we can push it back safely.
+					if (winner.real_end() - pf.real_start() <= min_overlap_cutoff ||
+						pf.real_end() - winner.real_start() <= min_overlap_cutoff) {
+
+						// Check for conflict with previously pushed features
+						// that may have been unpushed
+						can_push = true;
+						for (ppfx = 0; ppfx < pf.pushed_features.length; ppfx++) {
+							if (pf.pushed_features[ppfx].y == y) {
+								can_push = false;
+								break;
+							}
+						}
+
+						// Finally!
+						if (can_push) {
+							if (_debug)
+								console.warn(pf.name() + " unpushed, because " 
+									+ loser.name() + " pushed by " + winner.name());
+							pf.y = y;
+						}
+					}
+				}
+			}
 		}
 
 		var label_pos, label_lists;
-		_this.set_label_lists = function () {
-			var label_overlap_cutoff = -1; // pixel
 
-			var nlists = 6;
+		_this.set_label_lists = function () {
+			var label_overlap_cutoff = -1, // pixel
+				nlists = 6,
+				ix, fx, f,
+				section, bottom,
+				list_offset;
+
 			//                   top                bottom
             label_pos    = [ new Array(nlists), new Array(nlists)];
             label_lists  = [ new Array(nlists), new Array(nlists)];
                                 
 			// Initialize
-			for (var ix = 0; ix < nlists; ix++) {
-				for (var lx = 0; lx < 2; lx++) {
+			for (ix = 0; ix < nlists; ix++) {
+				for (lx = 0; lx < 2; lx++) {
 					label_lists[lx][ix] = [];
 				}
 			}
 
 			// Figure out which list each feature goes in
-            for (var fx in _this.features) {
-				var f = _this.features[fx];
+            for (fx = 0; fx < _this.features.length; fx++) {
+				f = _this.features[fx];
 
 				// Which nth of the plasmid is the feature in?
-				var section = Math.floor(nlists*(f.real_center() - plasmid_left)/
+				section = Math.floor(nlists*(f.real_center() - plasmid_left)/
 				                                 plasmid_width);
 				// Is it in the top or bottom?
-				var bottom = section % 2;
+				bottom = section % 2;
 
 				if (f.should_draw_label()) {
 					// push it on the appropriate list
@@ -2156,8 +2180,8 @@
 
 			// Calculate positions of label lists
 			//                 top  bottom
-			var list_offset = [20, -20];
-			for (var ix = 0; ix < nlists; ix++) {
+			list_offset = [20, -20];
+			for (ix = 0; ix < nlists; ix++) {
 				if (ix % 2 == 0) {
 
 					if (label_lists[0][ix].length >= 1) {
