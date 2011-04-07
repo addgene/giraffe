@@ -1367,17 +1367,24 @@ window.GiraffeControl = function ($,gd_map,dom) {
 	});
 
 	// Changes to the feature types
-	controls.find('input[value="show"]').change(function (event) {
-		var feat_type_name = $(this).attr("name").replace(/all-/, '');
+	controls.find('input[value="show"]').click(function (event) {
+		var feat_type_name,
+			label_checkbox;
+
+		feat_type_name = $(this).attr("name").replace(/all-/, '');
+		label_checkbox = $(this).parent().siblings().children().first();
 
 		if ($(this).attr("checked")) {
 			gd_map.show_feature_type(feat_type_name);
+			label_checkbox.removeAttr("disabled");
+			label_checkbox.attr("checked", "checked");
 		} else {
 			gd_map.hide_feature_type(feat_type_name);
+			label_checkbox.attr("disabled", "disabled");
 		}
 	});
 
-	controls.find('input[value="label"]').change(function (event) {
+	controls.find('input[value="label"]').click(function (event) {
 		var feat_type_name = $(this).attr("name").replace(/all-/, '');
 
 		if ($(this).attr("checked")) {
