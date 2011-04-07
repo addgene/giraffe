@@ -1195,7 +1195,7 @@
 			    max_rad = plasmid_radius,
 				fx, f,
 				biggest_size, biggest_feature, furthest_point,
-				new_rad, new_size
+				new_rad, new_size,
 				eff_furthest_point, overlap;
 
  			// reset radii in case this is being done any time but the first
