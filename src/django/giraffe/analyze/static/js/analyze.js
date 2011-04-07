@@ -1261,7 +1261,7 @@ window.GiraffeControl = function ($,gd_map,dom) {
 	controls = $('<form action="" class="giraffe-controls">\
 		<fieldset><legend>Feature Options</legend>\
 			<table><tbody>\
-			<tr><td><fieldset><legend class="enzymes">Restriction Enzymes</legend>\
+			<tr><td colspan="4"><fieldset><legend class="enzymes">Restriction Enzymes</legend>\
 			<label>Show <br />\
 			<select name="all-enzyme" multiple="multiple" size="3"> \
 				<option selected="selected">1-cutters</option>\
@@ -1273,8 +1273,8 @@ window.GiraffeControl = function ($,gd_map,dom) {
 			<input type="checkbox" checked="checked"\
 				   name="hide-enzyme-rows" value="hide" />\
 			Hide in table</label>\
-			</fieldset></td>\
-			<td><fieldset><legend class="features-genes">Generic Features</legend>\
+			</fieldset></tr>\
+			<tr><td><fieldset><legend class="features-genes">Generic Features</legend>\
 				<label>\
 				<input type="checkbox" checked="checked"\
 					   name="all-feature" value="label" />\
@@ -1303,8 +1303,8 @@ window.GiraffeControl = function ($,gd_map,dom) {
 				<input type="checkbox" checked="checked"\
 					   name="all-regulatory" value="show" />\
 				Show</label>\
-			</fieldset></td></tr>\
-			<tr><td><fieldset><legend class="promoters-primers-terminators">Promoters</legend>\
+			</fieldset></td>\
+			<td><fieldset><legend class="promoters-primers-terminators">Promoters</legend>\
 				<label>\
 				<input type="checkbox" checked="checked"\
 					   name="all-promoter" value="label" />\
@@ -1313,8 +1313,8 @@ window.GiraffeControl = function ($,gd_map,dom) {
 				<input type="checkbox" checked="checked"\
 					   name="all-promoter" value="show" />\
 				Show</label>\
-			</fieldset></td>\
-			<td><fieldset><legend class="promoters-primers-terminators">Primers</legend>\
+			</fieldset></td></tr>\
+			<tr><td><fieldset><legend class="promoters-primers-terminators">Primers</legend>\
 				<label>\
 				<input type="checkbox" checked="checked"\
 					   name="all-primer" value="label" />\
@@ -1342,6 +1342,16 @@ window.GiraffeControl = function ($,gd_map,dom) {
 				<label>\
 				<input type="checkbox" checked="checked"\
 					   name="all-origin" value="show" />\
+				Show</label>\
+			</fieldset></td>\
+			<td><fieldset><legend class="orfs">ORFs</legend>\
+				<label>\
+				<input type="checkbox" checked="checked"\
+					   name="all-orf" value="label" />\
+				Label</label><br />\
+				<label>\
+				<input type="checkbox" checked="checked"\
+					   name="all-orf" value="show" />\
 				Show</label>\
 			</fieldset></td></tr>\
 			</tbody></table>\
