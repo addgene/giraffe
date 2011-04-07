@@ -277,7 +277,6 @@ window.GiraffeAnalyze = function ($,gd,options) {
 
 		// Circular map pane
         dom_map_c = $('<div id="'+dom_map_id_c+'" class="giraffe-analyze-map giraffe-analyze-circular-map"></div>');
-		dom_control_id_c = random_dom_id();
 		dom_control_c = $('<div id="' + dom_control_id_c + '" class="giraffe-analyze-map-control"></div>');
         $(panes.pane(0))
             .append(dom_map_c)
@@ -294,9 +293,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
 		gc_c = GiraffeControl($, gd_c, dom_control_c);
 
 		// Linear map pane
-        dom_map_id_l = random_dom_id();
         dom_map_l = $('<div id="'+dom_map_id_l+'" class="giraffe-analyze-map giraffe-analyze-linear-map"></div>');
-		dom_control_id_l = random_dom_id();
 		dom_control_l = $('<div id="' + dom_control_id_c + '" class="giraffe-analyze-map-control"></div>');
         $(panes.pane(1))
             .append(dom_map_l)
