@@ -1149,14 +1149,18 @@ window.GiraffeTable = function ($,gd,dom) {
 	// Set general appearance properties
 	$(dom).children().addClass('giraffe-table');
 	
+	return $(dom);
 };
 
 window.GiraffeControl = function ($,gd_map,dom) {	
  	var controls,
+		table,
 		_debug = false,
 		control_feat_types = ["generic-features", "genes",
 		                      "regulatory", "promotors", 
 		                      "primers", "terminators", "origins"];
+
+	// FEATURE CLASS CONTROLS
 
 	/*
 	// General layout
@@ -1359,7 +1363,6 @@ window.GiraffeControl = function ($,gd_map,dom) {
 		</fieldset>\
 	</form>');
 
-	$(dom).append(controls);
 
 	// Changes to the Restriction Enzyme selection
 	controls.find('select[name="all-enzyme"]').change(function (event) {
@@ -1410,6 +1413,16 @@ window.GiraffeControl = function ($,gd_map,dom) {
 		}
 	});
 
+	$(dom).append(controls);
+
+	// INDIVIDUAL FEATURE TABLE
+	table = GiraffeTable($, gd_map.gd, 
+		$('<div></div>')
+			.attr('id', random_dom_id())
+			.addClass('giraffe-control-table'))
+	
+	$(dom).append(table);
+	
 /*
 	function register_control_handlers() {
 

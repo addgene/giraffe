@@ -165,6 +165,7 @@
     var std_features = [];
 
     this.Feature_Type = ft;
+	var gd = this;
 
 
 	///////////////////////////////////////////////////////////////////
@@ -503,6 +504,7 @@
 				hide_feature_label_type: change_context(this.hide_feature_label_type, this),
 				show_extra_features: change_context(this.show_extra_features, this),
 				hide_extra_features: change_context(this.hide_extra_features, this),
+				gd: gd
 			}
 		}
 
