@@ -1188,6 +1188,7 @@
 		}
 
 		// Move features that overlap to other radii.
+		// XXX THIS FUNCTION IS A SPEED BOTTLENECK
 		_this.resolve_conflicts = function () {
 			var conflicts = 0,
 			    rad = plasmid_radius, // current radius
@@ -1204,7 +1205,12 @@
 
 			do {
 				// Keep alternating between inside and outside the plasmid.
-				new_rad = rad + Math.pow(-1, rx) * rx * radius_spacing;
+				delta = rx *radius_spacing;
+
+				if (rx %2 == 0) // Even rx
+					new_rad = rad + delta;
+				else
+					new_rad = rad - delta;
 
 				conflicts = 0; // Assume you have no conflicts until you find some
 
@@ -1222,7 +1228,7 @@
 					f = this.features[fx % this.features.length];
 
 
-					if ( (f.radius == rad) && (f.type() != ft.enzyme) && (f.visible())) { 
+					if (f.visible() && f.type() != ft.enzyme && f.radius == rad) { 
 						
 						// When you cross the plasmid start boundary every time 
 						// but the first, update the furthest_point so that its
@@ -2023,9 +2029,10 @@
 				new_size, overlap,
 				fx, f;
 
- 			// reset radiuses
+ 			// reset radii in case this is being done any time but the first
 			for (fx = 0; fx < this.features.length; fx++) 
 				this.features[fx].y = 0;
+
 
 			do {
 				// Keep alternating between inside and outside the plasmid.
