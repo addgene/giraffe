@@ -1366,6 +1366,27 @@ window.GiraffeControl = function ($,gd_map,dom) {
 		gd_map.redraw_cutters(opts);
 	});
 
+	// Changes to the feature types
+	controls.find('input[value="show"]').change(function (event) {
+		var feat_type_name = $(this).attr("name").replace(/all-/, '');
+
+		if ($(this).attr("checked")) {
+			gd_map.show_feature_type(feat_type_name);
+		} else {
+			gd_map.hide_feature_type(feat_type_name);
+		}
+	});
+
+	controls.find('input[value="label"]').change(function (event) {
+		var feat_type_name = $(this).attr("name").replace(/all-/, '');
+
+		if ($(this).attr("checked")) {
+			gd_map.show_feature_label_type(feat_type_name);
+		} else {
+			gd_map.hide_feature_label_type(feat_type_name);
+		}
+	});
+
 /*
 	function register_control_handlers() {
 

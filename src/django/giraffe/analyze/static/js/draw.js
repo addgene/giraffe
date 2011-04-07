@@ -370,8 +370,33 @@
 
 		_this.redraw_cutters = function (new_cutters_to_show) {
 			cutters_to_show = new_cutters_to_show;
-			this.redraw();
+			this.redraw(false);
 		}
+
+		// any number of arguments will work. accessed via arguments object
+		function apply_to_feature_type(recalc) {
+			var funcs_to_call = arguments;
+			return (function (type_name) {
+				var fx, ax,
+					type_code = ft[type_name];
+
+				for (fx = 0; fx < this.features.length; fx++) {
+					if (this.features[fx].type() == type_code) {
+						// All arguments after the first are functions to call
+						for (ax = 1; ax < funcs_to_call.length; ax++) {
+							this.features[fx][funcs_to_call[ax]]();
+						}
+					}
+				}
+
+				this.redraw(recalc);
+			});
+		}
+
+		_this.hide_feature_type = apply_to_feature_type(true, "hide");
+		_this.show_feature_type = apply_to_feature_type(true, "show", "show_label");
+		_this.show_feature_label_type = apply_to_feature_type(false, "show_label");
+		_this.hide_feature_label_type = apply_to_feature_type(false, "hide_label");
 
 		_this.draw_features = function () {
 			var fx;
@@ -386,7 +411,7 @@
 			// do this only once, the first time the map is created.
 			this.extend_features();
 
-			this.update();
+			this.update(true);
 		}
 
 		_this.clear = function () {
@@ -403,20 +428,30 @@
 			}
 		}
 
-		_this.redraw = function () {
+		_this.redraw = function (recalc) {
 			this.clear();
-			this.update();
+			this.update(recalc);
 		}
 
-		_this.update = function() { // Redraw the map
-
-            // Hide the right cutters
-            this.show_hide_cutters();
-
+		_this.recalculate_positions = function() { // Redraw the map
             // Resolve conflicts on the circle, push some overlapping
             // features to other radii
 			this.max_extent = this.resolve_conflicts();
 			this.label_pos = this.max_extent + this.label_offset; 
+		}
+
+		_this.update = function(recalc) { // Redraw the map
+			if (arguments.length < 1) {
+				recalc = true;
+			}
+
+			if (recalc) {
+				this.recalculate_positions();
+			}
+
+            // Hide the right cutters
+            this.show_hide_cutters();
+
             // Determine which labels are in which lists
             this.set_label_lists();
 
@@ -448,6 +483,10 @@
 			// this pointer, will return /Their own/ draw and features objects
 			return { 
 				redraw_cutters: change_context(this.redraw_cutters, this),
+				show_feature_type: change_context(this.show_feature_type, this),
+				hide_feature_type: change_context(this.hide_feature_type, this),
+				show_feature_label_type: change_context(this.show_feature_label_type, this),
+				hide_feature_label_type: change_context(this.hide_feature_label_type, this)
 			}
 		}
 
@@ -1150,6 +1189,10 @@
 			var rx = 1;               // radius counter
 			var max_rad = plasmid_radius;
 
+ 			// reset radiuses
+			for (var fx = 0; fx < this.features.length; fx++) 
+				this.features[fx].radius = plasmid_radius;
+
 			function push(winner, loser) {
 				// Record that the push happened
 				winner.pushed_features.push(loser); 
@@ -1208,8 +1251,8 @@
 				conflicts = 0; // Assume you have no conflicts until you find some
 
 				// Clear the record of who pushed whom
-				for (var fx in _this.features) {
-					_this.features[fx].pushed_features = [];
+				for (var fx in this.features) {
+					this.features[fx].pushed_features = [];
 				}
 
 				var biggest_size = 0;
@@ -1218,16 +1261,17 @@
 
 				// Go through the feature list twice, to make sure that features
 				// that cross the boundary are resolved
-				for (var fx = 0; fx < 2 * _this.features.length; fx++) {
-					var f = _this.features[fx % _this.features.length];
+				for (var fx = 0; fx < 2 * this.features.length; fx++) {
+					var f = this.features[fx % this.features.length];
 
-					if (f.radius == rad && f.type() != ft.enzyme) { 
+
+					if ( (f.radius == rad) && (f.type() != ft.enzyme) && (f.visible())) { 
 						
 						// When you cross the plasmid start boundary every time 
 						// but the first, update the furthest_point so that its
 						// now expressed in numbers that will make sense to 
 						// features on the other side of the boundary
-						if (fx >= _this.features.length && furthest_point <= 0)
+						if (fx >= this.features.length && furthest_point <= 0)
 							furthest_point += 360;
 
 						// Calculate the effective furthest point: first, convert from 
@@ -1962,6 +2006,10 @@
 			var yx = 1;               // radius counter
 			var max_dist = 0;
 
+ 			// reset radiuses
+			for (var fx = 0; fx < this.features.length; fx++) 
+				this.features[fx].y = 0;
+
 			function push(winner, loser) {
 				// Record that the push happened
 				winner.pushed_features.push(loser); 
@@ -2011,18 +2059,18 @@
 
 				conflicts = 0; // Assume you have no conflicts until you find some
 
-				// Clear the record of who pushed whom
-				for (var fx in _this.features) {
-					_this.features[fx].pushed_features = [];
+				// Clear the record of who pushed whom 
+				for (var fx in this.features) {
+					this.features[fx].pushed_features = [];
 				}
 
 				var biggest_size = 0;
 				var biggest_feature;
 				var furthest_point = plasmid_left; // Start at a complete lower bound
 
-				for (var fx = 0; fx < _this.features.length; fx++) {
-					var f = _this.features[fx];
-					if (f.y == y && f.type() != ft.enzyme) { 
+				for (var fx = 0; fx < this.features.length; fx++) {
+					var f = this.features[fx];
+					if (f.y == y && f.type() != ft.enzyme && f.visible()) { 
 						var new_size = f.real_size();
 						var overlap = furthest_point - f.real_start();
 						if (overlap <= min_overlap_cutoff) { 
