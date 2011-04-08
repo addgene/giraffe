@@ -1420,13 +1420,28 @@ window.GiraffeControl = function ($,gd_map,dom) {
 			.attr('id', random_dom_id())
 			.addClass('giraffe-control-table'))
 
-	// Insert checkboxes in all of the body rows
+	// Insert show/label checkboxes in all of the body rows
 	table.find('tbody>tr')
-		.prepend('<td><input type="checkbox" checked="checked"\
-					   name="foo" value="label" /></td>')
-		.prepend('<td><input type="checkbox" checked="checked"\
-					   name="foo" value="show" /></td>')
+		.prepend(function (index, html) {
+			var pre = '',
+				start = '<td><input type="checkbox" checked="checked" name="',
+				middle = '" value="',
+				end = '" /></td>',
+				name = 'feature-',
+				types = [ 'show', 'label' ],
+				tx;
 
+			for (tx = 0; tx < types.length; tx++) {
+				pre += start;
+				pre += name + index;
+				pre += middle;
+				pre += types[tx];
+				pre += end;
+			}
+
+			return pre + html;
+		});
+				
 	// Insert header cells in all of the headers to make
 	// the tables the right shape
 	table.find('thead>tr')
