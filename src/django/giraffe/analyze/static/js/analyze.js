@@ -1430,19 +1430,18 @@ window.GiraffeControl = function ($,gd_map,dom) {
 				start = '<td><input type="checkbox" checked="checked" name="',
 				middle = '" value="',
 				end = '" /></td>',
-				name = 'feature-',
 				types = [ 'show', 'label' ],
 				tx;
 
 			for (tx = 0; tx < types.length; tx++) {
 				pre += start;
-				pre += name + index;
+				pre += $(this).attr('id');
 				pre += middle;
 				pre += types[tx];
 				pre += end;
 			}
 
-			return pre + html;
+			return pre;
 		});
 				
 	// Insert header cells in all of the headers to make
