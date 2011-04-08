@@ -244,6 +244,7 @@
 		var _clockwise = feat.clockwise;
 		var _cut = parseInt(feat.cut); // only for enzymes;
 		var _other_cutters = []; // only for enzymes;
+		var _id = Feature.nfeat;
 
 		// Accessors for private properties set at creation
 		this.name = function() { return _name; };
@@ -258,7 +259,8 @@
         this.is_enzyme = function() { return _type == ft.enzyme; }
         this.is_orf = function() { return _type == ft.orf; }
 
-		this.crosses_boundary = function () { return _end < _start };
+		this.crosses_boundary = function () { return _end < _start; };
+		this.id = function () { return _id; };
 
 		// Enzyme-only data access methods
 		// gives 0 if not enzyme
@@ -285,7 +287,12 @@
             }
             return s;
         }
+
+		Feature.nfeat++;
+		return this;
 	}; // END Basic Feature Class
+
+	Feature.nfeat = 0;
 
 
 	///////////////////////////////////////////////////////////////////
