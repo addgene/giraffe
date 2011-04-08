@@ -420,6 +420,25 @@
 		_this.show_feature_label_type = apply_to_feature_type(false, "show_label");
 		_this.hide_feature_label_type = apply_to_feature_type(false, "hide_label");
 
+		// any number of arguments will work. accessed via arguments object
+		function apply_to_feature() {
+			var funcs_to_call = arguments;
+			return (function (id) {
+				var ax;
+
+				// All arguments after the first are functions to call
+				for (ax = 1; ax < funcs_to_call.length; ax++) {
+					this.features[id][funcs_to_call[ax]]();
+				}
+			});
+		}
+
+		_this.hide_feature = apply_to_feature("hide");
+		_this.show_feature = apply_to_feature("show", "show_label");
+		_this.show_feature_label = apply_to_feature("show_label");
+		_this.hide_feature_label = apply_to_feature("hide_label");
+
+
 		_this.draw_features = function () {
 			var fx;
 
@@ -509,6 +528,10 @@
 				hide_feature_type: change_context(this.hide_feature_type, this),
 				show_feature_label_type: change_context(this.show_feature_label_type, this),
 				hide_feature_label_type: change_context(this.hide_feature_label_type, this),
+				show_feature: change_context(this.show_feature, this),
+				hide_feature: change_context(this.hide_feature, this),
+				show_feature_label: change_context(this.show_feature_label, this),
+				hide_feature_label: change_context(this.hide_feature_label, this),
 				show_extra_features: change_context(this.show_extra_features, this),
 				hide_extra_features: change_context(this.hide_extra_features, this),
 				gd: gd

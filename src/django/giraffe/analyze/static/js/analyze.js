@@ -1419,6 +1419,11 @@ window.GiraffeControl = function ($,gd_map,dom) {
 			.attr('id', random_dom_id())
 			.addClass('giraffe-control-table'))
 
+	// Insert header cells in all of the headers to make
+	// the tables the right shape
+	table.find('thead>tr')
+		.prepend('<th>Show</th><th>Label</th>');
+
 	// Insert show/label checkboxes in all of the body rows
 	table.find('tbody>tr')
 		.prepend(function (index, html) {
@@ -1440,10 +1445,30 @@ window.GiraffeControl = function ($,gd_map,dom) {
 			return pre;
 		});
 				
-	// Insert header cells in all of the headers to make
-	// the tables the right shape
-	table.find('thead>tr')
-		.prepend('<th>Show</th><th>Label</th>');
+	// The table checkboxes
+	table.find('input[value="label"]').click(function (event) {
+		var feat_id = parseInt($(this).attr("name").replace(/\D/, ''));
+
+		if ($(this).attr("checked")) {
+			gd_map.show_feature_label(feat_id);
+		} else {
+			gd_map.hide_feature_label(feat_id);
+		}
+	});
+
+	table.find('input[value="show"]').click(function (event) {
+		var feat_id = parseInt($(this).attr("name").replace(/\D/g, '')),
+			label_checkbox = $(this).parent().siblings().children('input').first();
+
+		if ($(this).attr("checked")) {
+			gd_map.show_feature(feat_id);
+			label_checkbox.removeAttr("disabled");
+			label_checkbox.attr("checked", "checked");
+		} else {
+			label_checkbox.attr("disabled", "disabled");
+			gd_map.hide_feature(feat_id);
+		}
+	});
 
 	controls.append(table);
 	$(dom).append(controls);
