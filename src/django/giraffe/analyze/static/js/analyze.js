@@ -1413,16 +1413,27 @@ window.GiraffeControl = function ($,gd_map,dom) {
 		}
 	});
 
-	$(dom).append(controls);
 
 	// INDIVIDUAL FEATURE TABLE
 	table = GiraffeTable($, gd_map.gd, 
 		$('<div></div>')
 			.attr('id', random_dom_id())
 			.addClass('giraffe-control-table'))
-	
-	$(dom).append(table);
-	
+
+	// Insert checkboxes in all of the body rows
+	table.find('tbody>tr')
+		.prepend('<td><input type="checkbox" checked="checked"\
+					   name="foo" value="label" /></td>')
+		.prepend('<td><input type="checkbox" checked="checked"\
+					   name="foo" value="show" /></td>')
+
+	// Insert empty cells in all of the headers to make
+	// the tables the right shape
+	table.find('thead>tr')
+		.prepend('<th></th><th></th>');
+
+	controls.append(table);
+	$(dom).append(controls);
 /*
 	function register_control_handlers() {
 
