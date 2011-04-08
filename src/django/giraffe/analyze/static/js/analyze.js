@@ -1079,7 +1079,7 @@ window.GiraffeTable = function ($,gd,dom) {
 
 		for (var fx = 0; fx < gd.std_features.length; fx++) {
 			var f = gd.std_features[fx],
-				row = feature_table.children('tbody').append('<tr></tr>');
+				row = feature_table.children('tbody').append('<tr></tr>').children().last();
 
 			row.append('<td>' + f.name() + '</td>');
 			row.append('<td>' + type_code_to_name(f.type(), gd) + '</td>');
@@ -1108,7 +1108,7 @@ window.GiraffeTable = function ($,gd,dom) {
 		for (var fx = 0; fx < gd.orf_features.length; fx++) {
 
 			var f = gd.orf_features[fx],
-				row = orf_table.children('tbody').append('<tr></tr>');
+				row = orf_table.children('tbody').append('<tr></tr>').children().last();
 
 			row.append('<td>' + f.name().replace(/ORF\s+[fF]rame\s+/, '') + '</td>');
 
@@ -1137,7 +1137,7 @@ window.GiraffeTable = function ($,gd,dom) {
 				row;
 
 			if (f.default_show_feature() && f.cut_count() == 1) {
-				row = enzyme_table.children('tbody').append('<tr></tr>');
+				row = enzyme_table.children('tbody').append('<tr></tr>').children().last();
 				row.append('<td>' + f.name() + '</td>');
 				row.append('<td>' + f.cut() + '</td>');
 			}
