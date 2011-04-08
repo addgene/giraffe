@@ -1273,10 +1273,6 @@ window.GiraffeControl = function ($,gd_map,dom) {
 				<option>3-cutters</option>\
 			</select>\
 			</label>\
-			<label>\
-			<input type="checkbox" checked="checked"\
-				   name="hide-enzyme-rows" value="hide" />\
-			Hide in table</label>\
 			</fieldset></tr>\
 			<tr><td><fieldset><legend class="features-genes">Generic Features</legend>\
 				<label>\
