@@ -1427,10 +1427,10 @@ window.GiraffeControl = function ($,gd_map,dom) {
 		.prepend('<td><input type="checkbox" checked="checked"\
 					   name="foo" value="show" /></td>')
 
-	// Insert empty cells in all of the headers to make
+	// Insert header cells in all of the headers to make
 	// the tables the right shape
 	table.find('thead>tr')
-		.prepend('<th></th><th></th>');
+		.prepend('<th>Show</th><th>Label</th>');
 
 	controls.append(table);
 	$(dom).append(controls);
