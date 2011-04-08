@@ -1447,7 +1447,7 @@ window.GiraffeControl = function ($,gd_map,dom) {
 				
 	// The table checkboxes
 	table.find('input[value="label"]').click(function (event) {
-		var feat_id = parseInt($(this).attr("name").replace(/\D/, ''));
+		var feat_id = parseInt($(this).attr("name").replace(/\D/g, ''));
 
 		if ($(this).attr("checked")) {
 			gd_map.show_feature_label(feat_id);

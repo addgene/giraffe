@@ -423,17 +423,19 @@
 		// any number of arguments will work. accessed via arguments object
 		function apply_to_feature() {
 			var funcs_to_call = arguments;
+
 			return (function (id) {
 				var ax;
 
+
 				// All arguments after the first are functions to call
-				for (ax = 1; ax < funcs_to_call.length; ax++) {
+				for (ax = 0; ax < funcs_to_call.length; ax++) {
 					this.features[id][funcs_to_call[ax]]();
 				}
 			});
 		}
 
-		_this.hide_feature = apply_to_feature("hide");
+		_this.hide_feature = apply_to_feature("hide_label", "hide");
 		_this.show_feature = apply_to_feature("show", "show_label");
 		_this.show_feature_label = apply_to_feature("show_label");
 		_this.hide_feature_label = apply_to_feature("hide_label");
