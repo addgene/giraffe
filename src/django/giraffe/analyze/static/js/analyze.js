@@ -1079,7 +1079,10 @@ window.GiraffeTable = function ($,gd,dom) {
 
 		for (var fx = 0; fx < gd.std_features.length; fx++) {
 			var f = gd.std_features[fx],
-				row = feature_table.children('tbody').append('<tr></tr>').children().last();
+				row = feature_table.children('tbody')
+				                   .append('<tr></tr>')
+								   .children().last()
+								   .attr('id', 'feature-' + f.id());
 
 			row.append('<td>' + f.name() + '</td>');
 			row.append('<td>' + type_code_to_name(f.type(), gd) + '</td>');
