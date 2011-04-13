@@ -61,7 +61,12 @@
 //  feature_click_callback: a callback that gets called when a feature
 //  is clicked on. Argument to this callback is a Feature object.
 //
+//  digest: draw the map like a restriction digest: features are very
+//  transparent and have no labels, and enzymes are drawn like normal.
 //
+//  digest_fade_factor: fade the features by this much (multiplicative, in [0,1.0])
+//  Defaults to 0.5.
+//  
 // FRAMEWORK
 // GiraffeDraw()
 // |
@@ -319,8 +324,38 @@ window.GiraffeDraw = function () {
 		var cutters_to_show, 
 			final_width,
 			final_height,
+			_is_digest,
+			_digest_fade_factor,
+			_feature_opacity,
+			_enzyme_opacity,
+			_bold_opacity,
 			thi$ = {};
 	
+		//XXX Wrap up all this default-checking in a method
+		// Digest flag: read-only, set once
+		_is_digest = false;
+		if ('digest' in options) {
+			_is_digest = options['digest'];
+		}
+		thi$.is_digest = function () { return _is_digest; };
+
+		_digest_fade_factor = 0.5;
+		if ('digest_fade_factor' in options) {
+			_digest_fade_factor = options['digest_fade_factor'];
+		}
+
+		// Opacities
+		_feature_opacity = 0.7;
+		_enzyme_opacity = 0.7;
+		if ('opacity' in options) {
+			_feature_opacity = parseFloat(options['opacity']);
+			_enzyme_opacity = parseFloat(options['opacity']);
+		}
+		_bold_opacity = 1.0;
+		thi$.feature_opacity = function () { return _feature_opacity; };
+		thi$.enzyme_opacity = function () { return _enzyme_opacity; };
+		thi$.bold_opacity = function () { return _bold_opacity; };
+
 		// Cutters to show
 		thi$.cutters_to_show = [1];
 		if ('cutters' in options) {
@@ -501,12 +536,26 @@ window.GiraffeDraw = function () {
 		}
 
 		thi$.update = function(recalc) { // Redraw the map
+			var fx, f;
+
 			if (arguments.length < 1) {
 				recalc = true;
 			}
 
 			if (recalc) {
 				this.recalculate_positions();
+			}
+
+			// For digest maps, make features more transparent, and hide their labels
+			if (this.is_digest()) {
+				_feature_opacity = _feature_opacity * _digest_fade_factor;
+
+				for (fx = 0; fx < this.features.length; fx++) {
+					f = this.features[fx];
+
+					if (f.type() != ft.enzyme)
+						f.hide_label();
+				}
 			}
 
             // Hide the right cutters
@@ -613,13 +662,6 @@ window.GiraffeDraw = function () {
 		var enzyme_weight = 1; // Restriction enzymes are drawn differently
 							   // This controls their "thickness" on the map
 		var enzyme_bold_weight = 3; // How thick when highlighted
-		var feature_opacity = 0.7;
-		var enzyme_opacity = 0.7;
-		if ('opacity' in options) {
-			feature_opacity = parseFloat(options['opacity']);
-			enzyme_opacity = parseFloat(options['opacity']);
-		}
-		var bold_opacity = 1.0;
 		var head_width = 25;
 		var head_length = 7;
 
@@ -723,7 +765,7 @@ window.GiraffeDraw = function () {
 			var _color = colors.feature;
 			var _width = feature_width;
 			var _draw_head = false;
-			var _opacity = feature_opacity;
+			var _opacity = _map.feature_opacity();
 			var _opaque = false; // holds opacity for clicks
 			switch(thi$.type()) {
 				case ft.promoter:
@@ -739,7 +781,7 @@ window.GiraffeDraw = function () {
 				case ft.enzyme:
 					_color = colors.enzyme;
 					_width = enzyme_width;
-					_opacity = enzyme_opacity;
+					_opacity = _map.enzyme_opacity();
 					break;
                 case ft.orf:
                     _color = colors.orf;
@@ -884,7 +926,7 @@ window.GiraffeDraw = function () {
 			}
 
 			var _bolder = function () {
-				var props = {"opacity": bold_opacity,
+				var props = {"opacity": _map.bold_opacity(),
                              "font-weight": "bold" };
                 if (thi$.type() == ft.enzyme) {
 				    props["stroke-width"] = enzyme_bold_weight;
@@ -1614,13 +1656,6 @@ window.GiraffeDraw = function () {
 		var enzyme_weight = 1; // Restriction enzymes are drawn differently
 							   // This controls their "thickness" on the map
 		var enzyme_bold_weight = 3; // How thick when highlighted
-		var feature_opacity = 0.7;
-		var enzyme_opacity = 0.7;
-		if ('opacity' in options) {
-			feature_opacity = parseFloat(options['opacity']);
-			enzyme_opacity = parseFloat(options['opacity']);
-		}
-		var bold_opacity = 1.0;
 		var head_width = 25;
 		var head_length = 5;
 
@@ -1684,7 +1719,7 @@ window.GiraffeDraw = function () {
 			var _color = colors.feature;
 			var _width = feature_width;
 			var _draw_head = false;
-			var _opacity = feature_opacity;
+			var _opacity = _map.feature_opacity();
 			var _opaque = false; // holds opacity for clicks
 			switch(thi$.type()) {
 				case ft.promoter:
@@ -1700,7 +1735,7 @@ window.GiraffeDraw = function () {
 				case ft.enzyme:
 					_color = colors.enzyme;
 					_width = enzyme_width;
-					_opacity = enzyme_opacity;
+					_opacity = _map.enzyme_opacity();
 					break;
                 case ft.orf:
                     _color = colors.orf;
@@ -1805,7 +1840,7 @@ window.GiraffeDraw = function () {
 			}
 
 			var _bolder = function () {
-				var props = {"opacity": bold_opacity,
+				var props = {"opacity": _map.bold_opacity(),
                              "font-weight": "bold" };
                 if (thi$.type() == ft.enzyme) {
 				    props["stroke-width"] = enzyme_bold_weight;
