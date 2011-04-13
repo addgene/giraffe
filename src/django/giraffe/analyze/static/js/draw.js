@@ -42,7 +42,7 @@
 //  fade_time: if non-zero, then highlight a feature will cause an
 //  animated fade-in/out effect. Default is 0.
 //
-//  feature_opacity: opacity when feature is shown. if not 1.0, then
+//  opacity: opacity when features/enzymes is shown. if not 1.0, then
 //  when feature is moused over or clicked on, the opacity will become
 //  1.0. Default is 0.7.
 //
