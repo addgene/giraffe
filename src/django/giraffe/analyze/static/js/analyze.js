@@ -1163,109 +1163,22 @@ window.GiraffeControl = function ($,gd_map,dom) {
 		                      "regulatory", "promotors", 
 		                      "primers", "terminators", "origins"];
 
-	// FEATURE CLASS CONTROLS
-
-	/*
-	// General layout
-	controls = $('<form action=""></form>')
-		.addClass('giraffe-controls')
-		.append('<fieldset></fieldset>')
-		.children()
-			.append('<legend>Feature Options</legend>')
-			.append('<table><tbody></tbody></table>')
-			.append('<label>Show extra features</label>')
-			.children('label')
-				.prepend('<input type="checkbox" name="extra-features" value="show" />')
-			.end()
-		.end();
-
-	// Table of fieldsets
-	controls
-		.find('tbody')
-			.append(function (index, html) {
-				var fx,
-					el,
-					cutter_options = 3,
-					feat_name;
-
-				// Table in two rows
-				el = $(this)
-					.append('<tr></tr>')
-					.append('<tr></tr>');
-
-				return el.html();
-
-				el
-					.children()
-						.first()
-							.append('<td><fieldset></fieldset></td>')
-							.find('fieldset')
-								.addClass('giraffe-controls-enzyme')
-								.append('<legend>Restriction enzymes</legend>')
-								.append('<label>Show<br /></label>')
-								.children('label')
-									.append('<select></select>')
-									.children()
-										.attr({
-											name: 'all-enzyme',
-											multiple: 'multiple',
-											size: cutter_options
-										})
-										.append(function (index, html) {
-											var ox;
-											for (ox = 0; ox < cutter_options; ox++) {
-												html += '<option>' + ox + '-cutters</option>';
-											}
-											return html;
-										})
-										.children()
-											.first()
-												.attr('selected', 'selected')
-											.end()
-										.end()
-									.end()
-								.end()
-
-				for (fx = 0; fx < control_feat_types.length; fx++) {
-					feat_name = control_feat_types[fx];
-
-					el
-						.children()
-							// Pick which row, top or bottom
-							.eq(Math.floor(fx/control_feat_types.length))
-								.append('<td><fieldset></fieldset></td>')
-								.find('fieldset')
-									.addClass('giraffe-controls-' + feat_name)
-										.append('<legend>' +
-												title_case(feat_name) +  '</legend>')
-										.append('<label>Label</label>')
-										.append('<label>Show</label>')
-										.children('label')
-											.each(function (index, el) {
-												$(this).append('<input></input>)')
-												       .children()
-												       .attr({
-												       		type: 'checkbox',
-												       		name: 'all-' + feat_name,
-												       		checked: 'checked',
-												       		value: $(this).text().toLowerCase() 
-														})
-											})
-											.first()
-												.after('<br />');
-
-				}
-
-				return el.html();
-			})
-		.end()
-
-	*/
+	draw_table = true;
+	draw_enzyme_controls = true;
+	draw_feature_controls = true;
+	
+	if (gd_map.is_digest()) {
+		draw_table = false;
+		draw_feature_controls = false;
+	}
 
 	controls = $('<form action="" class="giraffe-controls">\
-		<fieldset><legend>Feature Options</legend>\
-			<table><tbody>\
-			<tr><td colspan="4"><fieldset><legend class="enzymes">Restriction Enzymes</legend>\
+		<fieldset><legend>Feature Options</legend><table><tbody></tbody></table>\
+		</fieldset></form>');
+
+	if (draw_enzyme_controls) {
+		controls.find('tbody').append(
+			'<tr><td colspan="4"><fieldset><legend class="enzymes">Restriction Enzymes</legend>\
 			<label>Show <br />\
 			<select name="all-enzyme" multiple="multiple" size="3"> \
 				<option selected="selected">1-cutters</option>\
