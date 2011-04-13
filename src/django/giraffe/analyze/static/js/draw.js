@@ -80,9 +80,14 @@
 // Protect scope, but ensure that GiraffeDraw() is global
 (function(){
 
- 	///////////////////////////////////////////////////////////////////
-	// Crockford-stype prototypal inheritence
-	//
+ 	/**
+	 * Crockford-stype prototypal inheritence.
+	 *
+	 * Create a new object that inherits all public properites of the given object.
+	 *
+	 * @param  o the object to extend
+	 * @return   a new object whose __proto__ property points to o
+	 */
 	if (typeof Object.create !== 'function') {
 		Object.create = function (o) {
 			// Empty function object, to be used as a placeholder
@@ -103,11 +108,14 @@
 
  	///////////////////////////////////////////////////////////////////
 	// Package-scope variables
-	var _debug, ft, svg, colors;
+	var _debug,
+		ft,
+		svg,
+		colors;
 	
 	_debug = false;
 
-	// Feature Types
+	// Feature types: numerical codes to names
 	ft = { 
 		feature:    1, promoter:   2, primer:        3,
 		enzyme:     4, gene:       5, origin:        6,
@@ -115,8 +123,6 @@
         orf:       10
 	};
 
-	//// Package-scope utility functions
-	// SVG Object
 	// For dealing with the SVG syntax
 	svg = {
 		move: function (x, y) {
@@ -149,27 +155,38 @@
 		orf:     "#00c8c8",
 	};
 
- 
- window.GiraffeDraw = function () {
+/**
+ * Class: JSON parsing and feature drawing capabilities for a single feature.
+ *
+ * Only one GiraffeDraw per sequence.
+ */
+window.GiraffeDraw = function () {
 
  	///////////////////////////////////////////////////////////////////
- 	// One GD per sequence
-	// sequence-scope variables
-	var seq_length;
-    var full_sequence = '';
+ 	// GD-scope variables
+	var seq_length,
+    	full_sequence = '',
+		// Helpers to keep track of frequently used features
+		all_features = [],
+    	orf_features = [],
+    	enzyme_features = [],
+    	std_features = [];
 
-    // Helpers to keep track of frequently used features
-	var all_features = [];
-    var orf_features = [];
-    var enzyme_features = [];
-    var std_features = [];
 
-    this.Feature_Type = ft;
+	// XXX hack to provide link to GiraffeDraw to the map functions.
 	var gd = this;
 
-
 	///////////////////////////////////////////////////////////////////
-	// JSON Parsing
+	// Public data members
+	
+	// Expose the feature types
+    this.Feature_Type = ft;
+
+
+	/**
+	 * Parse JSON list of features
+	 *
+	 */
 	this.read = function (json) {
 		all_features = []; // package scope
 		seq_length = json[0]; // package scope
@@ -1552,7 +1569,6 @@
 				paper.changeSize(_this.final_width,_this.final_height,false,false)
 			}
 		}
-
 
 		return _this;
 	}; // End CircMap()
