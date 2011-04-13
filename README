@@ -4,3 +4,33 @@ maps of those features, and performing sequence analysis.
 This software is written and copyrighted by Addgene, and released
 under the MIT License. See LICENSE file.
 
+The software is mostly divided into two parts: a Django based service that
+detects features within a sequence, and a set of Javascript widgets that
+visualize the sequence, features, digests, etc.
+
+Requirement:
+
+	gcc - part of the feature detection algorithm is in C
+	python-setuptools - if you want to use easy_install to install mysql-python
+	python (2.7+)
+	django (1.2+)
+	BioPython (1.56) - ORF detection via BioPython - you can skip NumPy requirement
+
+	apt-get install libmysqlclient15-dev
+	apt-get install mysql-server
+	easy_install -U mysql-python
+
+
+Install:
+
+	git clone git@github.com:addgene/giraffe.git
+	cd giraffe
+	cd src/django/giraffe/blat/frags; gcc -O6 -o bin/frags frags.c
+
+	mysql
+	> DROP DATABASE giraffe;
+    > CREATE DATABASE giraffe CHARACTER SET 'utf8'
+	
+	cd src/django/giraffe; python manage.py syncdb --noinput
+
+
