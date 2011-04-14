@@ -317,22 +317,46 @@ window.GiraffeAnalyze = function ($,gd,options) {
         $('svg path, svg text').mouseout(function(){ $(help).hide(); });
     }
 
-    function digest_tab(dom) {
+
+	function digest_map_panes(dom) {
+
 		var cpanes,
+			dom_map_c,
 			dom_map_id_c = random_dom_id(),
 			dom_control_c,
 			dom_map_l,
+			dom_map_id_l = random_dom_id(),
 			dom_control_l,
+			circular_digest_map_shrink_factor = 0.7;
+
 		// Cutter map above
 		cpanes = Switch_Panes(['Linear Digest', 'Circular Digest']);
 
 		$(dom)
 			.append(cpanes.panes);
 
+		// Linear digest pane
+        dom_map_l = $('<div id="'+ dom_map_id_l+'" class="giraffe-analyze-map giraffe-analyze-linear-map giraffe-digest-map"></div>');
+		dom_control_l = $('<div id="' + random_dom_id()  + '" class="giraffe-analyze-map-control giraffe-digest-control"></div>');
+        $(cpanes.pane(0))
+            .append(dom_map_l)
+            .append(dom_control_l);
+
+        gd_l = gd.LinearMap({
+            'map_dom_id' : dom_map_id_l,
+            'plasmid_name' : name,
+			'digest' : true,
+            'cutters': [1],
+            'map_width' : map_width,
+            'map_height' : map_height,
+            'feature_click_callback' : map_feature_click_callback
+        });
+		gc_l = GiraffeControl($, gd_l, dom_control_l);
+
 		// Circular digest pane
         dom_map_c = $('<div id="'+ dom_map_id_c+'" class="giraffe-analyze-map giraffe-analyze-circular-map giraffe-digest-map"></div>');
 		dom_control_c = $('<div id="' + random_dom_id()  + '" class="giraffe-analyze-map-control giraffe-digest-control"></div>');
-        $(cpanes.pane(0))
+        $(cpanes.pane(1))
             .append(dom_map_c)
             .append(dom_control_c);
 
@@ -340,9 +364,9 @@ window.GiraffeAnalyze = function ($,gd,options) {
             'map_dom_id' : dom_map_id_c,
             'plasmid_name' : name,
 			'digest' : true,
-            'cutters': [1,2,3],
-            'map_width' : map_width,
-            'map_height' : map_height,
+            'cutters': [1],
+            'map_width' : map_width * circular_digest_map_shrink_factor,
+            'map_height' : map_height * circular_digest_map_shrink_factor,
             'feature_click_callback' : map_feature_click_callback
         });
 		gc_c = GiraffeControl($, gd_c, dom_control_c);
@@ -350,7 +374,14 @@ window.GiraffeAnalyze = function ($,gd,options) {
         cpanes.hide_all();
         cpanes.show(0);
 
-		// Digest data below
+		return cpanes;
+	}
+
+    function digest_tab(dom) {
+
+		var map_panes = digest_map_panes(dom);
+
+   		// Digest data below
         panes = Switch_Panes(
             [['All Cutters','See restriction enzymes that cut the sequence'],
              ['Unique Cutters','See restriction enzymes that cut the sequence only once'],
@@ -364,7 +395,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
             .append(panes.links)
             .append(panes.panes);
 
-        var all = cutters.all();
+		var all = cutters.all();
         var list = $('<ul></ul>').addClass('giraffe-enzyme-list');
         for (var i in all) {
             var name = $('<label></label>').append(all[i].name());

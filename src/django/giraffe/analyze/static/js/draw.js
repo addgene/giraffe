@@ -339,7 +339,7 @@ window.GiraffeDraw = function () {
 		}
 		thi$.is_digest = function () { return _is_digest; };
 
-		_digest_fade_factor = 0.3;
+		_digest_fade_factor = 0.15;
 		if ('digest_fade_factor' in options) {
 			_digest_fade_factor = options['digest_fade_factor'];
 		}
@@ -352,6 +352,10 @@ window.GiraffeDraw = function () {
 			_enzyme_opacity = parseFloat(options['opacity']);
 		}
 		_bold_opacity = 1.0;
+
+		if (_is_digest)
+			_feature_opacity = _feature_opacity * _digest_fade_factor;
+
 		thi$.feature_opacity = function () { return _feature_opacity; };
 		thi$.enzyme_opacity = function () { return _enzyme_opacity; };
 		thi$.bold_opacity = function () { return _bold_opacity; };
@@ -548,14 +552,10 @@ window.GiraffeDraw = function () {
 
 			// For digest maps, make features more transparent, and hide their labels
 			if (this.is_digest()) {
-				_feature_opacity = _feature_opacity * _digest_fade_factor;
-
 				for (fx = 0; fx < this.features.length; fx++) {
 					f = this.features[fx];
-
 					if (f.type() != ft.enzyme) {
 						f.hide_label();
-						f.opacity(_feature_opacity);
 					}
 				}
 			}
@@ -605,7 +605,7 @@ window.GiraffeDraw = function () {
 				hide_feature_label: change_context(this.hide_feature_label, this),
 				show_extra_features: change_context(this.show_extra_features, this),
 				hide_extra_features: change_context(this.hide_extra_features, this),
-				is_digest: change_context(this.is_digest, this),
+				is_digest: this.is_digest,
 				gd: gd
 			}
 		}
