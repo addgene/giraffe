@@ -379,7 +379,9 @@ window.GiraffeAnalyze = function ($,gd,options) {
 
     function digest_tab(dom) {
 
+   		// Digest maps above
 		var map_panes = digest_map_panes(dom);
+
 
    		// Digest data below
         panes = Switch_Panes(
@@ -496,6 +498,30 @@ window.GiraffeAnalyze = function ($,gd,options) {
 
         $(panes.pane(3)).append(__digest(true));
         $(panes.pane(4)).append(__digest(false));
+
+		// Digest map control by the digest panes
+		
+		// show a linear digest for the all- and unique-cutters panes
+		// and for the linear digest pane
+		$(panes.link(0)).click(function () {
+			map_panes.show(0);
+		});
+		$(panes.link(1)).click(function () {
+			map_panes.show(0);
+		});
+		$(panes.link(4)).click(function () {
+			map_panes.show(0);
+		});
+
+		// show nothing for the non-cutters pane
+		$(panes.link(2)).click(function () {
+			map_panes.hide_all();
+		});
+
+		// show a circular digest for the circular pane
+		$(panes.link(3)).click(function () {
+			map_panes.show(1);
+		});
 
         panes.show(0);
     }
