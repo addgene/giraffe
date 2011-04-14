@@ -34,3 +34,27 @@ Run test server:
 
 	Then visit "/"
 
+	Click on "See an example" to see an example.
+
+API:
+
+	You can POST a sequence to "/blat/", with the following CGI variables:
+
+		db=default&sequence=your_dna_sequence_here
+
+	Then you will be redirected to a URL that looks like
+
+		/blat/8de364690dbeb88d2ab63bd66861725539aa3204/default
+
+	The "8de3...3204" string is the hash identifier for your sequence. You can
+	use this hash identifier and this URL to retrieve features in the future
+	(JSON format).
+	
+	Also, you can use the hash identifier with the Javascript widgets. You will
+	need to load several js and css files as well. See demo.html for example --
+	you can put demo.html on your local computer and load it, and see the
+	sequence analysis widget show up on your browser.
+
+	(demo.html is currently set to use neon.addgene.org:8800 as the giraffe
+	server, that may be different for you)
+
