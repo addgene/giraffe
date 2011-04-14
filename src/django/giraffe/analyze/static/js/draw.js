@@ -1997,7 +1997,7 @@ window.GiraffeDraw = function () {
 				var w = fake_label.getBBox().width;
 				var h = fake_label.getBBox().height;
 				fake_label.remove();
-				
+
 				return { width: w, height: h };
 			}
 
@@ -2332,12 +2332,9 @@ window.GiraffeDraw = function () {
 		}
 
 		thi$.draw_labels = function () {
-			// Calculate the height of a label
+
+			var label_height = 13; // Just an educated guess
 			var label_leading = 1.3;
-			var label_height = 0;
-            if (thi$.features.length) {
-                label_height = thi$.features[0].label_size().height * label_leading;
-            }
 
 			// Finally, draw all the features
             for (var sx = 0; sx < label_pos[0].length; sx++) {
