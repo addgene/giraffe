@@ -339,7 +339,7 @@ window.GiraffeDraw = function () {
 		}
 		thi$.is_digest = function () { return _is_digest; };
 
-		_digest_fade_factor = 0.5;
+		_digest_fade_factor = 0.3;
 		if ('digest_fade_factor' in options) {
 			_digest_fade_factor = options['digest_fade_factor'];
 		}
@@ -553,8 +553,10 @@ window.GiraffeDraw = function () {
 				for (fx = 0; fx < this.features.length; fx++) {
 					f = this.features[fx];
 
-					if (f.type() != ft.enzyme)
+					if (f.type() != ft.enzyme) {
 						f.hide_label();
+						f.opacity(_feature_opacity);
+					}
 				}
 			}
 
@@ -590,6 +592,7 @@ window.GiraffeDraw = function () {
 			// Export the main properties as part of a Map-like object
 			// descendant classes inheret this ability, and because of the
 			// this pointer, will return /Their own/ draw and features objects
+			// XXX: loses original .length property
 			return { 
 				redraw_cutters: change_context(this.redraw_cutters, this),
 				show_feature_type: change_context(this.show_feature_type, this),
@@ -602,6 +605,7 @@ window.GiraffeDraw = function () {
 				hide_feature_label: change_context(this.hide_feature_label, this),
 				show_extra_features: change_context(this.show_extra_features, this),
 				hide_extra_features: change_context(this.hide_extra_features, this),
+				is_digest: change_context(this.is_digest, this),
 				gd: gd
 			}
 		}
@@ -808,6 +812,13 @@ window.GiraffeDraw = function () {
 			thi$.label_drawn = function() { return _label_drawn; };
 			thi$.feature_set = function() { return _feature_set };
 			thi$.label_set = function() { return _label_set };
+
+			thi$.opacity = function() { 
+				if (arguments.length < 1) 
+					return _opacity; 
+				else 
+					_opacity = arguments[0]; 
+			};
 
             thi$.initialize = function() {
 				paper = map.paper;
@@ -1710,6 +1721,13 @@ window.GiraffeDraw = function () {
 			var _arrow_set;
 			var _label_set;
 			var _label_drawn = false;
+
+			thi$.opacity = function() { 
+				if (arguments.length < 1) 
+					return _opacity; 
+				else 
+					_opacity = arguments[0]; 
+			};
 
 			// Visual properties
 			var _visible = true;

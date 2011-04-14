@@ -318,6 +318,39 @@ window.GiraffeAnalyze = function ($,gd,options) {
     }
 
     function digest_tab(dom) {
+		var cpanes,
+			dom_map_id_c = random_dom_id(),
+			dom_control_c,
+			dom_map_l,
+			dom_control_l,
+		// Cutter map above
+		cpanes = Switch_Panes(['Linear Digest', 'Circular Digest']);
+
+		$(dom)
+			.append(cpanes.panes);
+
+		// Circular digest pane
+        dom_map_c = $('<div id="'+ dom_map_id_c+'" class="giraffe-analyze-map giraffe-analyze-circular-map giraffe-digest-map"></div>');
+		dom_control_c = $('<div id="' + random_dom_id()  + '" class="giraffe-analyze-map-control giraffe-digest-control"></div>');
+        $(cpanes.pane(0))
+            .append(dom_map_c)
+            .append(dom_control_c);
+
+        gd_c = gd.CircularMap({
+            'map_dom_id' : dom_map_id_c,
+            'plasmid_name' : name,
+			'digest' : true,
+            'cutters': [1,2,3],
+            'map_width' : map_width,
+            'map_height' : map_height,
+            'feature_click_callback' : map_feature_click_callback
+        });
+		gc_c = GiraffeControl($, gd_c, dom_control_c);
+
+        cpanes.hide_all();
+        cpanes.show(0);
+
+		// Digest data below
         panes = Switch_Panes(
             [['All Cutters','See restriction enzymes that cut the sequence'],
              ['Unique Cutters','See restriction enzymes that cut the sequence only once'],
