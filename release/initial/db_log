@@ -1,8 +1,0 @@
-@1
-
-SELECT 1
-
-@50
-`cd ../../src/django/giraffe/blat/frags; gcc -O6 -o bin/frags frags.c`
-
-
