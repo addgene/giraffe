@@ -11,15 +11,10 @@ visualize the sequence, features, digests, etc.
 Requirement:
 
 	gcc - part of the feature detection algorithm is in C
-	python-setuptools - if you want to use easy_install to install mysql-python
 	python (2.7+)
 	django (1.2+)
 	BioPython (1.56) - ORF detection via BioPython - you can skip NumPy requirement
-
-	apt-get install libmysqlclient15-dev
-	apt-get install mysql-server
-	easy_install -U mysql-python
-
+	MySQL, and mysql-python module
 
 Install:
 
@@ -29,8 +24,13 @@ Install:
 
 	mysql
 	> DROP DATABASE giraffe;
-    > CREATE DATABASE giraffe CHARACTER SET 'utf8'
+	> CREATE DATABASE giraffe CHARACTER SET 'utf8'
 	
 	cd src/django/giraffe; python manage.py syncdb --noinput
 
+Run test server:
+
+	cd src/django/giraffe; python manage.py runserver
+
+	Then visit "/"
 
