@@ -1159,9 +1159,11 @@ window.GiraffeControl = function ($,gd_map,dom) {
  	var controls,
 		table,
 		_debug = false,
-		control_feat_types = ["generic-features", "genes",
-		                      "regulatory", "promotors", 
-		                      "primers", "terminators", "origins"];
+		draw_table,
+		draw_feature_controls,
+		control_feat_types,
+		feat_control_table,
+		ftx, ft;
 
 	draw_table = true;
 	draw_enzyme_controls = true;
@@ -1173,217 +1175,173 @@ window.GiraffeControl = function ($,gd_map,dom) {
 	}
 
 	controls = $('<form action="" class="giraffe-controls">\
-		<fieldset><legend>Feature Options</legend><table><tbody></tbody></table>\
+		<fieldset><legend>Feature Options</legend><table><tbody><tr class="controls-row"></tr></tbody></table>\
 		</fieldset></form>');
 
 	if (draw_enzyme_controls) {
-		controls.find('tbody').append(
-			'<tr><td colspan="4"><fieldset><legend class="enzymes">Restriction Enzymes</legend>\
-			<label>Show <br />\
-			<select name="all-enzyme" multiple="multiple" size="3"> \
-				<option selected="selected">1-cutters</option>\
-				<option>2-cutters</option>\
-				<option>3-cutters</option>\
-			</select>\
-			</label>\
-			</fieldset></tr>\
-			<tr><td><fieldset><legend class="features-genes">Generic Features</legend>\
-				<label>\
-				<input type="checkbox" checked="checked"\
-					   name="all-feature" value="label" />\
-				Label</label><br />\
-				<label>\
-				<input type="checkbox" checked="checked"\
-					   name="all-feature" value="show" />\
-				Show</label>\
-			</fieldset></td>\
-			<td><fieldset><legend class="features-genes">Genes</legend>\
-				<label>\
-				<input type="checkbox" checked="checked"\
-					   name="all-gene" value="label" />\
-				Label</label><br />\
-				<label>\
-				<input type="checkbox" checked="checked"\
-					   name="all-gene" value="show" />\
-				Show</label>\
-			</fieldset></td>\
-			<td><fieldset><legend class="origins-regulatory">Regulatory</legend>\
-				<label>\
-				<input type="checkbox" checked="checked"\
-					   name="all-regulatory" value="label" />\
-				Label</label><br />\
-				<label>\
-				<input type="checkbox" checked="checked"\
-					   name="all-regulatory" value="show" />\
-				Show</label>\
-			</fieldset></td>\
-			<td><fieldset><legend class="promoters-primers-terminators">Promoters</legend>\
-				<label>\
-				<input type="checkbox" checked="checked"\
-					   name="all-promoter" value="label" />\
-				Label</label><br />\
-				<label>\
-				<input type="checkbox" checked="checked"\
-					   name="all-promoter" value="show" />\
-				Show</label>\
-			</fieldset></td></tr>\
-			<tr><td><fieldset><legend class="promoters-primers-terminators">Primers</legend>\
-				<label>\
-				<input type="checkbox" checked="checked"\
-					   name="all-primer" value="label" />\
-				Label</label><br />\
-				<label>\
-				<input type="checkbox" checked="checked"\
-					   name="all-primer" value="show" />\
-				Show</label>\
-			</fieldset></td>\
-			<td><fieldset><legend class="promoters-primers-terminators">Terminators</legend>\
-				<label>\
-				<input type="checkbox" checked="checked"\
-					   name="all-terminator" value="label" />\
-				Label</label><br />\
-				<label>\
-				<input type="checkbox" checked="checked"\
-					   name="all-terminator" value="show" />\
-				Show</label>\
-			</fieldset></td>\
-			<td><fieldset><legend class="origins-regulatory">Origins</legend>\
-				<label>\
-				<input type="checkbox" checked="checked"\
-					   name="all-origin" value="label" />\
-				Label</label><br />\
-				<label>\
-				<input type="checkbox" checked="checked"\
-					   name="all-origin" value="show" />\
-				Show</label>\
-			</fieldset></td>\
-			<td><fieldset><legend class="orfs">ORFs</legend>\
-				<label>\
-				<input type="checkbox" checked="checked"\
-					   name="all-orf" value="label" />\
-				Label</label><br />\
-				<label>\
-				<input type="checkbox" checked="checked"\
-					   name="all-orf" value="show" />\
-				Show</label>\
-			</fieldset></td></tr>\
-			</tbody></table>\
-			<label>\
-			<input type="checkbox"\
-				   name="extra-features" value="show" />\
-			Show extra features</label>\
-		</fieldset>\
-	</form>');
+		controls.find('tr').append(
+			'<td class="enzymes"><table>\
+			<thead><tr><th>Restriction Enzymes</th></tr></thead>\
+			<tbody>\
+				<tr><td><label><input type="checkbox" checked="checked"\
+					          name="cutters-1" value="show" />\
+				1-cutters</label></td></tr>\
+				<tr><td><label><input type="checkbox"\
+					          name="cutters-2" value="show" />\
+				2-cutters</label></td></tr>\
+				<tr><td><label><input type="checkbox"\
+					          name="cutters-3" value="show" />\
+				3-cutters</label></td></tr>\
+			</tbody>\
+			</table></td>')
 
+		// Changes to the Restriction Enzyme selection
+		controls.find('input[name|="cutters"]').change(function (event) {
+			var opts = [];
 
-	// Changes to the Restriction Enzyme selection
-	controls.find('select[name="all-enzyme"]').change(function (event) {
-		var opts = [];
+			// Parse out selected options
+			$(this).closest('tbody').find("input[checked]").each(function () {
+				opts.push(parseInt($(this).attr('name').match(/\d+/)));
+			});
 
-		// Parse out selected options
-		$(this).find("option:selected").each(function () {
-			opts.push(parseInt($(this).text().match(/\d+/)));
+			gd_map.redraw_cutters(opts);
 		});
+	}
+	
+	if (draw_feature_controls) {
+		//                     Control name        feature type
+		control_feat_types = [["Generic features", "feature"],
+							  ["Genes",            "gene"],
+							  ["Regulatory",       "regulatory"],
+							  ["Promoters",        "promoter"],
+							  ["Primers",          "primer"],
+							  ["Terminators",      "terminator"],
+							  ["Origins",          "origin"],
+							  ["ORFs",             "orf"]];
 
-		gd_map.redraw_cutters(opts);
-	});
+		feat_control_table = controls.find('tr.controls-row')
+			.append('<td class="features">\
+				<table><thead><tr><th>Show</th><th>Label</th><th>Feature Type</th></tr>\
+				</thead><tbody></tbody></table>')
+			.find('td.features tbody');
 
-	// Changes to the feature types
-	controls.find('input[value="show"][name!="extra-features"]').click(function (event) {
-		var feat_type_name,
-			label_checkbox;
-
-		feat_type_name = $(this).attr("name").replace(/all-/, '');
-		label_checkbox = $(this).parent().siblings().children().first();
-
-		if ($(this).attr("checked")) {
-			gd_map.show_feature_type(feat_type_name);
-			label_checkbox.removeAttr("disabled");
-			label_checkbox.attr("checked", "checked");
-		} else {
-			gd_map.hide_feature_type(feat_type_name);
-			label_checkbox.attr("disabled", "disabled");
+		for (ftx = 0; ftx < control_feat_types.length; ftx++) {
+			feat_control_table.append(
+			'<tr class="' + control_feat_types[ftx][1] + '">\
+				<td><input type="checkbox" checked="checked"\
+					   name="all-' + control_feat_types[ftx][1] + '" value="show" />\
+				</td>\
+				<td><input type="checkbox" checked="checked"\
+					   name="all-' + control_feat_types[ftx][1] + '" value="label" />\
+				</td>\
+				<td>' +  control_feat_types[ftx][0] + '</td></tr>');
 		}
-	});
 
-	controls.find('input[value="label"]').click(function (event) {
-		var feat_type_name = $(this).attr("name").replace(/all-/, '');
+		controls.children('fieldset')
+			.append('<label><input type="checkbox" name="extra-features" value="show" />\
+					Show extra features</label>');
 
-		if ($(this).attr("checked")) {
-			gd_map.show_feature_label_type(feat_type_name);
-		} else {
-			gd_map.hide_feature_label_type(feat_type_name);
-		}
-	});
+		// Changes to the feature types
+		controls.find('td.features input[value="show"]').click(function (event) {
+			var feat_type_name,
+				label_checkbox;
 
-	// The "extra features" checkbox
-	controls.find('input[name="extra-features"]').click(function (event) {
-		if ($(this).attr("checked")) {
-			gd_map.show_extra_features();
-		} else {
-			gd_map.hide_extra_features();
-		}
-	});
+			feat_type_name = $(this).attr("name").replace(/all-/, '');
+			label_checkbox = $(this).parent().siblings().children().first();
 
-
-	// INDIVIDUAL FEATURE TABLE
-	table = GiraffeTable($, gd_map.gd, 
-		$('<div></div>')
-			.attr('id', random_dom_id())
-			.addClass('giraffe-control-table'))
-
-	// Insert header cells in all of the headers to make
-	// the tables the right shape
-	table.find('thead>tr')
-		.prepend('<th>Show</th><th>Label</th>');
-
-	// Insert show/label checkboxes in all of the body rows
-	table.find('tbody>tr')
-		.prepend(function (index, html) {
-			var pre = '',
-				start = '<td><input type="checkbox" checked="checked" name="',
-				middle = '" value="',
-				end = '" /></td>',
-				types = [ 'show', 'label' ],
-				tx;
-
-			for (tx = 0; tx < types.length; tx++) {
-				pre += start;
-				pre += $(this).attr('id');
-				pre += middle;
-				pre += types[tx];
-				pre += end;
+			if ($(this).attr("checked")) {
+				gd_map.show_feature_type(feat_type_name);
+				label_checkbox.removeAttr("disabled");
+				label_checkbox.attr("checked", "checked");
+			} else {
+				gd_map.hide_feature_type(feat_type_name);
+				label_checkbox.attr("disabled", "disabled");
 			}
-
-			return pre;
 		});
-				
-	// The table checkboxes
-	table.find('input[value="label"]').click(function (event) {
-		var feat_id = parseInt($(this).attr("name").replace(/\D/g, ''));
 
-		if ($(this).attr("checked")) {
-			gd_map.show_feature_label(feat_id);
-		} else {
-			gd_map.hide_feature_label(feat_id);
-		}
-	});
+		controls.find('td.features input[value="label"]').click(function (event) {
+			var feat_type_name = $(this).attr("name").replace(/all-/, '');
 
-	table.find('input[value="show"]').click(function (event) {
-		var feat_id = parseInt($(this).attr("name").replace(/\D/g, '')),
-			label_checkbox = $(this).parent().siblings().children('input').first();
+			if ($(this).attr("checked")) {
+				gd_map.show_feature_label_type(feat_type_name);
+			} else {
+				gd_map.hide_feature_label_type(feat_type_name);
+			}
+		});
 
-		if ($(this).attr("checked")) {
-			gd_map.show_feature(feat_id);
-			label_checkbox.removeAttr("disabled");
-			label_checkbox.attr("checked", "checked");
-		} else {
-			label_checkbox.attr("disabled", "disabled");
-			gd_map.hide_feature(feat_id);
-		}
-	});
+		// The "extra features" checkbox
+		controls.find('input[name="extra-features"]').click(function (event) {
+			if ($(this).attr("checked")) {
+				gd_map.show_extra_features();
+			} else {
+				gd_map.hide_extra_features();
+			}
+		});
 
-	controls.append(table);
+	}
+
+
+	if (draw_table) {
+		// INDIVIDUAL FEATURE TABLE
+		table = GiraffeTable($, gd_map.gd, 
+			$('<div></div>')
+				.attr('id', random_dom_id())
+				.addClass('giraffe-control-table'))
+
+		// Insert header cells in all of the headers to make
+		// the tables the right shape
+		table.find('thead>tr')
+			.prepend('<th>Show</th><th>Label</th>');
+
+		// Insert show/label checkboxes in all of the body rows
+		table.find('tbody>tr')
+			.prepend(function (index, html) {
+				var pre = '',
+					start = '<td><input type="checkbox" checked="checked" name="',
+					middle = '" value="',
+					end = '" /></td>',
+					types = [ 'show', 'label' ],
+					tx;
+
+				for (tx = 0; tx < types.length; tx++) {
+					pre += start;
+					pre += $(this).attr('id');
+					pre += middle;
+					pre += types[tx];
+					pre += end;
+				}
+
+				return pre;
+			});
+					
+		// The table checkboxes
+		table.find('input[value="label"]').click(function (event) {
+			var feat_id = parseInt($(this).attr("name").replace(/\D/g, ''));
+
+			if ($(this).attr("checked")) {
+				gd_map.show_feature_label(feat_id);
+			} else {
+				gd_map.hide_feature_label(feat_id);
+			}
+		});
+
+		table.find('input[value="show"]').click(function (event) {
+			var feat_id = parseInt($(this).attr("name").replace(/\D/g, '')),
+				label_checkbox = $(this).parent().siblings().children('input').first();
+
+			if ($(this).attr("checked")) {
+				gd_map.show_feature(feat_id);
+				label_checkbox.removeAttr("disabled");
+				label_checkbox.attr("checked", "checked");
+			} else {
+				label_checkbox.attr("disabled", "disabled");
+				gd_map.hide_feature(feat_id);
+			}
+		});
+
+		controls.append(table);
+	}
+
 	$(dom).append(controls);
 /*
 	function register_control_handlers() {
