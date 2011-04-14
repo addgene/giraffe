@@ -663,7 +663,7 @@ window.GiraffeDraw = function () {
 		// Feature visual properties
 		var feature_width = 15;
 		var enzyme_width = 25;
-		var enzyme_weight = 1; // Restriction enzymes are drawn differently
+		var enzyme_weight = 2; // Restriction enzymes are drawn differently
 							   // This controls their "thickness" on the map
 		var enzyme_bold_weight = 3; // How thick when highlighted
 		var head_width = 25;
@@ -1664,7 +1664,7 @@ window.GiraffeDraw = function () {
 		// Feature visual properties
 		var feature_width = 15;
 		var enzyme_width = 25;
-		var enzyme_weight = 1; // Restriction enzymes are drawn differently
+		var enzyme_weight = 2; // Restriction enzymes are drawn differently
 							   // This controls their "thickness" on the map
 		var enzyme_bold_weight = 3; // How thick when highlighted
 		var head_width = 25;
