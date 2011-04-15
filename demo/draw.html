@@ -1,0 +1,20 @@
+<!--
+This file shows how you can use a hash from the Giraffe Django service to
+retrieve features and draw them using the JavaScript widget.
+-->
+<html>
+<head> 
+<base href="http://neon.addgene.org:8800/" />
+</head>
+<body>
+<div id="giraffe-map"></div>
+<script src="/static/js/raphael-min.js"></script> 
+<script src="/static/js/scale.raphael.js"></script> 
+<script src="/static/analyze/js/draw.js"></script> 
+<script>var gd = GiraffeDraw();</script> 
+<script src="/blat/8de364690dbeb88d2ab63bd66861725539aa3204/default?sequence=1&jsonp=gd.read"></script> 
+<script>
+gd.CircularMap({ 'map_dom_id' : 'giraffe-map', 'plasmid_name' : 'My Plasmid' })
+</script>
+</body> 
+</html>

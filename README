@@ -5,10 +5,15 @@ This software is written and copyrighted by Addgene, and released
 under the MIT License. See LICENSE file.
 
 The software is mostly divided into two parts: a Django based service that
-detects features within a sequence, and a set of Javascript widgets that
+detects features within a sequence, and a set of JavaScript widgets that
 visualize the sequence, features, digests, etc.
 
-Requirement:
+You can use the two parts separately. I.e. you can just use the JavaScript
+widget for visualizing and analyzing sequence and features. See HTML files in
+the demo directory.
+
+
+Requirement for Django service:
 
 	gcc - part of the feature detection algorithm is in C
 	python (2.7+)
@@ -17,7 +22,8 @@ Requirement:
 		(You don't need NumPy for BioPython)
 	MySQL, and mysql-python module
 
-Install:
+
+Install Django service:
 
 	git clone git@github.com:addgene/giraffe.git
 	cd giraffe
@@ -29,6 +35,7 @@ Install:
 	
 	cd src/django/giraffe; python manage.py syncdb --noinput
 
+
 Run test server:
 
 	cd src/django/giraffe; python manage.py runserver
@@ -36,6 +43,7 @@ Run test server:
 	Then visit "/"
 
 	Click on "See an example" to see an example.
+
 
 API:
 
@@ -51,11 +59,11 @@ API:
 	use this hash identifier and this URL to retrieve features in the future
 	(JSON format).
 
-	Also, you can use the hash identifier with the Javascript widgets. For each
-	widget, you will need to include several JS files. See demo-analyzer.html
-	and demo-draw.html for examples. You can put these HTML files on your local
-	computer, and load it in your browser. These files show how you can
-	incorporate Giraffe sequence map or sequence analyzer in your web app.
+	Also, you can use the hash identifier with the JavaScript widgets. See demo
+	directory. You can download the HTML files from the demo directory to your
+	local computer, and load them in your browser. These files show how you can
+	incorporate Giraffe sequence map and analyzer widgets in your web app.
+	
 
 How to build your own features database:
 
