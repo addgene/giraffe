@@ -318,6 +318,17 @@ window.GiraffeDraw = function () {
 
 
 	///////////////////////////////////////////////////////////////////
+	// Generic Features that are drawn on a map
+	function DrawnFeature(basic_feature, map) {
+		var thi$ = Object.create(basic_feature);
+
+
+		return thi$;
+	}
+
+
+
+	///////////////////////////////////////////////////////////////////
 	// Generic Map prototype class
 	function Map(options) {
 		
