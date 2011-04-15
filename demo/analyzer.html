@@ -1,0 +1,31 @@
+<!--
+This file shows how you can use a hash from the Giraffe Django service to
+retrieve sequence and features and analyze them using the JavaScript widget.
+-->
+<html>
+<head> 
+<base href="http://neon.addgene.org:8800/" />
+<link href="/static/css/jquery-ui/redmond/jquery-ui-1.8.6.custom.css"
+ rel="stylesheet" type="text/css" /> 
+<link rel="stylesheet" href="/static/analyze/css/analyze.css" type="text/css"/> 
+</head>
+<body>
+<div id="giraffe-analyze"></div>
+<script src="/static/js/jquery-1.4.2.min.js"> </script> 
+<script src="/static/js/jquery-ui-1.8.6.custom.min.js"></script> 
+<script src="/static/js/jquery.ui.tooltip.js"></script> 
+<script>jQuery.noConflict()</script> 
+<script src="/static/js/raphael-min.js"></script> 
+<script src="/static/js/scale.raphael.js"></script> 
+<script src="/static/analyze/js/bio.js"></script> 
+<script src="/static/analyze/js/draw.js"></script> 
+<script src="/static/analyze/js/analyze.js"></script> 
+<script>var gd = GiraffeDraw();</script> 
+<script src="/blat/8de364690dbeb88d2ab63bd66861725539aa3204/default?sequence=1&jsonp=gd.read"></script>
+<script>
+jQuery(document).ready(function($){
+    GiraffeAnalyze($,gd,{'dom_id':'giraffe-analyze','name':'My Plasmid'});
+})
+</script> 
+</body> 
+</html>

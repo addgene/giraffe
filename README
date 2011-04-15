@@ -5,23 +5,25 @@ This software is written and copyrighted by Addgene, and released
 under the MIT License. See LICENSE file.
 
 The software is mostly divided into two parts: a Django based service that
-detects features within a sequence, and a set of Javascript widgets that
+detects features within a sequence, and a set of JavaScript widgets that
 visualize the sequence, features, digests, etc.
 
-Requirement:
+You can use the two parts separately. I.e. you can just use the JavaScript
+widget for visualizing and analyzing sequence and features. See HTML files in
+the demo directory.
+
+
+Requirement for Django service:
 
 	gcc - part of the feature detection algorithm is in C
-	python-setuptools - if you want to use easy_install to install mysql-python
 	python (2.7+)
 	django (1.2+)
-	BioPython (1.56) - ORF detection via BioPython - you can skip NumPy requirement
-
-	apt-get install libmysqlclient15-dev
-	apt-get install mysql-server
-	easy_install -U mysql-python
+	BioPython (1.56) - ORF detection via BioPython
+		(You don't need NumPy for BioPython)
+	MySQL, and mysql-python module
 
 
-Install:
+Install Django service:
 
 	git clone git@github.com:addgene/giraffe.git
 	cd giraffe
@@ -29,8 +31,42 @@ Install:
 
 	mysql
 	> DROP DATABASE giraffe;
-    > CREATE DATABASE giraffe CHARACTER SET 'utf8'
+	> CREATE DATABASE giraffe CHARACTER SET 'utf8'
 	
 	cd src/django/giraffe; python manage.py syncdb --noinput
+
+
+Run test server:
+
+	cd src/django/giraffe; python manage.py runserver
+
+	Then visit "/"
+
+	Click on "See an example" to see an example.
+
+
+API:
+
+	You can POST a sequence to "/blat/", with the following CGI variables:
+
+		db=default&sequence=your_dna_sequence_here
+
+	Then you will be redirected to a URL that looks like
+
+		/blat/8de364690dbeb88d2ab63bd66861725539aa3204/default
+
+	The "8de3...3204" string is the hash identifier for your sequence. You can
+	use this hash identifier and this URL to retrieve features in the future
+	(JSON format).
+
+	Also, you can use the hash identifier with the JavaScript widgets. See demo
+	directory. You can download the HTML files from the demo directory to your
+	local computer, and load them in your browser. These files show how you can
+	incorporate Giraffe sequence map and analyzer widgets in your web app.
+	
+
+How to build your own features database:
+
+	To be added later.
 
 
