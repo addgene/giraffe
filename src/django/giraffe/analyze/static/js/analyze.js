@@ -78,7 +78,8 @@
                 link_title = panes[i][1];
             }
             divs[i] = $('<div></div>');
-            links[i] = $('<a pane="'+i+'" href="#">'+link_text+'</a>').click(function() {
+            links[i] = $('<a pane="'+i+'" href="#">'+link_text+'</a>').click(function(evt) {
+                evt.preventDefault();
                 var i = $(this).attr('pane'); show(i);
             });
             if (link_title !== undefined) { links[i].attr('title',link_title); }
