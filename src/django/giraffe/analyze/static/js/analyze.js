@@ -389,8 +389,8 @@ window.GiraffeAnalyze = function ($,gd,options) {
             [['All Cutters','See restriction enzymes that cut the sequence'],
              ['Unique Cutters','See restriction enzymes that cut the sequence only once'],
              ['Non-Cutters','See restriction enzymes that do not cut the sequence'],
-             ['Circular Digest','See restriction digest bands assuming a circular sequence'],
-             ['Linear Digest','See restriction digest bands assuming a linear sequence']
+             ['Linear Digest','See restriction digest bands assuming a linear sequence'],
+             ['Circular Digest','See restriction digest bands assuming a circular sequence']
             ]
         );
 
@@ -497,8 +497,8 @@ window.GiraffeAnalyze = function ($,gd,options) {
             return list;
         }
 
-        $(panes.pane(3)).append(__digest(true));
-        $(panes.pane(4)).append(__digest(false));
+        $(panes.pane(3)).append(__digest(false));
+        $(panes.pane(4)).append(__digest(true));
 
 		// Digest map control by the digest panes
 		
@@ -510,18 +510,19 @@ window.GiraffeAnalyze = function ($,gd,options) {
 		$(panes.link(1)).click(function () {
 			map_panes.show(0);
 		});
-		$(panes.link(4)).click(function () {
+
+		$(panes.link(3)).click(function () {
 			map_panes.show(0);
+		});
+
+		// show a circular digest for the circular pane
+		$(panes.link(4)).click(function () {
+			map_panes.show(1);
 		});
 
 		// show nothing for the non-cutters pane
 		$(panes.link(2)).click(function () {
 			map_panes.hide_all();
-		});
-
-		// show a circular digest for the circular pane
-		$(panes.link(3)).click(function () {
-			map_panes.show(1);
 		});
 
         panes.show(0);
