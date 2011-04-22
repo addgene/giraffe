@@ -372,6 +372,12 @@ window.GiraffeAnalyze = function ($,gd,options) {
         });
 		gc_c = GiraffeControl($, gd_c, dom_control_c);
 
+
+		// Control of the digest panes by the restriction enzyme checkboxes on the
+		// map
+
+
+		// Show the linear map by default
         cpanes.hide_all();
         cpanes.show(0);
 
@@ -380,23 +386,31 @@ window.GiraffeAnalyze = function ($,gd,options) {
 
     function digest_tab(dom) {
 
-   		// Digest maps above
-		var map_panes = digest_map_panes(dom);
-
-
-   		// Digest data below
-        panes = Switch_Panes(
-            [['All Cutters','See restriction enzymes that cut the sequence'],
-             ['Unique Cutters','See restriction enzymes that cut the sequence only once'],
-             ['Non-Cutters','See restriction enzymes that do not cut the sequence'],
+		// Labels at the top
+		var label_panes = Switch_Panes(
+            [['Cutters','See restriction enzymes that cut the sequence'],
              ['Linear Digest','See restriction digest bands assuming a linear sequence'],
              ['Circular Digest','See restriction digest bands assuming a circular sequence']
             ]
         );
 
         $(dom)
-            .append(panes.links)
-            .append(panes.panes);
+            .append(label_panes.links);
+		label_panes.show(0);
+
+   		// Digest data below
+        var digest_panes = Switch_Panes(
+            ['All Cutters', 'Unique Cutters', 'Non-Cutters',
+             'Linear Digest', 'Circular Digest']
+        );
+
+   		// Digest maps above: need to pass in digest panes so that
+		// the map controls can pick the corresponding digest pane
+		var map_panes = digest_map_panes(dom, digest_panes);
+
+
+        $(dom)
+            .append(digest_panes.panes);
 
 		var all = cutters.all();
         var list = $('<ul></ul>').addClass('giraffe-enzyme-list');
@@ -415,7 +429,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
             var item = $('<li></li>').append(name).append(s);
             $(list).append(item);
         }
-        $(panes.pane(0)).append(list);
+        $(digest_panes.pane(0)).append(list);
 
         var unique = cutters.unique();
         var list = $('<ul></ul>').addClass('giraffe-enzyme-list');
@@ -428,7 +442,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
             var item = $('<li></li>').append(name).append(s);
             $(list).append(item);
         }
-        $(panes.pane(1)).append(list);
+        $(digest_panes.pane(1)).append(list);
 
         var non = cutters.non();
         var list = $('<ul></ul>').addClass('giraffe-enzyme-list');
@@ -437,7 +451,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
             var item = $('<li></li>').append(name);
             $(list).append(item);
         }
-        $(panes.pane(2))
+        $(digest_panes.pane(2))
             .append('<p>The following cutters do not cut this sequence.</p>')
             .append(list);
 
@@ -497,35 +511,31 @@ window.GiraffeAnalyze = function ($,gd,options) {
             return list;
         }
 
-        $(panes.pane(3)).append(__digest(false));
-        $(panes.pane(4)).append(__digest(true));
+        $(digest_panes.pane(3)).append(__digest(false));
+        $(digest_panes.pane(4)).append(__digest(true));
 
-		// Digest map control by the digest panes
+		// Digest map control by the pane links
 		
 		// show a linear digest for the all- and unique-cutters panes
 		// and for the linear digest pane
-		$(panes.link(0)).click(function () {
-			map_panes.show(0);
-		});
-		$(panes.link(1)).click(function () {
+		$(label_panes.link(0)).click(function () {
 			map_panes.show(0);
 		});
 
-		$(panes.link(3)).click(function () {
+		$(label_panes.link(1)).click(function () {
 			map_panes.show(0);
+			digest_panes.show(3);
 		});
 
-		// show a circular digest for the circular pane
-		$(panes.link(4)).click(function () {
+		// Circular digest pane shows a circular map
+		$(label_panes.link(2)).click(function () {
 			map_panes.show(1);
+			digest_panes.show(4);
 		});
 
-		// show nothing for the non-cutters pane
-		$(panes.link(2)).click(function () {
-			map_panes.hide_all();
-		});
 
-        panes.show(0);
+		// By default, show the uniqe-cutter pane
+		digest_panes.show(1);
     }
 
     function translate_tab(dom) {
