@@ -1341,10 +1341,6 @@ window.GiraffeControl = function ($,gd_map,dom) {
 				<td>' +  control_feat_types[ftx][0] + '</td></tr>');
 		}
 
-		controls.children('fieldset')
-			.append('<label><input type="checkbox" name="extra-features" value="show" />\
-					Show extra features</label>');
-
 		// Changes to the feature types
 		controls.find('td.features input[value="show"]').click(function (event) {
 			var feat_type_name,
@@ -1376,6 +1372,10 @@ window.GiraffeControl = function ($,gd_map,dom) {
 	}
 
 	if (draw_extra_features_checkbox) {
+		controls.children('fieldset')
+			.append('<label><input type="checkbox" name="extra-features" value="show" />\
+					Show extra features</label>');
+
 		// The "extra features" checkbox
 		controls.find('input[name="extra-features"]').click(function (event) {
 			if ($(this).attr("checked")) {
