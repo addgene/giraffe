@@ -60,18 +60,22 @@ window.GiraffeAnalyze = function ($,gd,options) {
     function Switch_Panes(panes) {
         var divs = [];
         var links = [];
+		var current_pane;
 
         function hide_all() {
             for (var i in divs) { $(divs[i]).hide(); } 
             for (var i in links) { $(links[i]).removeClass('giraffe-link-on'); } 
+			current_pane = undefined;
         }
         function show(i) {
             hide_all();
             $(links[i]).addClass('giraffe-link-on');
             $(divs[i]).show();
+			current_pane = i;
         }
         function link(i) { return links[i]; }
         function pane(i) { return divs[i]; }
+        function current() { return current_pane; }
 
         var links_dom = $('<p></p>');
         var divs_dom = $('<div></div>');
@@ -100,6 +104,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
             'pane' : pane,
             'link' : link,
             'show' : show,
+            'current' : current,
             'hide_all' : hide_all,
         }
     }
