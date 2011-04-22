@@ -1270,6 +1270,8 @@ window.GiraffeControl = function ($,gd_map,dom) {
 	draw_table = true;
 	draw_enzyme_controls = true;
 	draw_feature_controls = true;
+	//XXX For now, we keep this hidden. Maybe we'll do something with it later.
+	draw_extra_features_checkbox = false;
 	
 	if (gd_map.is_digest()) {
 		draw_table = false;
@@ -1371,6 +1373,9 @@ window.GiraffeControl = function ($,gd_map,dom) {
 			}
 		});
 
+	}
+
+	if (draw_extra_features_checkbox) {
 		// The "extra features" checkbox
 		controls.find('input[name="extra-features"]').click(function (event) {
 			if ($(this).attr("checked")) {
@@ -1379,7 +1384,6 @@ window.GiraffeControl = function ($,gd_map,dom) {
 				gd_map.hide_extra_features();
 			}
 		});
-
 	}
 
 
