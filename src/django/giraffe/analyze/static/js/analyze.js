@@ -1279,25 +1279,26 @@ window.GiraffeControl = function ($,gd_map,dom) {
 	}
 
 	controls = $('<form action="" class="giraffe-controls">\
-		<fieldset><legend>Feature Options</legend><table><tbody><tr class="controls-row"></tr></tbody></table>\
+		<fieldset><legend>Feature Options</legend><table><tbody class="giraffe-controls-layout"></tbody></table>\
 		</fieldset></form>');
 
 	if (draw_enzyme_controls) {
-		controls.find('tr').append(
-			'<td class="enzymes"><table>\
-			<thead><tr><th>Restriction Enzymes</th></tr></thead>\
-			<tbody>\
-				<tr><td><label><input type="checkbox" checked="checked"\
-					          name="cutters-1" value="show" />\
-				1-cutters</label></td></tr>\
-				<tr><td><label><input type="checkbox"\
-					          name="cutters-2" value="show" />\
-				2-cutters</label></td></tr>\
-				<tr><td><label><input type="checkbox"\
-					          name="cutters-3" value="show" />\
-				3-cutters</label></td></tr>\
-			</tbody>\
-			</table></td>')
+		controls.find('tbody').append(
+			'<tr><td class="enzymes"><table>' +
+			'<thead></thead>' + 
+			'<tbody>' +
+				'<tr><th>Restriction Enzymes</th>' +
+				'<td><label><input type="checkbox" checked="checked"' +
+					         'name="cutters-1" value="show" />' +
+				'1-cutters</label></td>' +
+				'<td><label><input type="checkbox"' +
+					          'name="cutters-2" value="show" />' +
+				'2-cutters</label></td>' +
+				'<td><label><input type="checkbox"' +
+					          'name="cutters-3" value="show" />' +
+				'3-cutters</label></td></tr>' +
+			'</tbody>' +
+			'</table></td></tr>')
 
 		// Changes to the Restriction Enzyme selection
 		controls.find('input[name|="cutters"]').change(function (event) {
@@ -1323,11 +1324,12 @@ window.GiraffeControl = function ($,gd_map,dom) {
 							  ["Origins",          "origin"],
 							  ["ORFs",             "orf"]];
 
-		feat_control_table = controls.find('tr.controls-row')
-			.append('<td class="features">\
-				<table><thead><tr><th>Show</th><th>Label</th><th>Feature Type</th></tr>\
-				</thead><tbody></tbody></table>')
-			.find('td.features tbody');
+		feat_control_table = 
+			$('<tr><td class="features">' +
+			  '<table><thead><tr><th>Show</th><th>Label</th><th>Feature Type</th></tr>' + 
+			  '</thead><tbody></tbody></table></td></tr>')
+			.appendTo(controls.find('.giraffe-controls-layout'))
+			.find('tbody');
 
 		for (ftx = 0; ftx < control_feat_types.length; ftx++) {
 			feat_control_table.append(
