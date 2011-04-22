@@ -71,7 +71,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
             hide_all();
             $(links[i]).addClass('giraffe-link-on');
             $(divs[i]).show();
-			current_pane = i;
+			current_pane = parseInt(i);
         }
         function link(i) { return links[i]; }
         function pane(i) { return divs[i]; }
@@ -377,11 +377,6 @@ window.GiraffeAnalyze = function ($,gd,options) {
         });
 		gc_c = GiraffeControl($, gd_c, dom_control_c);
 
-
-		// Control of the digest panes by the restriction enzyme checkboxes on the
-		// map
-
-
 		// Show the linear map by default
         cpanes.hide_all();
         cpanes.show(0);
@@ -401,146 +396,183 @@ window.GiraffeAnalyze = function ($,gd,options) {
 
         $(dom)
             .append(label_panes.links);
-		label_panes.show(0);
 
    		// Digest data below
-        var digest_panes = Switch_Panes(
-            ['All Cutters', 'Unique Cutters', 'Non-Cutters',
-             'Linear Digest', 'Circular Digest']
+        var digest = Switch_Panes(
+            ['Cutters', 'Linear Digest', 'Circular Digest']
         );
 
    		// Digest maps above: need to pass in digest panes so that
 		// the map controls can pick the corresponding digest pane
-		var map_panes = digest_map_panes(dom, digest_panes);
+		var map_panes = digest_map_panes(dom);
+		var cutters_to_show = [1];
+
+		var digest_data_dom = 
+			$('<div id="giraffe-digest-data"></div>')
+				.appendTo(dom);
+
+		// Make this function using closures, so that the function
+		// definitions and generic cutter lists get read only once--not each
+		// time this function is called
+		var write_digest_data = (function () {
+			var list;
+			var all = cutters.all();
+			var non = cutters.non();
+
+			function make_cutter_list() {
+
+				if (cutters_to_show.length > 0) {
+
+					for (var i = 0; i < all.length; i++) {
+						var all_of_this = all[i].other_cutters();
+						var cuts = [];
+						for (var c = 0; c < all_of_this.length; c++) {
+							cuts.push(gd.all_features[all_of_this[c]].cut());
+						}
+
+						if (cutters_to_show.indexOf(cuts.length) >= 0) {
+							var name = $('<label></label>').append(all[i].name());
+							for (var c = 0; c < cuts.length; c++) {
+								cuts[c] = '<a href="#" seq-title="'+all[i].name()
+										  +' cut site" bp="'+cuts[c]+'" class="giraffe-bp">'+cuts[c]+'</a>';
+							}
+							var s = $('<p>Cuts after '+cuts.join(', ')+'</p>');
+							var item = $('<li></li>').append(name).append(s);
+							$(list).append(item);
+						}
+					}
+				} else {
+					// Non-cutters
+					digest_data_dom.append(
+						'<p>The following cutters do not cut this sequence.</p>')
+					for (var i = 0; i < non.length; i++) {
+						var name = $('<label></label>').append(non[i]);
+						var item = $('<li></li>').append(name);
+						$(list).append(item);
+					}
+				}
+				
+			};
+
+			function make_digest_list(circular) {
+				if (cutters_to_show.length < 1) {
+					return;
+				}
+
+				for (var i = 0; i < all.length; i++) {
+					var cuts = [];
+					var all_of_this = all[i].other_cutters();
+					all_of_this.sort(function(a,b){
+						return gd.all_features[a].start() -
+							gd.all_features[b].start();
+					});
+					for (var c = 0; c < all_of_this.length; c++) {
+						cuts.push(gd.all_features[all_of_this[c]].cut());
+					}
+
+					if (cutters_to_show.indexOf(cuts.length) >= 0) {
+						var name = $('<label></label>').append(all[i].name());
+						var digests = []
+						for (var j=0; j<cuts.length; j++) {
+							if (j == 0 && !circular) {
+								var a0 = '<a href="#" class="giraffe-bp" '
+										 +'seq-title="Fragment cut by '
+										 +all[i].name()+'" bp="1,'+cuts[j]+'">';
+								digests.push(a0+'1-'+(cuts[j])+'</a> ('+cuts[j]+' bp)');
+							}
+							if (j+1 == cuts.length) {
+								if (circular) {
+									var a0 = '<a href="#" class="giraffe-bp" '
+											 +'seq-title="Fragment cut by '
+											 +all[i].name()+'" bp="'
+											 +(cuts[j]+1)+','+cuts[0]+'">';
+									digests.push(a0+(cuts[j]+1)+'-'+cuts[0]+'</a> ('+
+												 (seqlen-(cuts[j]+1)+1+cuts[0])+' bp)');
+								}
+								else {
+									var a0 = '<a href="#" class="giraffe-bp" '
+											 +'seq-title="Fragment cut by '
+											 +all[i].name()+'" bp="'
+											 +(cuts[j]+1)+','+seqlen+'">';
+									digests.push(a0+(cuts[j]+1)+'-'+seqlen+'</a> ('+
+												 (seqlen-(cuts[j]+1)+1)+' bp)');
+								}
+							}
+							else {
+								var a0 = '<a href="#" class="giraffe-bp" '
+										 +'seq-title="Fragment cut by '
+										 +all[i].name()+'" bp="'
+										 +(cuts[j]+1)+','+cuts[j+1]+'">';
+								digests.push(a0+(cuts[j]+1)+'-'+(cuts[j+1])+'</a> ('+
+											 (cuts[j+1]-(cuts[j]+1)+1)+' bp)');
+							}
+						}
+						var s = $('<p>'+digests.join(', ')+'</p>');
+						var item = $('<li></li>').append(name).append(s);
+						$(list).append(item);
+					}
+				}
+			}
+			
+			// The actual digest drawing function
+			return function () {
+				digest_data_dom.empty();
+				list = $('<ul></ul>').addClass('giraffe-enzyme-list');
 
 
-        $(dom)
-            .append(digest_panes.panes);
+				switch (label_panes.current()) {
+					case 0:
+						make_cutter_list()
+						break;
+					case 1:
+						make_digest_list(false)
+						break;
+					case 2:
+						make_digest_list(true)
+						break;
+					default:
+						break;
+				}
 
-		var all = cutters.all();
-        var list = $('<ul></ul>').addClass('giraffe-enzyme-list');
-        for (var i in all) {
-            var name = $('<label></label>').append(all[i].name());
-            var cuts = [];
-            var all_of_this = all[i].other_cutters();
-            for (var c in all_of_this) {
-                cuts.push(gd.all_features[all_of_this[c]].cut());
-            }
-            for (var c in cuts) {
-                cuts[c] = '<a href="#" seq-title="'+all[i].name()
-                          +' cut site" bp="'+cuts[c]+'" class="giraffe-bp">'+cuts[c]+'</a>';
-            }
-            var s = $('<p>Cuts after '+cuts.join(', ')+'</p>');
-            var item = $('<li></li>').append(name).append(s);
-            $(list).append(item);
-        }
-        $(digest_panes.pane(0)).append(list);
+				digest_data_dom.append(list);
+			}
+		})();
 
-        var unique = cutters.unique();
-        var list = $('<ul></ul>').addClass('giraffe-enzyme-list');
-        for (var i in unique) {
-            var name = $('<label></label>').append(unique[i].name());
-            var x = '<a href="#" seq-title="'+unique[i].name()
-                    +' cut site" bp="'+unique[i].cut()+'" class="giraffe-bp">'
-                    +unique[i].cut()+'</a>';
-            var s = $('<p>Cuts after '+x+'</p>');
-            var item = $('<li></li>').append(name).append(s);
-            $(list).append(item);
-        }
-        $(digest_panes.pane(1)).append(list);
-
-        var non = cutters.non();
-        var list = $('<ul></ul>').addClass('giraffe-enzyme-list');
-        for (var i in non) {
-            var name = $('<label></label>').append(non[i]);
-            var item = $('<li></li>').append(name);
-            $(list).append(item);
-        }
-        $(digest_panes.pane(2))
-            .append('<p>The following cutters do not cut this sequence.</p>')
-            .append(list);
-
-        function __digest(circular) {
-            var all = cutters.all();
-            var list = $('<ul></ul>').addClass('giraffe-enzyme-list');
-            for (var i in all) {
-                var name = $('<label></label>').append(all[i].name());
-                var cuts = [];
-                var all_of_this = all[i].other_cutters();
-                all_of_this.sort(function(a,b){
-                    return gd.all_features[a].start() -
-                        gd.all_features[b].start();
-                });
-                for (var c in all_of_this) {
-                    cuts.push(gd.all_features[all_of_this[c]].cut());
-                }
-                var digests = []
-                for (var j=0; j<cuts.length; j++) {
-                    if (j == 0 && !circular) {
-                        var a0 = '<a href="#" class="giraffe-bp" '
-                                 +'seq-title="Fragment cut by '
-                                 +all[i].name()+'" bp="1,'+cuts[j]+'">';
-                        digests.push(a0+'1-'+(cuts[j])+'</a> ('+cuts[j]+' bp)');
-                    }
-                    if (j+1 == cuts.length) {
-                        if (circular) {
-                            var a0 = '<a href="#" class="giraffe-bp" '
-                                     +'seq-title="Fragment cut by '
-                                     +all[i].name()+'" bp="'
-                                     +(cuts[j]+1)+','+cuts[0]+'">';
-                            digests.push(a0+(cuts[j]+1)+'-'+cuts[0]+'</a> ('+
-                                         (seqlen-(cuts[j]+1)+1+cuts[0])+' bp)');
-                        }
-                        else {
-                            var a0 = '<a href="#" class="giraffe-bp" '
-                                     +'seq-title="Fragment cut by '
-                                     +all[i].name()+'" bp="'
-                                     +(cuts[j]+1)+','+seqlen+'">';
-                            digests.push(a0+(cuts[j]+1)+'-'+seqlen+'</a> ('+
-                                         (seqlen-(cuts[j]+1)+1)+' bp)');
-                        }
-                    }
-                    else {
-                        var a0 = '<a href="#" class="giraffe-bp" '
-                                 +'seq-title="Fragment cut by '
-                                 +all[i].name()+'" bp="'
-                                 +(cuts[j]+1)+','+cuts[j+1]+'">';
-                        digests.push(a0+(cuts[j]+1)+'-'+(cuts[j+1])+'</a> ('+
-                                     (cuts[j+1]-(cuts[j]+1)+1)+' bp)');
-                    }
-                }
-                var s = $('<p>'+digests.join(', ')+'</p>');
-                var item = $('<li></li>').append(name).append(s);
-                $(list).append(item);
-            }
-            return list;
-        }
-
-        $(digest_panes.pane(3)).append(__digest(false));
-        $(digest_panes.pane(4)).append(__digest(true));
-
-		// Digest map control by the pane links
-		
-		// show a linear digest for the all- and unique-cutters panes
-		// and for the linear digest pane
-		$(label_panes.link(0)).click(function () {
-			map_panes.show(0);
+		$(label_panes.links).click(function (event) {
+			// Pick which map to draw, depending on the
+			// tab that's clicked
+			switch (label_panes.current()) {
+				case 0:
+				case 1:
+					map_panes.show(0);
+					break;
+				case 2:
+					map_panes.show(1);
+					break;
+				default:
+					break;
+			}
+			
+			// This takes care of the right thing to do,
+			// regardless of what tab it is
+			write_digest_data();
 		});
 
-		$(label_panes.link(1)).click(function () {
-			map_panes.show(0);
-			digest_panes.show(3);
+		// Force rewriting the digest data when the cutter controls are changed
+		$(map_panes.panes).find('input[name|="cutters"]').change(function (event) {
+			cutters_to_show = [];
+
+			// Parse out selected options
+			$(this).closest('tbody').find("input[checked]").each(function () {
+				cutters_to_show.push(parseInt($(this).attr('name').match(/\d+/)));
+			});
+
+			write_digest_data();
 		});
 
-		// Circular digest pane shows a circular map
-		$(label_panes.link(2)).click(function () {
-			map_panes.show(1);
-			digest_panes.show(4);
-		});
+		// Select the cutter pane and draw everything the first time
+		$(label_panes.link(0)).click();
 
-
-		// By default, show the uniqe-cutter pane
-		digest_panes.show(1);
     }
 
     function translate_tab(dom) {
