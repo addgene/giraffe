@@ -1148,9 +1148,27 @@ window.GiraffeAnalyze = function ($,gd,options) {
     }
 
     function map_feature_click_callback(feature) {
+		var bp; // Start and end of feature
+		var name = feature.name(); // Tag to display
+
+		// Only if it's an enzyme:
+		var sequence;
+		var cut_marker = '<sup>&#x25BC</sup>';
+		var cut_position = feature.cut() - feature.start() + 1;
+
         sequence_viewer_clear_highlight();
-        var bp = [feature.start(),feature.end()];
-        sequence_viewer_bp_event_highlight(bp,feature.name());
+        bp = [feature.start(),feature.end()];
+
+		// Mark cut site if it's an enzyme
+		if (feature.type() == gd.Feature_Type.enzyme) {
+			sequence = feature.clockwise_sequence().toUpperCase(); 
+			sequence = sequence.substring(0, cut_position) + 
+			           cut_marker +
+			           sequence.substring(cut_position);
+			name += ' (' + sequence + ')';
+		}
+
+        sequence_viewer_bp_event_highlight(bp,name);
     }
 
     function full_widget() {
