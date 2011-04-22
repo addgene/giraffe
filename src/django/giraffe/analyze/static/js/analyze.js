@@ -1445,6 +1445,8 @@ window.GiraffeControl = function ($,gd_map,dom) {
 	}
 
 	$(dom).append(controls);
+
+	return controls;
 };
 
 })();
