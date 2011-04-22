@@ -472,7 +472,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
 
 					if (cutters_to_show.indexOf(cuts.length) >= 0) {
 						var name = $('<label></label>').append(all[i].name());
-						var digests = []
+						var digests = [];
 						for (var j=0; j<cuts.length; j++) {
 							if (j == 0 && !circular) {
 								var a0 = '<a href="#" class="giraffe-bp" '
@@ -488,8 +488,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
 											 +(cuts[j]+1)+','+cuts[0]+'">';
 									digests.push(a0+(cuts[j]+1)+'-'+cuts[0]+'</a> ('+
 												 (seqlen-(cuts[j]+1)+1+cuts[0])+' bp)');
-								}
-								else {
+								} else {
 									var a0 = '<a href="#" class="giraffe-bp" '
 											 +'seq-title="Fragment cut by '
 											 +all[i].name()+'" bp="'
@@ -497,8 +496,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
 									digests.push(a0+(cuts[j]+1)+'-'+seqlen+'</a> ('+
 												 (seqlen-(cuts[j]+1)+1)+' bp)');
 								}
-							}
-							else {
+							} else {
 								var a0 = '<a href="#" class="giraffe-bp" '
 										 +'seq-title="Fragment cut by '
 										 +all[i].name()+'" bp="'
@@ -539,28 +537,38 @@ window.GiraffeAnalyze = function ($,gd,options) {
 		})();
 
 		$(label_panes.links).click(function (event) {
+			var pane;
+
 			// Pick which map to draw, depending on the
 			// tab that's clicked
 			switch (label_panes.current()) {
 				case 0:
 				case 1:
-					map_panes.show(0);
+					pane = 0;
 					break;
 				case 2:
-					map_panes.show(1);
-					break;
-				default:
+					pane = 1;
 					break;
 			}
 			
-			// This takes care of the right thing to do,
-			// regardless of what tab it is
+			// Show the appropriate pane
+			map_panes.show(pane);
+
+			// Update cutters_to_show to reflect the checkboxes selected in that pane
+			cutters_to_show = [];
+			$(map_panes.pane(pane)).find("input[checked]").each(function () {
+				cutters_to_show.push(parseInt($(this).attr('name').match(/\d+/)));
+			});
+
+			// Redraw the digest
 			write_digest_data();
 		});
 
 		// Force rewriting the digest data when the cutter controls are changed
 		$(map_panes.panes).find('input[name|="cutters"]').change(function (event) {
 			cutters_to_show = [];
+
+			console.warn(cutters_to_show);
 
 			// Parse out selected options
 			$(this).closest('tbody').find("input[checked]").each(function () {
