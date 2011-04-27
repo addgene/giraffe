@@ -93,7 +93,8 @@
         /**
          * Crockford-stype prototypal inheritence.
          *
-         * @constructor Create a new object that inherits all public properites of the given object.
+         * @constructor Create a new object that inherits all public properites
+         *              of the given object.
          *
          * @param   {Object} o the object to extend
          * @returns {o}        a new object whose __proto__ property points to o
@@ -166,9 +167,8 @@
     };
 
 /**
- * Class: JSON parsing and feature drawing capabilities for a single feature.
- *
- * Only one GiraffeDraw per sequence.
+ * @class JSON parsing and feature drawing capabilities for a single feature.
+ *        Only one GiraffeDraw per sequence.
  */
 window.GiraffeDraw = function () {
 
