@@ -326,6 +326,7 @@ window.GiraffeDraw = function () {
     // Generic Features that are drawn on a map
     function DrawnFeature(basic_feature, map) {
         var thi$ = Object.create(basic_feature);
+        thi$.map = map;
 
         return thi$;
     }
@@ -410,10 +411,13 @@ window.GiraffeDraw = function () {
         }
 
         thi$.extend_features = function () {
-            var bfx;
+            var bfx,
+                df, ef;
 
             for (bfx = 0; bfx < all_features.length; bfx++) {
-                this.features.push(new this.FeatureType(all_features[bfx], this));
+                df = new DrawnFeature(all_features[bfx], this);
+                ef = new this.FeatureType(df);
+                this.features.push(ef);
             }
         }
 
@@ -610,7 +614,7 @@ window.GiraffeDraw = function () {
             // Export the main properties as part of a Map-like object
             // descendant classes inheret this ability, and because of the
             // this pointer, will return /Their own/ draw and features objects
-            // XXX: loses original .length property
+            // XXX: change_context functions lose their original .length property
             return { 
                 redraw_cutters: change_context(this.redraw_cutters, this),
                 show_feature_type: change_context(this.show_feature_type, this),
@@ -769,13 +773,11 @@ window.GiraffeDraw = function () {
 
         ///////////////////////////////////////////////////////////////////
         // Circular Feature class
-        function CircularFeature(basic_feature, map) {
-
-            // Keep a pointer to the map
-            var _map = map;
+        function CircularFeature(basic_feature) {
 
             // Create a prototypal descendent of the basic_feature to expand
             var thi$ = Object.create(basic_feature);
+
 
             // The result of this function will be a CircularFeature object
             
@@ -787,7 +789,7 @@ window.GiraffeDraw = function () {
             var _color = colors.feature;
             var _width = feature_width;
             var _draw_head = false;
-            var _opacity = _map.feature_opacity();
+            var _opacity = thi$.map.feature_opacity();
             var _opaque = false; // holds opacity for clicks
             switch(thi$.type()) {
                 case ft.promoter:
@@ -803,7 +805,7 @@ window.GiraffeDraw = function () {
                 case ft.enzyme:
                     _color = colors.enzyme;
                     _width = enzyme_width;
-                    _opacity = _map.enzyme_opacity();
+                    _opacity = thi$.map.enzyme_opacity();
                     break;
                 case ft.orf:
                     _color = colors.orf;
@@ -839,7 +841,7 @@ window.GiraffeDraw = function () {
             };
 
             thi$.initialize = function() {
-                paper = map.paper;
+                paper = thi$.map.paper;
                 _feature_set = paper.set();
                 _arrow_set = paper.set();
                 _label_set = paper.set();
@@ -939,7 +941,7 @@ window.GiraffeDraw = function () {
                 // it's a multi-cutter
                 if (thi$.type() == ft.enzyme) {
                     for (fx = 0; fx < thi$.other_cutters().length; fx++) {
-                        f = _map.features[thi$.other_cutters()[fx]];
+                        f = thi$.map.features[thi$.other_cutters()[fx]];
                         sets.push(f.feature_set());
                         lines.push(f.label_set()[0]);
                     }
@@ -955,7 +957,7 @@ window.GiraffeDraw = function () {
             }
 
             var _bolder = function () {
-                var props = {"opacity": _map.bold_opacity(),
+                var props = {"opacity": thi$.map.bold_opacity(),
                              "font-weight": "bold" };
                 if (thi$.type() == ft.enzyme) {
                     props["stroke-width"] = enzyme_bold_weight;
@@ -1725,11 +1727,8 @@ window.GiraffeDraw = function () {
         };
 
         // TODO: MAJOR CODE REORGANIZATION: MERGE COMMON ELEMENTS INTO ONE CLASS
-        function LinearFeature(basic_feature, map) {
+        function LinearFeature(basic_feature) {
             
-            // Keep a pointer to the map
-            var _map = map;
-
             // Create a prototypal descendent of the basic_feature to expand
             var thi$ = Object.create(basic_feature);
             // The result of this function will be a LinearFeature object
@@ -1755,7 +1754,7 @@ window.GiraffeDraw = function () {
             var _color = colors.feature;
             var _width = feature_width;
             var _draw_head = false;
-            var _opacity = _map.feature_opacity();
+            var _opacity = thi$.map.feature_opacity();
             var _opaque = false; // holds opacity for clicks
             switch(thi$.type()) {
                 case ft.promoter:
@@ -1771,7 +1770,7 @@ window.GiraffeDraw = function () {
                 case ft.enzyme:
                     _color = colors.enzyme;
                     _width = enzyme_width;
-                    _opacity = _map.enzyme_opacity();
+                    _opacity = thi$.map.enzyme_opacity();
                     break;
                 case ft.orf:
                     _color = colors.orf;
@@ -1792,7 +1791,7 @@ window.GiraffeDraw = function () {
             thi$.label_set = function() { return _label_set };
 
             thi$.initialize = function() {
-                paper = map.paper;
+                paper = thi$.map.paper;
                 _feature_set = paper.set();
                 _arrow_set = paper.set();
                 _label_set = paper.set();
@@ -1860,7 +1859,7 @@ window.GiraffeDraw = function () {
                 // it's a multi-cutter
                 if (thi$.type() == ft.enzyme) {
                     for (fx = 0; fx < thi$.other_cutters().length; fx++) {
-                        f = _map.features[thi$.other_cutters()[fx]];
+                        f = thi$.map.features[thi$.other_cutters()[fx]];
                         sets.push(f.feature_set());
                         lines.push(f.label_set()[0]);
                     }
@@ -1876,7 +1875,7 @@ window.GiraffeDraw = function () {
             }
 
             var _bolder = function () {
-                var props = {"opacity": _map.bold_opacity(),
+                var props = {"opacity": thi$.map.bold_opacity(),
                              "font-weight": "bold" };
                 if (thi$.type() == ft.enzyme) {
                     props["stroke-width"] = enzyme_bold_weight;
