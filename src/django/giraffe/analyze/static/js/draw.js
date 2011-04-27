@@ -345,65 +345,68 @@ window.GiraffeDraw = function () {
             _enzyme_opacity,
             _bold_opacity,
             thi$ = {};
-    
-        //XXX Wrap up all this default-checking in a method
-        // Digest flag: read-only, set once
-        _is_digest = false;
-        if ('digest' in options) {
-            _is_digest = options['digest'];
-        }
-        thi$.is_digest = function () { return _is_digest; };
 
-        _digest_fade_factor = 0.15;
-        if ('digest_fade_factor' in options) {
-            _digest_fade_factor = options['digest_fade_factor'];
-        }
+        init();
 
-        // Opacities
-        _feature_opacity = 0.7;
-        _enzyme_opacity = 0.7;
-        if ('opacity' in options) {
-            _feature_opacity = parseFloat(options['opacity']);
-            _enzyme_opacity = parseFloat(options['opacity']);
-        }
-        _bold_opacity = 1.0;
+        function init() {
+            // Digest flag: read-only, set once
+            _is_digest = false;
+            if ('digest' in options) {
+                _is_digest = options['digest'];
+            }
+            thi$.is_digest = function () { return _is_digest; };
 
-        if (_is_digest)
-            _feature_opacity = _feature_opacity * _digest_fade_factor;
+            _digest_fade_factor = 0.15;
+            if ('digest_fade_factor' in options) {
+                _digest_fade_factor = options['digest_fade_factor'];
+            }
 
-        thi$.feature_opacity = function () { return _feature_opacity; };
-        thi$.enzyme_opacity = function () { return _enzyme_opacity; };
-        thi$.bold_opacity = function () { return _bold_opacity; };
+            // Opacities
+            _feature_opacity = 0.7;
+            _enzyme_opacity = 0.7;
+            if ('opacity' in options) {
+                _feature_opacity = parseFloat(options['opacity']);
+                _enzyme_opacity = parseFloat(options['opacity']);
+            }
+            _bold_opacity = 1.0;
 
-        // Cutters to show
-        thi$.cutters_to_show = [1];
-        if ('cutters' in options) {
-            cutters_to_show = options['cutters'];
-        }
+            if (_is_digest)
+                _feature_opacity = _feature_opacity * _digest_fade_factor;
 
-        // Where to draw the map
-        thi$.map_dom_id = 'giraffe-draw-map';
-        if ('map_dom_id' in options) {
-            thi$.map_dom_id = options['map_dom_id'];
-        }
+            thi$.feature_opacity = function () { return _feature_opacity; };
+            thi$.enzyme_opacity = function () { return _enzyme_opacity; };
+            thi$.bold_opacity = function () { return _bold_opacity; };
 
-        thi$.paper  = {}; // To be used for RaphaelJS;
-        thi$.label_offset = 0;
+            // Cutters to show
+            thi$.cutters_to_show = [1];
+            if ('cutters' in options) {
+                cutters_to_show = options['cutters'];
+            }
 
-        thi$.features = [];
-        thi$.show_all_features = false;
+            // Where to draw the map
+            thi$.map_dom_id = 'giraffe-draw-map';
+            if ('map_dom_id' in options) {
+                thi$.map_dom_id = options['map_dom_id'];
+            }
 
-        thi$.width = 800;
-        thi$.height = 800;
+            thi$.paper  = {}; // To be used for RaphaelJS;
+            thi$.label_offset = 0;
 
-        // Final size: to be scaled down to this at the end
-        thi$.final_width = 640;
-        thi$.final_height = 640;
-        if ('map_width' in options) {
-            thi$.final_width = parseInt(options['map_width'])
-        }
-        if ('map_height' in options) {
-            thi$.final_height = parseInt(options['map_height'])
+            thi$.features = [];
+            thi$.show_all_features = false;
+
+            thi$.width = 800;
+            thi$.height = 800;
+
+            // Final size: to be scaled down to this at the end
+            thi$.final_width = 640;
+            thi$.final_height = 640;
+            if ('map_width' in options) {
+                thi$.final_width = parseInt(options['map_width']);
+            }
+            if ('map_height' in options) {
+                thi$.final_height = parseInt(options['map_height']);
+            }
         }
 
         thi$.extend_features = function () {
