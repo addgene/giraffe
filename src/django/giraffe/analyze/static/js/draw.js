@@ -1,12 +1,15 @@
-/////////////////////////////////////////////////////////////////////////////
-//
-// GiraffeDraw: Javascript API for drawing plasmid maps from 
-//              JSON plasmid feature data
-//
-// 2011 Addgene
-// Mikhail Wolfson (wolfsonm@addgene.org)
-// Benjie Chen     (benjie@addgene.org)
-//
+/******************************************************************************
+ *
+ * GiraffeDraw: Javascript API for drawing plasmid maps from 
+ *              JSON plasmid feature data
+ *
+ * Copyright 2011 Addgene, Inc
+ *
+ * @version 0.1
+ * @author  Mikhail Wolfson (wolfsonm@addgene.org)
+ * @author  Benjie Chen     (benjie@addgene.org)
+ *
+ */
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -83,20 +86,22 @@
 //    linear feature drawing, which makes its own extended clones of objects
 
 // Protect scope, but ensure that GiraffeDraw() is global
-(function(){
+(function () {
 
-    /**
-     * Crockford-stype prototypal inheritence.
-     *
-     * Create a new object that inherits all public properites of the given object.
-     *
-     * @param  o the object to extend
-     * @return   a new object whose __proto__ property points to o
-     */
     if (typeof Object.create !== 'function') {
+
+        /**
+         * Crockford-stype prototypal inheritence.
+         *
+         * @constructor Create a new object that inherits all public properites of the given object.
+         *
+         * @param   {Object} o the object to extend
+         * @returns {o}        a new object whose __proto__ property points to o
+         * @ignore
+         */
         Object.create = function (o) {
             // Empty function object, to be used as a placeholder
-            function F() {}; 
+            function F() {}
 
             // Set the prototype property of this function to point to o
             F.prototype = o;
@@ -108,7 +113,7 @@
 
             // return just such an object
             return new F();
-        };
+        }
     }
 
     ///////////////////////////////////////////////////////////////////
@@ -321,7 +326,6 @@ window.GiraffeDraw = function () {
     // Generic Features that are drawn on a map
     function DrawnFeature(basic_feature, map) {
         var thi$ = Object.create(basic_feature);
-
 
         return thi$;
     }
