@@ -251,8 +251,6 @@ window.GiraffeAnalyze = function ($,gd,options) {
         panes = Switch_Panes(['Circular Map', 'Linear Map']);
 
 		var help, // DOMs
-			dom_table_id = random_dom_id(), 
-			dom_table, 
 			dom_map_id_c = random_dom_id(), 
 			dom_map_c,
 			dom_control_id_c = random_dom_id(), 
@@ -270,16 +268,12 @@ window.GiraffeAnalyze = function ($,gd,options) {
               'Click on a feature label or feature to highlight DNA sequence.'+
               '</p>');
 
-		// Table dom
-		dom_table = $('<div id="'+dom_table_id+'"></div>');
 
         $(dom)
             .append(help)
             .append(panes.links)
-            .append(panes.panes)
-			.append(dom_table);
+            .append(panes.panes);
 
-		gt = GiraffeTable($, gd, dom_table);
 
 		// Circular map pane
         dom_map_c = $('<div id="'+dom_map_id_c+'" class="giraffe-analyze-map giraffe-analyze-circular-map"></div>');
