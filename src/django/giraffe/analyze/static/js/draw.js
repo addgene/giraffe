@@ -935,11 +935,6 @@ window.GiraffeDraw = function () {
         var min_overlap_pct = 0.01;
         var min_overlap_feature_size = 0.5; // in degrees
         
-        // Tic marks
-        var tic_mark_length = 15;
-        var tic_mark_radius = inner_radius - tic_mark_length/2;
-        var tic_label_radius = tic_mark_radius - 1.5*tic_mark_length;
-
         var label_letter_height = 0;
         var label_letter_width = 0;
 
@@ -988,7 +983,6 @@ window.GiraffeDraw = function () {
             return plasmid_start-label_section_degree/2.0-section*label_section_degree;
         };
 
-        // TODO: MAJOR CODE REORGANIZATION: MERGE COMMON ELEMENTS INTO ONE CLASS
         ///////////////////////////////////////////////////////////////////
         // Circular Feature class
         function CircularFeature(basic_feature) {
@@ -1317,6 +1311,11 @@ window.GiraffeDraw = function () {
 
         // Circle setup
         thi$.draw_plasmid = function () {
+            // Tic marks
+            var tic_mark_length = 15;
+            var tic_mark_radius = inner_radius - tic_mark_length/2;
+            var tic_label_radius = tic_mark_radius - 1.5*tic_mark_length;
+
             function draw_tic_mark(a) {
                 // use thi$ for paper because `this` is killed by local scope
                 var r0 = tic_mark_radius - tic_mark_length/2;
