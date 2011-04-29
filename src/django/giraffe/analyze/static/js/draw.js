@@ -445,7 +445,7 @@ window.GiraffeDraw = function () {
         thi$.lighter = function () {
             var props = {"opacity": this.opacity,
                          "font-weight":"normal"};
-            if (thi$.type() == ft.enzyme) {
+            if (this.type() == ft.enzyme) {
                 props["stroke-width"] = this.map.enzyme_weight();
             }
             var line_props = {"stroke": colors.bg_text,
@@ -1130,7 +1130,7 @@ window.GiraffeDraw = function () {
                 }
 
                 // Arc drawing
-                if ((this.crosses_boundary() || a1 < a0) && thi$.type() != ft.enzyme) {
+                if ((this.crosses_boundary() || a1 < a0) && this.type() != ft.enzyme) {
                     // Compensating for the head may have "taken up" all
                     // the room on the plasmid, in which case no arc needs
                     // to be drawn
@@ -1151,7 +1151,7 @@ window.GiraffeDraw = function () {
                     arc.attr({"stroke-width": this.width});
 
                     this.arrow_set.push(arc);
-                } else if (thi$.type() == ft.enzyme) { 
+                } else if (this.type() == ft.enzyme) { 
                     // Restriction enzymes get drawn on their own
                     var xy0 = convert.polar_to_rect(thi$.radius - this.map.enzyme_width()/2.0, 
                             (a0+a1)/2.0);
@@ -1176,6 +1176,10 @@ window.GiraffeDraw = function () {
                 this.feature_set.attr({"stroke":         this.color,
                                    "stroke-linecap": "butt",
                                    "opacity":        this.opacity});
+
+                if (this.map.is_digest() && this.type() != ft.enzyme) {
+                    this.feature_set.attr("title", this.label_name());
+                }
 
             } // END CircularFeature::draw()
 
@@ -1819,7 +1823,7 @@ window.GiraffeDraw = function () {
                 }
 
                 // Body drawing
-                if (x0 < x1 && thi$.type() != ft.enzyme) { 
+                if (x0 < x1 && this.type() != ft.enzyme) { 
                     // Compensating for the head may have "taken up" all
                     // the room on the plasmid, in which case no arc needs
                     // to be drawn
@@ -1830,7 +1834,7 @@ window.GiraffeDraw = function () {
                     body.attr({"stroke-width": this.width});
 
                     this.arrow_set.push(body);
-                } else if (thi$.type() == ft.enzyme) { 
+                } else if (this.type() == ft.enzyme) { 
                     // Restriction enzymes get drawn on their own
                     var x_m = (x0 + x1)/2;
 
@@ -1851,6 +1855,10 @@ window.GiraffeDraw = function () {
                 this.feature_set.attr({"stroke": this.color,
                                    "stroke-linecap": "butt",
                                    "opacity": this.opacity});
+
+                if (this.map.is_digest() && this.type() != ft.enzyme) {
+                    this.feature_set.attr("title", this.label_name());
+                }
 
             } // END LinearFeature::draw()
 
