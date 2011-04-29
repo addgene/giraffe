@@ -156,6 +156,7 @@
     };
 
     // Feature Colors
+    // TODO: Make this map-specific and an option for this
     colors = {
         bg_text: "#aaa",
         plasmid: "#000",
@@ -326,10 +327,198 @@ window.GiraffeDraw = function () {
     // Generic Features that are drawn on a map
     function DrawnFeature(basic_feature, map) {
         var thi$ = Object.create(basic_feature);
+
+        thi$.label_drawn = false;
+        thi$.feature_set = {};
+        thi$.arrow_set = {};
+        thi$.label_set = {};
+
+        // Visual properties
+        thi$.visible = true;
+        thi$.labeled = true;
+
+        // Easy access to drawing objects
         thi$.map = map;
+        thi$.paper = map.paper;
+
+        // Defaults
+        thi$.color = colors.feature;
+        thi$.width = feature_width;
+        thi$.draw_head = false;
+        thi$.opacity = map.feature_opacity();
+        thi$.opaque = false; // holds opacity for clicks
+        set_properties()
+
+        // Type-based property selection
+        function set_properties() {
+
+            switch(thi$.type()) {
+                case ft.promoter:
+                case ft.primer:
+                    thi$.draw_head = true; // Promotors and primers are the only primer-colored
+                case ft.terminator:   // features with heads
+                    thi$.color = colors.primer;
+                    break;
+                case ft.regulatory:
+                case ft.origin:
+                    thi$.color = colors.origin;
+                    break;
+                case ft.enzyme:
+                    thi$.color = colors.enzyme;
+                    thi$.width = map.enzyme_width();
+                    thi$.opacity = map.enzyme_opacity();
+                    break;
+                case ft.orf:
+                    thi$.color = colors.orf;
+                case ft.gene:
+                    thi$.draw_head = true;
+                    break;
+            }
+        }
+
+        thi$.initialize = function() {
+            this.feature_set = this.paper.set();
+            this.arrow_set = this.paper.set();
+            this.label_set = this.paper.set();
+        }
+
+        // Actions for interactivity
+        // Generic fading animation/property setting mechanism
+        thi$.fade = function (props, line_props) {
+            var sets = this.paper.set(),
+                lines = this.paper.set(),
+                fx, f;
+
+            sets.push(this.feature_set);
+            lines.push(this.label_set[0]); // label line
+
+            // Cutters: highlight other examples of this enzyme if
+            // it's a multi-cutter
+            if (this.type() == ft.enzyme) {
+                for (fx = 0; fx < this.other_cutters().length; fx++) {
+                    f = this.map.features[this.other_cutters()[fx]];
+                    sets.push(f.feature_set());
+                    lines.push(f.label_set()[0]);
+                }
+            }
+
+            if (this.map.fade_time) { 
+                sets.animate(props, this.map.fade_time); 
+                lines.animateWith(sets, line_props, this.map.fade_time); 
+            } else { 
+                sets.attr(props);
+                lines.attr(line_props); 
+            }
+        }
+
+        thi$.bolder = function () {
+            var props = {"opacity": this.map.bold_opacity(),
+                         "font-weight": "bold" };
+            if (this.type() == ft.enzyme) {
+                props["stroke-width"] = this.map.enzyme_bold_weight;
+            }
+            var line_props = {"stroke": colors.plasmid, 
+                              "stroke-width": label_line_bold_weight};
+            this.fade(props, line_props);
+        }
+
+        thi$.lighter = function () {
+            var props = {"opacity": this.opacity,
+                         "font-weight":"normal"};
+            if (thi$.type() == ft.enzyme) {
+                props["stroke-width"] = this.map.enzyme_weight();
+            }
+            var line_props = {"stroke": colors.bg_text,
+                              "stroke-width": label_line_weight};
+            this.fade(props, line_props);
+        }
+
+        // Toggle solid/light upon click
+        thi$.click = function (event) {
+            if (this.map.feature_click_callback) {
+                this.map.feature_click_callback(basic_feature);
+            } else {
+                if (this.opaque) {
+                    this.lighter();
+                    this.opaque = false;
+                } else {
+                    this.bolder();
+                    this.opaque = true;
+                }
+            }
+        };
+
+        // Hovering: solid/light upon mouseover
+        thi$.mouse_over = function (event) {
+            if (!this.opaque)
+                this.bolder();
+        };
+
+        thi$.mouse_up = function (event) {
+            if (!this.opaque)
+                this.lighter();
+        };
+
+        // Showing and hiding
+
+        thi$.hide = function () {
+            if (this.visible) {
+                if (this.feature_set) { this.feature_set.hide(); }
+                this.visible = false;
+                this.labeled = false;
+            }
+        }; // END DrawnFeature::hide()
+
+        thi$.show = function () {
+            if (!this.visible) {
+                if (this.feature_set) { this.feature_set.show(); }
+                if (!this.labeled) {
+                    if (this.label_set) { this.label_set.hide(); }
+                }
+                this.visible = true;
+            }
+        }; // END DrawnFeature::show()
+
+        thi$.hide_label = function () {
+            if (this.labeled) {
+                if (this.label_set) { this.label_set.hide(); }
+                this.labeled = false;
+            }
+        }; // END DrawnFeature::hide_label()
+
+        thi$.show_label = function () {
+            if (!this.labeled) {
+                if (this.label_set) { this.label_set.show(); }
+                this.labeled = true;
+            }
+        }; // END DrawnFeature::show_label()
+
+        thi$.clear_label = function () {
+            if (this.label_drawn) {
+                if (this.label_set) {
+                    this.label_set.unclick(this.click);
+                    this.label_set.unhover(this.mouse_over, this.mouse_up);
+                    this.label_set.remove();
+                    this.label_set = this.paper.set();
+                }
+                this.labeled = false;
+                this.label_drawn = false;
+            }
+        }; // END DrawnFeature::clear_label()
+
+        // Common properties
+
+        /** Automatically provide the cut site in cutter labels */
+        thi$.label_name = function () {
+            var label_name = this.name();
+            if (this.type() == ft.enzyme) {
+                label_name += " (" + this.cut() + ")";
+            }
+            return label_name;
+        } // END DrawnFeature::label_name()
 
         return thi$;
-    }
+    } // END DrawnFeature()
 
 
 
@@ -342,9 +531,9 @@ window.GiraffeDraw = function () {
             final_height,
             _is_digest,
             _digest_fade_factor,
-            _feature_opacity,
-            _enzyme_opacity,
-            _bold_opacity,
+            _feature_opacity, _enzyme_opacity, _bold_opacity,
+            _feature_width, _enzyme_width, 
+            _enzyme_weight, enzyme_bold_weight,
             thi$ = {};
 
         init();
@@ -362,6 +551,14 @@ window.GiraffeDraw = function () {
                 _digest_fade_factor = options['digest_fade_factor'];
             }
 
+            // Feature visual properties
+            _feature_width = 15;
+            _enzyme_width = 25;
+            _enzyme_weight = 2; // Restriction enzymes are drawn differently
+                                // This controls their "thickness" on the map
+            _enzyme_bold_weight = 3; // How thick when highlighted
+
+
             // Opacities
             _feature_opacity = 0.7;
             _enzyme_opacity = 0.7;
@@ -373,10 +570,6 @@ window.GiraffeDraw = function () {
 
             if (_is_digest)
                 _feature_opacity = _feature_opacity * _digest_fade_factor;
-
-            thi$.feature_opacity = function () { return _feature_opacity; };
-            thi$.enzyme_opacity = function () { return _enzyme_opacity; };
-            thi$.bold_opacity = function () { return _bold_opacity; };
 
             // Cutters to show
             thi$.cutters_to_show = [1];
@@ -408,7 +601,28 @@ window.GiraffeDraw = function () {
             if ('map_height' in options) {
                 thi$.final_height = parseInt(options['map_height']);
             }
+
+            // Animation properties
+            thi$.fade_time = 0;
+            if ('fade_time' in options) {
+                thi$.fade_time = parseInt(options['fade_time'])
+            }
+
+            // Callback
+            thi$.feature_click_callback = undefined;
+            if ('feature_click_callback' in options) {
+                thi$.feature_click_callback = options['feature_click_callback'];
+            }
         }
+
+        thi$.feature_width = function () { return _feature_width; };
+        thi$.enzyme_width = function () { return _enzyme_width; };
+        thi$.enzyme_weight = function () { return _enzyme_weight; };
+        thi$.enzyme_bold_weight = function () { return _enzyme_bold_weight; };
+
+        thi$.feature_opacity = function () { return _feature_opacity; };
+        thi$.enzyme_opacity = function () { return _enzyme_opacity; };
+        thi$.bold_opacity = function () { return _bold_opacity; };
 
         thi$.extend_features = function () {
             var bfx,
@@ -600,7 +814,10 @@ window.GiraffeDraw = function () {
             this.rescale();
         }
 
-        // Centralized mechanism for exposing public properties of maps
+        // Centralized mechanism for exposing public properties of maps to the ouside user
+        // Do not expose any of the mechanics, just an API of utility methods useful
+        // in turning on and off features, and the gd object itself, for static things
+        // like feature types, etc.
         thi$.expose = function() {
 
             // Return a function that mimics <func>, but will always
@@ -661,9 +878,6 @@ window.GiraffeDraw = function () {
         var thi$ = Object.create(new Map(options));
         thi$.FeatureType = CircularFeature;
 
-        // Shortcut to paper access
-        var paper;
-
         // Paper setup - not the final width, but how we will draw the
         // map, we will scale later on
         var cx = thi$.width/2;
@@ -682,26 +896,8 @@ window.GiraffeDraw = function () {
             thi$.label_offset = parseInt(options['label_offset']);
         }
 
-        // Feature visual properties
-        var feature_width = 15;
-        var enzyme_width = 25;
-        var enzyme_weight = 2; // Restriction enzymes are drawn differently
-                               // This controls their "thickness" on the map
-        var enzyme_bold_weight = 3; // How thick when highlighted
         var head_width = 25;
         var head_length = 7;
-
-        // Callback
-        var feature_click_callback = undefined;
-        if ('feature_click_callback' in options) {
-            feature_click_callback = options['feature_click_callback'];
-        }
-
-        // Animation properties
-        var fade_time = 0;
-        if ('fade_time' in options) {
-            fade_time = parseInt(options['fade_time'])
-        }
 
         // Overlaps
         var min_overlap_cutoff = -0.1;// in degrees
@@ -771,6 +967,7 @@ window.GiraffeDraw = function () {
             return plasmid_start-label_section_degree/2.0-section*label_section_degree;
         };
 
+        // TODO: MAJOR CODE REORGANIZATION: MERGE COMMON ELEMENTS INTO ONE CLASS
         ///////////////////////////////////////////////////////////////////
         // Circular Feature class
         function CircularFeature(basic_feature) {
@@ -778,74 +975,12 @@ window.GiraffeDraw = function () {
             // Create a prototypal descendent of the basic_feature to expand
             var thi$ = Object.create(basic_feature);
 
-
             // The result of this function will be a CircularFeature object
             
-            // Visual properties
-            var _visible = true;
-            var _labeled = true;
-
-            // Type-based property selection
-            var _color = colors.feature;
-            var _width = feature_width;
-            var _draw_head = false;
-            var _opacity = thi$.map.feature_opacity();
-            var _opaque = false; // holds opacity for clicks
-            switch(thi$.type()) {
-                case ft.promoter:
-                case ft.primer:
-                    _draw_head = true; // Promotors and primers are the only primer-colored
-                case ft.terminator:   // features with heads
-                    _color = colors.primer;
-                    break;
-                case ft.regulatory:
-                case ft.origin:
-                    _color = colors.origin;
-                    break;
-                case ft.enzyme:
-                    _color = colors.enzyme;
-                    _width = enzyme_width;
-                    _opacity = thi$.map.enzyme_opacity();
-                    break;
-                case ft.orf:
-                    _color = colors.orf;
-                case ft.gene:
-                    _draw_head = true;
-                    break;
-            }
 
             // Radius is public, unlike other properties, which are permanent
             thi$.radius = plasmid_radius; // Default to plasmid radius, can be changed
                                           // later on by other methods
-
-            // Accessors for private properties set at creation
-            thi$.visible = function() { return _visible; };
-            thi$.labeled = function() { return _labeled; };
-
-            // The visual object to modify when accessing the feature.
-            var _feature_set;
-            var _arrow_set;
-            var _label_set;
-            var _label_drawn = false;
-
-            // Check to see if label has been drawn yet
-            thi$.label_drawn = function() { return _label_drawn; };
-            thi$.feature_set = function() { return _feature_set };
-            thi$.label_set = function() { return _label_set };
-
-            thi$.opacity = function() { 
-                if (arguments.length < 1) 
-                    return _opacity; 
-                else 
-                    _opacity = arguments[0]; 
-            };
-
-            thi$.initialize = function() {
-                paper = thi$.map.paper;
-                _feature_set = paper.set();
-                _arrow_set = paper.set();
-                _label_set = paper.set();
-            }
 
             // Calculated properties
 
@@ -927,85 +1062,10 @@ window.GiraffeDraw = function () {
                 return szd;
             };
 
-            // Actions for interactivity
-            // Generic fading animation/property setting mechanism
-            var _fade = function (props, line_props) {
-                var sets = paper.set(),
-                    lines = paper.set(),
-                    fx, f;
-
-                sets.push(_feature_set);
-                lines.push(_label_set[0]); // label line
-
-                // Cutters: highlight other examples of this enzyme if
-                // it's a multi-cutter
-                if (thi$.type() == ft.enzyme) {
-                    for (fx = 0; fx < thi$.other_cutters().length; fx++) {
-                        f = thi$.map.features[thi$.other_cutters()[fx]];
-                        sets.push(f.feature_set());
-                        lines.push(f.label_set()[0]);
-                    }
-                }
-
-                if (fade_time) { 
-                    sets.animate(props, fade_time); 
-                    lines.animateWith(sets, line_props, fade_time); 
-                } else { 
-                    sets.attr(props);
-                    lines.attr(line_props); 
-                }
-            }
-
-            var _bolder = function () {
-                var props = {"opacity": thi$.map.bold_opacity(),
-                             "font-weight": "bold" };
-                if (thi$.type() == ft.enzyme) {
-                    props["stroke-width"] = enzyme_bold_weight;
-                }
-                var line_props = {"stroke": colors.plasmid, 
-                                  "stroke-width": label_line_bold_weight};
-                _fade(props, line_props);
-            }
-
-            var _lighter = function () {
-                var props = {"opacity": _opacity,
-                             "font-weight":"normal"};
-                if (thi$.type() == ft.enzyme) {
-                    props["stroke-width"] = enzyme_weight;
-                }
-                var line_props = {"stroke": colors.bg_text,
-                                  "stroke-width": label_line_weight};
-                _fade(props, line_props);
-            }
-
-            // Toggle solid/light upon click
-            var _click = function (event) {
-                if (feature_click_callback) {
-                    feature_click_callback(basic_feature);
-                } else {
-                    if (_opaque) {
-                        _lighter();
-                        _opaque = false;
-                    } else {
-                        _bolder();
-                        _opaque = true;
-                    }
-                }
-            };
-
-            // Hovering: solid/light upon mouseover
-            var _mouse_over = function (event) {
-                if (!_opaque)
-                    _bolder();
-            };
-            var _mouse_up = function (event) {
-                if (!_opaque)
-                    _lighter();
-            };
 
             // Feature drawing
             thi$.draw = function () {
-                if (!_visible) { return; }
+                if (!this.visible) { return; }
 
                 // Convert from sequence positions to angles
                 var a0 = convert.pos_to_angle(thi$.start());
@@ -1045,13 +1105,13 @@ window.GiraffeDraw = function () {
 
                     // Unlike the arc, the head is traced with a line, and
                     // then created entirely with the fill color
-                    var head = paper.path(svg.move(xy_p.x, xy_p.y) +
+                    var head = this.paper.path(svg.move(xy_p.x, xy_p.y) +
                                           svg.line(xy_b.x, xy_b.y) +
                                           svg.line(xy_t.x, xy_t.y) + 
                                           svg.close());
                     head.attr({"stroke-width": 0,
                                "fill":         _color});
-                    _arrow_set.push(head);
+                    this.arrow_set.push(head);
                 }
 
                 // Arc drawing
@@ -1070,12 +1130,12 @@ window.GiraffeDraw = function () {
                     // The arc has no fill-color: it's just a thick line
                     var large_angle = thi$.real_size() > 180 ? 1 : 0;
 
-                    var arc = paper.path(svg.move(xy0.x, xy0.y) +
+                    var arc = this.paper.path(svg.move(xy0.x, xy0.y) +
                                          svg.arc(thi$.radius, xy1.x, xy1.y,
                                                  large_angle));
                     arc.attr({"stroke-width": _width});
 
-                    _arrow_set.push(arc);
+                    this.arrow_set.push(arc);
                 } else if (thi$.type() == ft.enzyme) { 
                     // Restriction enzymes get drawn on their own
                     var xy0 = convert.polar_to_rect(thi$.radius - enzyme_width/2.0, 
@@ -1084,21 +1144,21 @@ window.GiraffeDraw = function () {
                             (a0+a1)/2.0);
                     // Not really an arc, just a line, but left this way
                     // for consistency
-                    var arc = paper.path(svg.move(xy0.x, xy0.y) +
+                    var arc = this.paper.path(svg.move(xy0.x, xy0.y) +
                                          svg.line(xy1.x, xy1.y));
                     arc.attr({"stroke-width": enzyme_weight});
                     arc.toBack();
 
-                    _arrow_set.push(arc);
+                    this.arrow_set.push(arc);
                 }
 
-                _arrow_set.click(_click);
-                _arrow_set.hover(_mouse_over, _mouse_up);
+                this.arrow_set.click(_click);
+                this.arrow_set.hover(_mouse_over, _mouse_up);
 
-                _feature_set.push(_arrow_set);
+                this.feature_set.push(this.arrow_set);
 
                 // Apply the feature-wide properties to the whole feature
-                _feature_set.attr({"stroke":         _color,
+                this.feature_set.attr({"stroke":         _color,
                                    "stroke-linecap": "butt",
                                    "opacity":        _opacity});
 
@@ -1107,19 +1167,10 @@ window.GiraffeDraw = function () {
             // Should we draw the label?
             thi$.should_draw_label = function () {
                 // Don't bother unless we need to
-                if (!_visible || !_labeled) 
+                if (!this.visible || !this.labeled) 
                     return false;
                 return true;
             } // END CircularFeature::should_draw_label()
-
-            // What label should we draw?
-            thi$.label_name = function () {
-                var label_name = thi$.name();
-                if (thi$.type() == ft.enzyme) {
-                    label_name += " (" + thi$.cut() + ")";
-                }
-                return label_name;
-            } // END CircularFeature::label_name()
 
             // Set which label list this feature's label should be in
             thi$.set_label_list = function () {
@@ -1199,7 +1250,7 @@ window.GiraffeDraw = function () {
                 }
 
                 // Draw the line to the label position
-                var label_line = paper.path(svg.move(xy0.x, xy0.y) +
+                var label_line = this.paper.path(svg.move(xy0.x, xy0.y) +
                                             svg.line(xy1.x, xy1.y));
                 label_line.attr({"stroke": colors.bg_text,
                                  "stroke-width": label_line_weight,
@@ -1207,7 +1258,7 @@ window.GiraffeDraw = function () {
 
                 // Enzymes show their cut sites in the label
                 var label_name = thi$.label_name();
-                var label = paper.text(xy1.x, xy1.y, label_name);
+                var label = this.paper.text(xy1.x, xy1.y, label_name);
 
                 if (section > 3) {
                     // Left half of wheel: align right
@@ -1222,65 +1273,20 @@ window.GiraffeDraw = function () {
                             "font-size": label_font_size,
                             "opacity": 1.0 });
 
-                _label_set.push(label_line);
-                _label_set.push(label);
+                this.label_set.push(label_line);
+                this.label_set.push(label);
 
                 // Handlers
-                _label_set.click(_click);
-                _label_set.hover(_mouse_over, _mouse_up);
+                this.label_set.click(_click);
+                this.label_set.hover(_mouse_over, _mouse_up);
 
                 // Only push label_line, so when we fade in and out,
                 // we don't also fade the label.
-                _feature_set.push(label_line);
+                this.feature_set.push(label_line);
 
-                _labeled = true;
+                this.labeled = true;
                 _label_drawn = true;
             } // END CircularFeature::draw_label()
-
-            thi$.hide = function () {
-                if (_visible) {
-                    if (_feature_set) { _feature_set.hide(); }
-                    _visible = false;
-                    _labeled = false;
-                }
-            }; // END CircularFeature::hide()
-
-            thi$.show = function () {
-                if (!_visible) {
-                    if (_feature_set) { _feature_set.show(); }
-                    if (!_labeled) {
-                        if (_label_set) { _label_set.hide(); }
-                    }
-                    _visible = true;
-                }
-            }; // END CircularFeature::show()
-
-            thi$.hide_label = function () {
-                if (_labeled) {
-                    if (_label_set) { _label_set.hide(); }
-                    _labeled = false;
-                }
-            }; // END CircularFeature::hide_label()
-
-            thi$.show_label = function () {
-                if (!_labeled) {
-                    if (_label_set) { _label_set.show(); }
-                    _labeled = true;
-                }
-            }; // END CircularFeature::show_label()
-
-            thi$.clear_label = function () {
-                if (_label_drawn) {
-                    if (_label_set) {
-                        _label_set.unclick(_click);
-                        _label_set.unhover(_mouse_over, _mouse_up);
-                        _label_set.remove();
-                        _label_set = paper.set();
-                    }
-                    _labeled = false;
-                    _label_drawn = false;
-                }
-            }; // END CircularFeature::clear_label()
 
             return thi$;
         }; // END CircularFeature Class
@@ -1295,12 +1301,12 @@ window.GiraffeDraw = function () {
                 var r1 = tic_mark_radius + tic_mark_length/2;
                 var xy0 = convert.polar_to_rect(r0,a);
                 var xy1 = convert.polar_to_rect(r1,a);
-                var tic = paper.path(svg.move(xy0.x, xy0.y) +
+                var tic = this.paper.path(svg.move(xy0.x, xy0.y) +
                                      svg.line(xy1.x, xy1.y));
                 tic.attr({"stroke": colors.bg_text});
 
                 var xyl = convert.polar_to_rect(tic_label_radius, a);
-                var label = paper.text(xyl.x, xyl.y, String(convert.angle_to_pos(a)));
+                var label = this.paper.text(xyl.x, xyl.y, String(convert.angle_to_pos(a)));
                 label.attr({"fill": colors.bg_text});
                 if (a < plasmid_start || a > 360 - plasmid_start) { // Right half of wheel: align right
                     label.attr({"text-anchor": "end"});
@@ -1309,13 +1315,13 @@ window.GiraffeDraw = function () {
                 } // Top and bottom default to middle, which is correct
             }
 
-            var plasmid = paper.circle(cx, cy, plasmid_radius);
+            var plasmid = this.paper.circle(cx, cy, plasmid_radius);
             plasmid.attr("stroke", colors.plasmid);
             var title = seq_length + ' bp';
             if (plasmid_name != "") {
                 title = plasmid_name + "\n\n" + title;
             }
-            var plasmid_label = paper.text(cx, cy, title);
+            var plasmid_label = this.paper.text(cx, cy, title);
             plasmid_label.attr({"fill":      colors.plasmid,
                                 "font-size": plasmid_font_size, });
 
@@ -1639,7 +1645,7 @@ window.GiraffeDraw = function () {
                 thi$.final_height != thi$.height) {
                 // "center" parameter just adds unnecessary CSS to the container
                 // object to give it an absolute position: not what we need
-                paper.changeSize(thi$.final_width,thi$.final_height,false,false)
+                this.paper.changeSize(thi$.final_width,thi$.final_height,false,false)
             }
         }
 
@@ -1653,10 +1659,6 @@ window.GiraffeDraw = function () {
         // Inherit the common Map functions
         var thi$ = Object.create(new Map(options));
         thi$.FeatureType = LinearFeature;
-
-        // Shortcut to paper access
-        var paper;
-
 
         // Paper setup - not the final width, but how we will draw the
         // map, we will scale later on
@@ -1681,26 +1683,8 @@ window.GiraffeDraw = function () {
             thi$.label_offset = parseInt(options['label_offset']);
         }
 
-        // Feature visual properties
-        var feature_width = 15;
-        var enzyme_width = 25;
-        var enzyme_weight = 2; // Restriction enzymes are drawn differently
-                               // This controls their "thickness" on the map
-        var enzyme_bold_weight = 3; // How thick when highlighted
         var head_width = 25;
         var head_length = 5;
-
-        // Callback
-        var feature_click_callback = undefined;
-        if ('feature_click_callback' in options) {
-            feature_click_callback = options['feature_click_callback'];
-        }
-
-        // Animation properties
-        var fade_time = 0;
-        if ('fade_time' in options) {
-            fade_time = parseInt(options['fade_time'])
-        }
 
         // Overlaps
         var min_overlap_cutoff = -1;// in pixels
@@ -1727,75 +1711,17 @@ window.GiraffeDraw = function () {
         };
 
         // TODO: MAJOR CODE REORGANIZATION: MERGE COMMON ELEMENTS INTO ONE CLASS
+        ///////////////////////////////////////////////////////////////////
+        // Circular Feature class
         function LinearFeature(basic_feature) {
             
             // Create a prototypal descendent of the basic_feature to expand
             var thi$ = Object.create(basic_feature);
+
             // The result of this function will be a LinearFeature object
 
-            // The visual object to modify when accessing the feature.
-            var _feature_set;
-            var _arrow_set;
-            var _label_set;
-            var _label_drawn = false;
-
-            thi$.opacity = function() { 
-                if (arguments.length < 1) 
-                    return _opacity; 
-                else 
-                    _opacity = arguments[0]; 
-            };
-
-            // Visual properties
-            var _visible = true;
-            var _labeled = true;
-
-            // Type-based property selection
-            var _color = colors.feature;
-            var _width = feature_width;
-            var _draw_head = false;
-            var _opacity = thi$.map.feature_opacity();
-            var _opaque = false; // holds opacity for clicks
-            switch(thi$.type()) {
-                case ft.promoter:
-                case ft.primer:
-                    _draw_head = true; // Promotors and primers are the only primer-colored
-                case ft.terminator:   // features with heads
-                    _color = colors.primer;
-                    break;
-                case ft.regulatory:
-                case ft.origin:
-                    _color = colors.origin;
-                    break;
-                case ft.enzyme:
-                    _color = colors.enzyme;
-                    _width = enzyme_width;
-                    _opacity = thi$.map.enzyme_opacity();
-                    break;
-                case ft.orf:
-                    _color = colors.orf;
-                case ft.gene:
-                    _draw_head = true;
-                    break;
-            }
-
-            // Accessors for private properties set at creation
-            thi$.visible = function() { return _visible; };
-            thi$.labeled = function() { return _labeled; };
 
             thi$.y = 0; // default to plasmid height (y is an offset)
-
-            // Check to see if label has been drawn yet
-            thi$.label_drawn = function() { return _label_drawn; };
-            thi$.feature_set = function() { return _feature_set };
-            thi$.label_set = function() { return _label_set };
-
-            thi$.initialize = function() {
-                paper = thi$.map.paper;
-                _feature_set = paper.set();
-                _arrow_set = paper.set();
-                _label_set = paper.set();
-            }
 
             thi$.real_center = function() {
                 return (this.real_start() + this.real_end()) / 2.0;
@@ -1845,86 +1771,11 @@ window.GiraffeDraw = function () {
                 return rsz;
             };
 
-            // Actions for interactivity
-            // Generic fading animation/property setting mechanism
-            var _fade = function (props, line_props) {
-                var sets = paper.set(),
-                    lines = paper.set(),
-                    fx, f;
-
-                sets.push(_feature_set);
-                lines.push(_label_set[0]); // label line
-
-                // Cutters: highlight other examples of this enzyme if
-                // it's a multi-cutter
-                if (thi$.type() == ft.enzyme) {
-                    for (fx = 0; fx < thi$.other_cutters().length; fx++) {
-                        f = thi$.map.features[thi$.other_cutters()[fx]];
-                        sets.push(f.feature_set());
-                        lines.push(f.label_set()[0]);
-                    }
-                }
-
-                if (fade_time) { 
-                    sets.animate(props, fade_time); 
-                    lines.animateWith(sets, line_props, fade_time); 
-                } else { 
-                    sets.attr(props);
-                    lines.attr(line_props); 
-                }
-            }
-
-            var _bolder = function () {
-                var props = {"opacity": thi$.map.bold_opacity(),
-                             "font-weight": "bold" };
-                if (thi$.type() == ft.enzyme) {
-                    props["stroke-width"] = enzyme_bold_weight;
-                }
-                var line_props = {"stroke": colors.plasmid, 
-                                  "stroke-width": label_line_bold_weight};
-                _fade(props, line_props);
-            }
-
-            var _lighter = function () {
-                var props = {"opacity": _opacity,
-                             "font-weight":"normal"};
-                if (thi$.type() == ft.enzyme) {
-                    props["stroke-width"] = enzyme_weight;
-                }
-                var line_props = {"stroke": colors.bg_text,
-                                  "stroke-width": label_line_weight};
-                _fade(props, line_props);
-            }
-
-            // Toggle solid/light upon click
-            var _click = function (event) {
-                if (feature_click_callback) {
-                    feature_click_callback(basic_feature);
-                } else {
-                    if (_opaque) {
-                        _lighter();
-                        _opaque = false;
-                    } else {
-                        _bolder();
-                        _opaque = true;
-                    }
-                }
-            };
-
-            // Hovering: solid/light upon mouseover
-            var _mouse_over = function (event) {
-                if (!_opaque)
-                    _bolder();
-            };
-            var _mouse_up = function (event) {
-                if (!_opaque)
-                    _lighter();
-            };
 
             thi$.draw = function () {
                 // Don't draw features that cross the boundary, as this is not
                 // a circular plasmid
-                if (!_visible || thi$.crosses_boundary()) { return; }
+                if (! this.visible || thi$.crosses_boundary()) { return; }
 
                 // Convert from sequence positions to x-coords
                 var x0 = convert.pos_to_x(thi$.start());
@@ -1947,13 +1798,13 @@ window.GiraffeDraw = function () {
 
                     // Unlike the body, the head is traced with a line, and
                     // then created entirely with the fill color
-                    var head = paper.path(svg.move(hx_tip, y) +
+                    var head = this.paper.path(svg.move(hx_tip, y) +
                                      svg.line(hx_back, y - head_width/2.0) +
                                      svg.line(hx_back, y + head_width/2.0) +
                                      svg.close());
                     head.attr({"stroke-width": 0,
                                "fill":         _color});
-                    _arrow_set.push(head);
+                    this.arrow_set.push(head);
                 }
 
                 // Body drawing
@@ -1963,30 +1814,30 @@ window.GiraffeDraw = function () {
                     // to be drawn
 
                     // The body has no fill-color: it's just a thick line
-                    var body = paper.path(svg.move(x0, y) +
+                    var body = this.paper.path(svg.move(x0, y) +
                                           svg.line(x1, y));
                     body.attr({"stroke-width": _width});
 
-                    _arrow_set.push(body);
+                    this.arrow_set.push(body);
                 } else if (thi$.type() == ft.enzyme) { 
                     // Restriction enzymes get drawn on their own
                     var x_m = (x0 + x1)/2;
 
-                    var body = paper.path(svg.move(x_m, y - _width/2.0) +
+                    var body = this.paper.path(svg.move(x_m, y - _width/2.0) +
                                           svg.line(x_m, y + _width/2.0));
                     body.attr({"stroke-width": enzyme_weight});
                     body.toBack();
 
-                    _arrow_set.push(body);
+                    this.arrow_set.push(body);
                 }
 
-                _arrow_set.click(_click);
-                _arrow_set.hover(_mouse_over, _mouse_up);
+                this.arrow_set.click(_click);
+                this.arrow_set.hover(_mouse_over, _mouse_up);
 
-                _feature_set.push(_arrow_set);
+                this.feature_set.push(this.arrow_set);
 
                 // Apply the feature-wide properties to the whole feature
-                _feature_set.attr({"stroke": _color,
+                this.feature_set.attr({"stroke": _color,
                                    "stroke-linecap": "butt",
                                    "opacity": _opacity});
 
@@ -1995,22 +1846,13 @@ window.GiraffeDraw = function () {
             // Should we draw the label?
             thi$.should_draw_label = function () {
                 // Don't bother unless we need to
-                if (!_visible || !_labeled || this.crosses_boundary()) 
+                if (!this.visible || !this.labeled || this.crosses_boundary()) 
                     return false;
                 return true;
             } // END LinearFeature::should_draw_label()
 
-            // What label should we draw?
-            thi$.label_name = function () {
-                var label_name = thi$.name();
-                if (thi$.type() == ft.enzyme) {
-                    label_name += " (" + thi$.cut() + ")";
-                }
-                return label_name;
-            } // END LinearFeature::label_name()
-
             thi$.label_size = function() {
-                var fake_label = paper.text(0, 0, this.label_name());
+                var fake_label = this.paper.text(0, 0, this.label_name());
                 var w = fake_label.getBBox().width;
                 var h = fake_label.getBBox().height;
                 fake_label.remove();
@@ -2029,7 +1871,7 @@ window.GiraffeDraw = function () {
 
                 // Enzymes show their cut sites in the label
                 var label_name = thi$.label_name();
-                var label = paper.text(pos, height, label_name);
+                var label = this.paper.text(pos, height, label_name);
                 
                 // Below, right-justify. Above, left-justify.
                 var anchor = (height >= plasmid_y) ? "end" : "start";
@@ -2039,73 +1881,28 @@ window.GiraffeDraw = function () {
                             "opacity": 1.0 });
 
                 // Draw the line to the label position
-                var label_line = paper.path(svg.move(x_c, plasmid_y + this.y) +
+                var label_line = this.paper.path(svg.move(x_c, plasmid_y + this.y) +
                                             svg.line(pos, height));
                 label_line.attr({"stroke": colors.bg_text,
                                  "stroke-width": label_line_weight,
                                  "opacity": 0.5 });
 
-                _label_set.push(label_line);
-                _label_set.push(label);
+                this.label_set.push(label_line);
+                this.label_set.push(label);
 
                 // Handlers
-                _label_set.click(_click);
-                _label_set.hover(_mouse_over, _mouse_up);
+                this.label_set.click(_click);
+                this.label_set.hover(_mouse_over, _mouse_up);
 
                 // Only push label_line, so when we fade in and out,
                 // we don't also fade the label.
-                _feature_set.push(label_line);
+                this.feature_set.push(label_line);
 
-                _labeled = true;
+                this.labeled = true;
                 _label_drawn = true;
 
                 return label.getBBox();
             } // END LinearFeature::draw_label()
-
-            thi$.hide = function () {
-                if (_visible) {
-                    if (_feature_set) { _feature_set.hide(); }
-                    _visible = false;
-                    _labeled = false;
-                }
-            }; // END LinearFeature::hide()
-
-            thi$.show = function () {
-                if (!_visible) {
-                    if (_feature_set) { _feature_set.show(); }
-                    if (!_labeled) {
-                        if (_label_set) { _label_set.hide(); }
-                    }
-                    _visible = true;
-                }
-            }; // END LinearFeature::show()
-
-            thi$.hide_label = function () {
-                if (_labeled) {
-                    if (_label_set) { _label_set.hide(); }
-                    _labeled = false;
-                }
-            }; // END LinearFeature::hide_label()
-
-            thi$.show_label = function () {
-                if (!_labeled) {
-                    if (_label_set) { _label_set.show(); }
-                    _labeled = true;
-                }
-            }; // END LinearFeature::show_label()
-
-            thi$.clear_label = function () {
-                if (_label_drawn) {
-                    if (_label_set) {
-                        _label_set.unclick(_click);
-                        _label_set.unhover(_mouse_over, _mouse_up);
-                        _label_set.remove();
-                        _label_set = paper.set();
-                    }
-                    _labeled = false;
-                    _label_drawn = false;
-                }
-            }; // END LinearFeature::clear_label()
 
             return thi$;
         }; // END LinearFeature Class
@@ -2124,15 +1921,15 @@ window.GiraffeDraw = function () {
                 var x = convert.pos_to_x(p);
                 var y0 = tic_mark_y - tic_mark_length/2;
                 var y1 = tic_mark_y + tic_mark_length/2;
-                var tic = paper.path(svg.move(x, y0) +
+                var tic = this.paper.path(svg.move(x, y0) +
                                      svg.line(x, y1));
                 tic.attr({"stroke": colors.bg_text});
 
-                var label = paper.text(x, tic_label_y, String(p));
+                var label = this.paper.text(x, tic_label_y, String(p));
                 label.attr({"fill": colors.bg_text});
             }
 
-            var plasmid = paper.path(svg.move(plasmid_left,  plasmid_y) +
+            var plasmid = this.paper.path(svg.move(plasmid_left,  plasmid_y) +
                                      svg.line(plasmid_right, plasmid_y));
 
             plasmid.attr("stroke", colors.plasmid);
@@ -2140,7 +1937,7 @@ window.GiraffeDraw = function () {
             if (plasmid_name != "") {
                 title = plasmid_name + ": " + title;
             }
-            var plasmid_label = paper.text(cx, title_y, title);
+            var plasmid_label = this.paper.text(cx, title_y, title);
             plasmid_label.attr({"fill":      colors.plasmid,
                                 "font-size": plasmid_font_size, });
 
@@ -2477,10 +2274,9 @@ window.GiraffeDraw = function () {
 
                 // "center" parameter just adds unnecessary CSS to the container
                 // object to give it an absolute position: not what we need
-                paper.changeSize(thi$.final_width,thi$.final_height,false,true)
+                this.paper.changeSize(thi$.final_width,thi$.final_height,false,true)
             }
         }
-
         
         return thi$;
     }; // End LinMap()
