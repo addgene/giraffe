@@ -117,6 +117,27 @@
         }
     }
 
+    // Function.prototype.bind polyfill
+    if ( !Function.prototype.bind ) {
+
+      Function.prototype.bind = function( obj ) {
+        var slice = [].slice,
+            args = slice.call(arguments, 1), 
+            self = this, 
+            nop = function () {}, 
+            bound = function () {
+              return self.apply( this instanceof nop ? this : ( obj || {} ), 
+                                  args.concat( slice.call(arguments) ) );    
+            };
+
+        nop.prototype = self.prototype;
+
+        bound.prototype = new nop();
+
+        return bound;
+      };
+    }
+
     ///////////////////////////////////////////////////////////////////
     // Package-scope variables
     var _debug,
@@ -329,9 +350,9 @@ window.GiraffeDraw = function () {
         var thi$ = Object.create(basic_feature);
 
         thi$.label_drawn = false;
-        thi$.feature_set = {};
-        thi$.arrow_set = {};
-        thi$.label_set = {};
+        thi$.feature_set = undefined;
+        thi$.arrow_set = undefined;
+        thi$.label_set = undefined;
 
         // Visual properties
         thi$.visible = true;
@@ -339,11 +360,10 @@ window.GiraffeDraw = function () {
 
         // Easy access to drawing objects
         thi$.map = map;
-        thi$.paper = map.paper;
 
         // Defaults
         thi$.color = colors.feature;
-        thi$.width = feature_width;
+        thi$.width = map.feature_width();
         thi$.draw_head = false;
         thi$.opacity = map.feature_opacity();
         thi$.opaque = false; // holds opacity for clicks
@@ -377,16 +397,16 @@ window.GiraffeDraw = function () {
         }
 
         thi$.initialize = function() {
-            this.feature_set = this.paper.set();
-            this.arrow_set = this.paper.set();
-            this.label_set = this.paper.set();
+            this.feature_set = this.map.paper.set();
+            this.arrow_set = this.map.paper.set();
+            this.label_set = this.map.paper.set();
         }
 
         // Actions for interactivity
         // Generic fading animation/property setting mechanism
         thi$.fade = function (props, line_props) {
-            var sets = this.paper.set(),
-                lines = this.paper.set(),
+            var sets = this.map.paper.set(),
+                lines = this.map.paper.set(),
                 fx, f;
 
             sets.push(this.feature_set);
@@ -397,8 +417,8 @@ window.GiraffeDraw = function () {
             if (this.type() == ft.enzyme) {
                 for (fx = 0; fx < this.other_cutters().length; fx++) {
                     f = this.map.features[this.other_cutters()[fx]];
-                    sets.push(f.feature_set());
-                    lines.push(f.label_set()[0]);
+                    sets.push(f.feature_set);
+                    lines.push(f.label_set[0]);
                 }
             }
 
@@ -418,7 +438,7 @@ window.GiraffeDraw = function () {
                 props["stroke-width"] = this.map.enzyme_bold_weight;
             }
             var line_props = {"stroke": colors.plasmid, 
-                              "stroke-width": label_line_bold_weight};
+                              "stroke-width": this.map.label_line_bold_weight()};
             this.fade(props, line_props);
         }
 
@@ -429,12 +449,12 @@ window.GiraffeDraw = function () {
                 props["stroke-width"] = this.map.enzyme_weight();
             }
             var line_props = {"stroke": colors.bg_text,
-                              "stroke-width": label_line_weight};
+                              "stroke-width": this.map.label_line_weight()};
             this.fade(props, line_props);
         }
 
         // Toggle solid/light upon click
-        thi$.click = function (event) {
+        thi$.click = function(event) {
             if (this.map.feature_click_callback) {
                 this.map.feature_click_callback(basic_feature);
             } else {
@@ -446,15 +466,18 @@ window.GiraffeDraw = function () {
                     this.opaque = true;
                 }
             }
-        };
+        }
+       
 
         // Hovering: solid/light upon mouseover
         thi$.mouse_over = function (event) {
+            // this object context will change when called, so we use thi$
             if (!this.opaque)
                 this.bolder();
         };
 
         thi$.mouse_up = function (event) {
+            // this object context will change when called, so we use thi$
             if (!this.opaque)
                 this.lighter();
         };
@@ -499,7 +522,7 @@ window.GiraffeDraw = function () {
                     this.label_set.unclick(this.click);
                     this.label_set.unhover(this.mouse_over, this.mouse_up);
                     this.label_set.remove();
-                    this.label_set = this.paper.set();
+                    this.label_set = this.map.paper.set();
                 }
                 this.labeled = false;
                 this.label_drawn = false;
@@ -526,14 +549,14 @@ window.GiraffeDraw = function () {
     // Generic Map prototype class
     function Map(options) {
         
-        var cutters_to_show, 
-            final_width,
-            final_height,
+        var _cutters_to_show, 
             _is_digest,
             _digest_fade_factor,
             _feature_opacity, _enzyme_opacity, _bold_opacity,
             _feature_width, _enzyme_width, 
             _enzyme_weight, enzyme_bold_weight,
+            _label_line_weight, _label_line_bold_weight, _label_font_size,
+            _plasmid_font_size, _plasmid_name,
             thi$ = {};
 
         init();
@@ -544,7 +567,6 @@ window.GiraffeDraw = function () {
             if ('digest' in options) {
                 _is_digest = options['digest'];
             }
-            thi$.is_digest = function () { return _is_digest; };
 
             _digest_fade_factor = 0.15;
             if ('digest_fade_factor' in options) {
@@ -558,6 +580,17 @@ window.GiraffeDraw = function () {
                                 // This controls their "thickness" on the map
             _enzyme_bold_weight = 3; // How thick when highlighted
 
+            // Labels and other text
+            _label_line_weight = 1;
+            _label_line_bold_weight = 1.5 * _label_line_weight;
+            _label_font_size = '13pt';
+
+            // Plasmid text
+            _plasmid_font_size = '16pt';
+            _plasmid_name = '';
+            if ('plasmid_name' in options) {
+                _plasmid_name = options['plasmid_name'];
+            }
 
             // Opacities
             _feature_opacity = 0.7;
@@ -572,9 +605,9 @@ window.GiraffeDraw = function () {
                 _feature_opacity = _feature_opacity * _digest_fade_factor;
 
             // Cutters to show
-            thi$.cutters_to_show = [1];
+            _cutters_to_show = [1];
             if ('cutters' in options) {
-                cutters_to_show = options['cutters'];
+                _cutters_to_show = options['cutters'];
             }
 
             // Where to draw the map
@@ -583,7 +616,7 @@ window.GiraffeDraw = function () {
                 thi$.map_dom_id = options['map_dom_id'];
             }
 
-            thi$.paper  = {}; // To be used for RaphaelJS;
+            thi$.paper  = undefined; // To be used for RaphaelJS;
             thi$.label_offset = 0;
 
             thi$.features = [];
@@ -615,6 +648,7 @@ window.GiraffeDraw = function () {
             }
         }
 
+        thi$.is_digest = function () { return _is_digest; };
         thi$.feature_width = function () { return _feature_width; };
         thi$.enzyme_width = function () { return _enzyme_width; };
         thi$.enzyme_weight = function () { return _enzyme_weight; };
@@ -623,6 +657,12 @@ window.GiraffeDraw = function () {
         thi$.feature_opacity = function () { return _feature_opacity; };
         thi$.enzyme_opacity = function () { return _enzyme_opacity; };
         thi$.bold_opacity = function () { return _bold_opacity; };
+
+        thi$.label_line_weight = function() { return  _label_line_weight; };
+        thi$.label_line_bold_weight = function() { return  _label_line_bold_weight; };
+        thi$.label_font_size = function() { return  _label_font_size; };
+        thi$.plasmid_font_size = function() { return  _plasmid_font_size; };
+        thi$.plasmid_name = function() { return  _plasmid_name; };
 
         thi$.extend_features = function () {
             var bfx,
@@ -654,7 +694,7 @@ window.GiraffeDraw = function () {
                     // cutters to show - i.e. 1 cutter, 2 cutters,
                     // etc.
                     if (f.type() == ft.enzyme) {
-                        if (cutters_to_show.indexOf(f.cut_count()) < 0) {
+                        if (_cutters_to_show.indexOf(f.cut_count()) < 0) {
                             f.hide();
                             f.clear_label();
                         } else {
@@ -673,7 +713,7 @@ window.GiraffeDraw = function () {
         }
 
         thi$.redraw_cutters = function (new_cutters_to_show) {
-            cutters_to_show = new_cutters_to_show;
+            _cutters_to_show = new_cutters_to_show;
             this.redraw(false);
         }
 
@@ -820,30 +860,21 @@ window.GiraffeDraw = function () {
         // like feature types, etc.
         thi$.expose = function() {
 
-            // Return a function that mimics <func>, but will always
-            // call <func> with the <new_this> context
-            function change_context(func, new_this) {
-                return (function () {
-                    func.apply(new_this, arguments);
-                });
-            }
-
             // Export the main properties as part of a Map-like object
             // descendant classes inheret this ability, and because of the
             // this pointer, will return /Their own/ draw and features objects
-            // XXX: change_context functions lose their original .length property
             return { 
-                redraw_cutters: change_context(this.redraw_cutters, this),
-                show_feature_type: change_context(this.show_feature_type, this),
-                hide_feature_type: change_context(this.hide_feature_type, this),
-                show_feature_label_type: change_context(this.show_feature_label_type, this),
-                hide_feature_label_type: change_context(this.hide_feature_label_type, this),
-                show_feature: change_context(this.show_feature, this),
-                hide_feature: change_context(this.hide_feature, this),
-                show_feature_label: change_context(this.show_feature_label, this),
-                hide_feature_label: change_context(this.hide_feature_label, this),
-                show_extra_features: change_context(this.show_extra_features, this),
-                hide_extra_features: change_context(this.hide_extra_features, this),
+                redraw_cutters: this.redraw_cutters.bind(this),
+                show_feature_type: this.show_feature_type.bind(this),
+                hide_feature_type: this.hide_feature_type.bind(this),
+                show_feature_label_type: this.show_feature_label_type.bind(this),
+                hide_feature_label_type: this.hide_feature_label_type.bind(this),
+                show_feature: this.show_feature.bind(this),
+                hide_feature: this.hide_feature.bind(this),
+                show_feature_label: this.show_feature_label.bind(this),
+                hide_feature_label: this.hide_feature_label.bind(this),
+                show_extra_features: this.show_extra_features.bind(this),
+                hide_extra_features: this.hide_extra_features.bind(this),
                 is_digest: this.is_digest,
                 gd: gd
             }
@@ -908,16 +939,6 @@ window.GiraffeDraw = function () {
         var tic_mark_length = 15;
         var tic_mark_radius = inner_radius - tic_mark_length/2;
         var tic_label_radius = tic_mark_radius - 1.5*tic_mark_length;
-
-        // Labels and other text
-        var label_line_weight = 1;
-        var label_line_bold_weight = 1.5 * label_line_weight;
-        var label_font_size = '13pt';
-        var plasmid_font_size = '16pt';
-        var plasmid_name = '';
-        if ('plasmid_name' in options) {
-            plasmid_name = options['plasmid_name'];
-        }
 
         var label_letter_height = 0;
         var label_letter_width = 0;
@@ -1000,7 +1021,7 @@ window.GiraffeDraw = function () {
                 // Take the minimum head size into account. Only need to do this 
                 // when the head is drawn and pointing clockwise, to
                 // "push the start back."
-                if (_draw_head && thi$.clockwise()) { 
+                if (this.draw_head && thi$.clockwise()) { 
                     sd = convert.pos_to_angle(thi$.end()) + thi$.real_size();
                 } else { // Headless feature, or head is pointing the wrong way.
                          // Just give its typical start position
@@ -1028,7 +1049,7 @@ window.GiraffeDraw = function () {
                 // Take the minimum head size into account. Only need to do this 
                 // when the head is drawn and pointing counterclockwise, to 
                 // "push the end forward."
-                if (_draw_head && !thi$.clockwise()) { // Take the minimum head size into account
+                if (this.draw_head && !thi$.clockwise()) { // Take the minimum head size into account
                     ed = convert.pos_to_angle(thi$.start()) - thi$.real_size();
                 } else { // Headless feature, or head is pointing the wrong way.
                          // Just give its typical end position
@@ -1048,7 +1069,7 @@ window.GiraffeDraw = function () {
                     szd = convert.seq_length_to_angle(thi$.end() - thi$.start() + 1);
 
                 // Head size: return this if it's bigger
-                if (_draw_head) {
+                if (this.draw_head) {
                     // Convert the head length into degrees, just as you do
                     // in the draw() method. Must recalcualte every time, as
                     // radius may have changed
@@ -1075,7 +1096,7 @@ window.GiraffeDraw = function () {
                 // and arc pushed onto it as necessary.
                 
                 // Arrowhead drawing, if needed
-                if (_draw_head) {
+                if (this.draw_head) {
 
                     // Arrow tip point lines up with a0 or a1 and it points
                     // tangent to the circle.
@@ -1105,17 +1126,17 @@ window.GiraffeDraw = function () {
 
                     // Unlike the arc, the head is traced with a line, and
                     // then created entirely with the fill color
-                    var head = this.paper.path(svg.move(xy_p.x, xy_p.y) +
+                    var head = this.map.paper.path(svg.move(xy_p.x, xy_p.y) +
                                           svg.line(xy_b.x, xy_b.y) +
                                           svg.line(xy_t.x, xy_t.y) + 
                                           svg.close());
                     head.attr({"stroke-width": 0,
-                               "fill":         _color});
+                               "fill":         this.color});
                     this.arrow_set.push(head);
                 }
 
                 // Arc drawing
-                if ((thi$.crosses_boundary() || a1 < a0) && thi$.type() != ft.enzyme) {
+                if ((this.crosses_boundary() || a1 < a0) && thi$.type() != ft.enzyme) {
                     // Compensating for the head may have "taken up" all
                     // the room on the plasmid, in which case no arc needs
                     // to be drawn
@@ -1130,37 +1151,37 @@ window.GiraffeDraw = function () {
                     // The arc has no fill-color: it's just a thick line
                     var large_angle = thi$.real_size() > 180 ? 1 : 0;
 
-                    var arc = this.paper.path(svg.move(xy0.x, xy0.y) +
+                    var arc = this.map.paper.path(svg.move(xy0.x, xy0.y) +
                                          svg.arc(thi$.radius, xy1.x, xy1.y,
                                                  large_angle));
-                    arc.attr({"stroke-width": _width});
+                    arc.attr({"stroke-width": this.width});
 
                     this.arrow_set.push(arc);
                 } else if (thi$.type() == ft.enzyme) { 
                     // Restriction enzymes get drawn on their own
-                    var xy0 = convert.polar_to_rect(thi$.radius - enzyme_width/2.0, 
+                    var xy0 = convert.polar_to_rect(thi$.radius - this.map.enzyme_width()/2.0, 
                             (a0+a1)/2.0);
-                    var xy1 = convert.polar_to_rect(thi$.radius + enzyme_width/2.0, 
+                    var xy1 = convert.polar_to_rect(thi$.radius + this.map.enzyme_width()/2.0, 
                             (a0+a1)/2.0);
                     // Not really an arc, just a line, but left this way
                     // for consistency
-                    var arc = this.paper.path(svg.move(xy0.x, xy0.y) +
+                    var arc = this.map.paper.path(svg.move(xy0.x, xy0.y) +
                                          svg.line(xy1.x, xy1.y));
-                    arc.attr({"stroke-width": enzyme_weight});
+                    arc.attr({"stroke-width": this.map.enzyme_weight()});
                     arc.toBack();
 
                     this.arrow_set.push(arc);
                 }
 
-                this.arrow_set.click(_click);
-                this.arrow_set.hover(_mouse_over, _mouse_up);
+                this.arrow_set.click(this.click.bind(this));
+                this.arrow_set.hover(this.mouse_over.bind(this), this.mouse_up.bind(this));
 
                 this.feature_set.push(this.arrow_set);
 
                 // Apply the feature-wide properties to the whole feature
-                this.feature_set.attr({"stroke":         _color,
+                this.feature_set.attr({"stroke":         this.color,
                                    "stroke-linecap": "butt",
-                                   "opacity":        _opacity});
+                                   "opacity":        this.opacity});
 
             } // END CircularFeature::draw()
 
@@ -1194,7 +1215,7 @@ window.GiraffeDraw = function () {
             thi$.draw_label = function () {
                 if (!thi$.should_draw_label()) { return; }
 
-                if (_label_drawn)
+                if (this.label_drawn)
                     thi$.clear_label();
 
                 // Figure out the center of the feature
@@ -1250,15 +1271,15 @@ window.GiraffeDraw = function () {
                 }
 
                 // Draw the line to the label position
-                var label_line = this.paper.path(svg.move(xy0.x, xy0.y) +
+                var label_line = this.map.paper.path(svg.move(xy0.x, xy0.y) +
                                             svg.line(xy1.x, xy1.y));
                 label_line.attr({"stroke": colors.bg_text,
-                                 "stroke-width": label_line_weight,
+                                 "stroke-width": this.map.label_line_weight(),
                                  "opacity": 0.5 });
 
                 // Enzymes show their cut sites in the label
                 var label_name = thi$.label_name();
-                var label = this.paper.text(xy1.x, xy1.y, label_name);
+                var label = this.map.paper.text(xy1.x, xy1.y, label_name);
 
                 if (section > 3) {
                     // Left half of wheel: align right
@@ -1269,23 +1290,23 @@ window.GiraffeDraw = function () {
                     label.attr({"text-anchor": "start"});
                 }
 
-                label.attr({"fill": _color,
-                            "font-size": label_font_size,
+                label.attr({"fill": this.color,
+                            "font-size": this.map.label_font_size(),
                             "opacity": 1.0 });
 
                 this.label_set.push(label_line);
                 this.label_set.push(label);
 
                 // Handlers
-                this.label_set.click(_click);
-                this.label_set.hover(_mouse_over, _mouse_up);
+                this.label_set.click(this.click.bind(this));
+                this.label_set.hover(this.mouse_over.bind(this), this.mouse_up.bind(this));
 
                 // Only push label_line, so when we fade in and out,
                 // we don't also fade the label.
                 this.feature_set.push(label_line);
 
                 this.labeled = true;
-                _label_drawn = true;
+                this.label_drawn = true;
             } // END CircularFeature::draw_label()
 
             return thi$;
@@ -1297,16 +1318,17 @@ window.GiraffeDraw = function () {
         // Circle setup
         thi$.draw_plasmid = function () {
             function draw_tic_mark(a) {
+                // use thi$ for paper because `this` is killed by local scope
                 var r0 = tic_mark_radius - tic_mark_length/2;
                 var r1 = tic_mark_radius + tic_mark_length/2;
                 var xy0 = convert.polar_to_rect(r0,a);
                 var xy1 = convert.polar_to_rect(r1,a);
-                var tic = this.paper.path(svg.move(xy0.x, xy0.y) +
+                var tic = thi$.paper.path(svg.move(xy0.x, xy0.y) +
                                      svg.line(xy1.x, xy1.y));
                 tic.attr({"stroke": colors.bg_text});
 
                 var xyl = convert.polar_to_rect(tic_label_radius, a);
-                var label = this.paper.text(xyl.x, xyl.y, String(convert.angle_to_pos(a)));
+                var label = thi$.paper.text(xyl.x, xyl.y, String(convert.angle_to_pos(a)));
                 label.attr({"fill": colors.bg_text});
                 if (a < plasmid_start || a > 360 - plasmid_start) { // Right half of wheel: align right
                     label.attr({"text-anchor": "end"});
@@ -1318,12 +1340,12 @@ window.GiraffeDraw = function () {
             var plasmid = this.paper.circle(cx, cy, plasmid_radius);
             plasmid.attr("stroke", colors.plasmid);
             var title = seq_length + ' bp';
-            if (plasmid_name != "") {
-                title = plasmid_name + "\n\n" + title;
+            if (this.plasmid_name() != "") {
+                title = this.plasmid_name() + "\n\n" + title;
             }
             var plasmid_label = this.paper.text(cx, cy, title);
             plasmid_label.attr({"fill":      colors.plasmid,
-                                "font-size": plasmid_font_size, });
+                                "font-size": this.plasmid_font_size(), });
 
             for (var ang = 0; ang < 360; ang += 30) {
                 draw_tic_mark(ang);
@@ -1371,7 +1393,7 @@ window.GiraffeDraw = function () {
                     f = this.features[fx % this.features.length];
 
 
-                    if (f.visible() && f.type() != ft.enzyme && f.radius == rad) { 
+                    if (f.visible && f.type() != ft.enzyme && f.radius == rad) { 
                         
                         // When you cross the plasmid start boundary every time 
                         // but the first, update the furthest_point so that its
@@ -1691,16 +1713,6 @@ window.GiraffeDraw = function () {
         var min_overlap_pct = 0;
         var min_overlap_feature_size = 0; // in pixels
         
-        // Labels and other text
-        var label_line_weight = 1;
-        var label_line_bold_weight = 1.5 * label_line_weight;
-        var label_font_size = '13pt';
-        var plasmid_font_size = '16pt';
-        var plasmid_name = '';
-        if ('plasmid_name' in options) {
-            plasmid_name = options['plasmid_name'];
-        }
-
         var label_letter_height = 0;
         var label_letter_width = 0;
 
@@ -1734,7 +1746,7 @@ window.GiraffeDraw = function () {
                 // Take the minimum head size into account. Only need to do this 
                 // when the head is drawn and pointing clockwise, to
                 // "push the start back."
-                if (_draw_head && this.clockwise()) { 
+                if (this.draw_head && this.clockwise()) { 
                     rs = convert.pos_to_x(this.end()) - this.real_size();
                 } else { // Headless feature, or head is pointing the wrong way.
                          // Just give its typical start position
@@ -1748,7 +1760,7 @@ window.GiraffeDraw = function () {
                 // Take the minimum head size into account. Only need to do this 
                 // when the head is drawn and pointing counterclockwise, to 
                 // "push the end forward."
-                if (_draw_head && !this.clockwise()) { // Take the minimum head size into account
+                if (this.draw_head && !this.clockwise()) { // Take the minimum head size into account
                     re = convert.pos_to_x(this.start()) + this.real_size();
                 } else { // Headless feature, or head is pointing the wrong way.
                          // Just give its typical end position
@@ -1765,7 +1777,7 @@ window.GiraffeDraw = function () {
                       convert.pos_to_x(thi$.start());
 
                 // Head size: return this if it's bigger
-                if (_draw_head && head_length > rsz)
+                if (this.draw_head && head_length > rsz)
                         rsz = head_length;
 
                 return rsz;
@@ -1784,7 +1796,7 @@ window.GiraffeDraw = function () {
                 var y = plasmid_y + thi$.y;
 
                 // Arrowhead drawing, if needed
-                if (_draw_head) {
+                if (this.draw_head) {
                     var hx_tip, hx_back;
                     if (thi$.clockwise()) {
                         hx_tip = x1;
@@ -1798,12 +1810,12 @@ window.GiraffeDraw = function () {
 
                     // Unlike the body, the head is traced with a line, and
                     // then created entirely with the fill color
-                    var head = this.paper.path(svg.move(hx_tip, y) +
+                    var head = this.map.paper.path(svg.move(hx_tip, y) +
                                      svg.line(hx_back, y - head_width/2.0) +
                                      svg.line(hx_back, y + head_width/2.0) +
                                      svg.close());
                     head.attr({"stroke-width": 0,
-                               "fill":         _color});
+                               "fill":         this.color});
                     this.arrow_set.push(head);
                 }
 
@@ -1814,32 +1826,32 @@ window.GiraffeDraw = function () {
                     // to be drawn
 
                     // The body has no fill-color: it's just a thick line
-                    var body = this.paper.path(svg.move(x0, y) +
+                    var body = this.map.paper.path(svg.move(x0, y) +
                                           svg.line(x1, y));
-                    body.attr({"stroke-width": _width});
+                    body.attr({"stroke-width": this.width});
 
                     this.arrow_set.push(body);
                 } else if (thi$.type() == ft.enzyme) { 
                     // Restriction enzymes get drawn on their own
                     var x_m = (x0 + x1)/2;
 
-                    var body = this.paper.path(svg.move(x_m, y - _width/2.0) +
-                                          svg.line(x_m, y + _width/2.0));
-                    body.attr({"stroke-width": enzyme_weight});
+                    var body = this.map.paper.path(svg.move(x_m, y - this.width/2.0) +
+                                          svg.line(x_m, y + this.width/2.0));
+                    body.attr({"stroke-width": this.map.enzyme_weight()});
                     body.toBack();
 
                     this.arrow_set.push(body);
                 }
 
-                this.arrow_set.click(_click);
-                this.arrow_set.hover(_mouse_over, _mouse_up);
+                this.arrow_set.click(this.click.bind(this));
+                this.arrow_set.hover(this.mouse_over.bind(this), this.mouse_up.bind(this));
 
                 this.feature_set.push(this.arrow_set);
 
                 // Apply the feature-wide properties to the whole feature
-                this.feature_set.attr({"stroke": _color,
+                this.feature_set.attr({"stroke": this.color,
                                    "stroke-linecap": "butt",
-                                   "opacity": _opacity});
+                                   "opacity": this.opacity});
 
             } // END LinearFeature::draw()
 
@@ -1852,7 +1864,7 @@ window.GiraffeDraw = function () {
             } // END LinearFeature::should_draw_label()
 
             thi$.label_size = function() {
-                var fake_label = this.paper.text(0, 0, this.label_name());
+                var fake_label = this.map.paper.text(0, 0, this.label_name());
                 var w = fake_label.getBBox().width;
                 var h = fake_label.getBBox().height;
                 fake_label.remove();
@@ -1863,7 +1875,7 @@ window.GiraffeDraw = function () {
             thi$.draw_label = function (height, pos) {
                 if (!this.should_draw_label()) { return; }
 
-                if (_label_drawn)
+                if (this.label_drawn)
                     this.clear_label();
 
                 // Figure out the center of the feature
@@ -1871,35 +1883,35 @@ window.GiraffeDraw = function () {
 
                 // Enzymes show their cut sites in the label
                 var label_name = thi$.label_name();
-                var label = this.paper.text(pos, height, label_name);
+                var label = this.map.paper.text(pos, height, label_name);
                 
                 // Below, right-justify. Above, left-justify.
                 var anchor = (height >= plasmid_y) ? "end" : "start";
-                label.attr({"fill": _color,
+                label.attr({"fill": this.color,
                             "text-anchor": anchor,
-                            "font-size": label_font_size,
+                            "font-size": this.map.label_font_size(),
                             "opacity": 1.0 });
 
                 // Draw the line to the label position
-                var label_line = this.paper.path(svg.move(x_c, plasmid_y + this.y) +
+                var label_line = this.map.paper.path(svg.move(x_c, plasmid_y + this.y) +
                                             svg.line(pos, height));
                 label_line.attr({"stroke": colors.bg_text,
-                                 "stroke-width": label_line_weight,
+                                 "stroke-width": this.map.label_line_weight(),
                                  "opacity": 0.5 });
 
                 this.label_set.push(label_line);
                 this.label_set.push(label);
 
                 // Handlers
-                this.label_set.click(_click);
-                this.label_set.hover(_mouse_over, _mouse_up);
+                this.label_set.click(this.click.bind(this));
+                this.label_set.hover(this.mouse_over.bind(this), this.mouse_up.bind(this));
 
                 // Only push label_line, so when we fade in and out,
                 // we don't also fade the label.
                 this.feature_set.push(label_line);
 
                 this.labeled = true;
-                _label_drawn = true;
+                this.label_drawn = true;
 
                 return label.getBBox();
             } // END LinearFeature::draw_label()
@@ -1921,11 +1933,11 @@ window.GiraffeDraw = function () {
                 var x = convert.pos_to_x(p);
                 var y0 = tic_mark_y - tic_mark_length/2;
                 var y1 = tic_mark_y + tic_mark_length/2;
-                var tic = this.paper.path(svg.move(x, y0) +
+                var tic = thi$.paper.path(svg.move(x, y0) +
                                      svg.line(x, y1));
                 tic.attr({"stroke": colors.bg_text});
 
-                var label = this.paper.text(x, tic_label_y, String(p));
+                var label = thi$.paper.text(x, tic_label_y, String(p));
                 label.attr({"fill": colors.bg_text});
             }
 
@@ -1934,12 +1946,12 @@ window.GiraffeDraw = function () {
 
             plasmid.attr("stroke", colors.plasmid);
             var title = seq_length + ' bp';
-            if (plasmid_name != "") {
-                title = plasmid_name + ": " + title;
+            if (this.plasmid_name() != "") {
+                title = this.plasmid_name() + ": " + title;
             }
             var plasmid_label = this.paper.text(cx, title_y, title);
             plasmid_label.attr({"fill":      colors.plasmid,
-                                "font-size": plasmid_font_size, });
+                                "font-size": this.plasmid_font_size(), });
 
             // Set the scale to be the order of magnitude of seq_length
             // i.e. 100, 1000, 10, etc.
@@ -1980,7 +1992,7 @@ window.GiraffeDraw = function () {
 
                 for (fx = 0; fx < this.features.length; fx++) {
                     f = this.features[fx];
-                    if (f.y == y && f.type() != ft.enzyme && f.visible()) { 
+                    if (f.y == y && f.type() != ft.enzyme && f.visible) { 
                         new_size = f.real_size();
                         overlap = furthest_point - f.real_start();
                         if (overlap <= min_overlap_cutoff) { 
