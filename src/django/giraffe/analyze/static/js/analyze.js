@@ -1455,7 +1455,7 @@ window.GiraffeControl = function ($,gd_map,dom) {
 		// Insert header cells in all of the headers to make
 		// the tables the right shape
 		table.find('thead>tr')
-			.prepend('<th>Show</th><th>Label</th>');
+			.prepend('<th>Show Feature</th><th>Label Feature</th>');
 
 		// Insert show/label checkboxes in all of the body rows
 		table.find('tbody>tr')
