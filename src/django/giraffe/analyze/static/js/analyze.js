@@ -1479,11 +1479,15 @@ window.GiraffeControl = function ($,gd_map,dom) {
 				.attr('id', random_dom_id())
 				.addClass('giraffe-control-table'))
 
+		table.find('colgroup')
+			.prepend('<col class="giraffe-table-feature-show"  />' +
+                     '<col class="giraffe-table-feature-label" />');
+
 		// Insert header cells in all of the headers to make
 		// the tables the right shape
 		table.find('thead>tr')
-			.prepend('<th class="giraffe-table-feature-show">Show Feature</th>' +
-                     '<th class="giraffe-table-feature-label">Label Feature</th>');
+			.prepend('<th>Show Feature</th>' +
+                     '<th>Label Feature</th>');
 
 		// Insert show/label checkboxes in all of the body rows
 		table.find('tbody>tr')
@@ -1493,7 +1497,6 @@ window.GiraffeControl = function ($,gd_map,dom) {
 
 				for (tx = 0; tx < types.length; tx++) {
                     var foo = $('<td></td>')
-                        .addClass('giraffe-table-feature-' + types[tx])
                         .append($('<input type="checkbox" checked="checked" />')
                             .attr('value', types[tx])
                             .attr('name', $(this).attr('id')))
