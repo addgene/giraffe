@@ -1478,7 +1478,7 @@ window.GiraffeControl = function ($,gd_map,dom) {
 
 				for (tx = 0; tx < types.length; tx++) {
                     var foo = $('<td></td>')
-                        .addClass('giraffe-table-' + types[tx])
+                        .addClass('giraffe-table-feature-' + types[tx])
                         .append($('<input type="checkbox" checked="checked" />')
                             .attr('value', types[tx])
                             .attr('name', $(this).attr('id')))
