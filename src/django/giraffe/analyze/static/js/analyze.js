@@ -1231,11 +1231,17 @@ window.GiraffeTable = function ($,gd,dom) {
 		
 		// Initialize table
 		feature_table = $('<table></table>')
+			.append('<colgroup>' +
+                        '<col class="giraffe-table-feature-name" />' +
+                        '<col class="giraffe-table-feature-type" />' +
+                        '<col class="giraffe-table-feature-data" />' +
+                        '<col class="giraffe-table-feature-data" />' +
+                    '</colgroup>')
 			.append('<thead><tr>' +
-                        '<th class="giraffe-table-feature-name">Feature Name</th>' +
-                        '<th class="giraffe-table-feature-type">Type</th>' +
-                        '<th class="giraffe-table-feature-data">Start</th>' +
-                        '<th class="giraffe-table-feature-data">End<th>' +
+                        '<th>Feature Name</th>' +
+                        '<th>Type</th>' +
+                        '<th>Start</th>' +
+                        '<th>End<th>' +
                     '</tr></thead>')
 			.append('<tbody></tbody>')
 			.addClass('giraffe-table-feature');
@@ -1245,15 +1251,15 @@ window.GiraffeTable = function ($,gd,dom) {
 				row = $('<tr></tr>').appendTo(feature_table.children('tbody'))
                                     .attr('id', 'feature-' + f.id());
 
-			row.append('<td class="giraffe-table-feature-name">' + f.name() + '</td>');
-			row.append('<td class="giraffe-table-feature-type">' + type_code_to_name(f.type(), gd) + '</td>');
+			row.append('<td>' + f.name() + '</td>');
+			row.append('<td>' + type_code_to_name(f.type(), gd) + '</td>');
 
 			if (f.clockwise()) {
-				row.append('<td class="giraffe-table-feature-data">' + f.start() + '</td>');
-				row.append('<td class="giraffe-table-feature-data">' + f.end() + '</td>');
+				row.append('<td>' + f.start() + '</td>');
+				row.append('<td>' + f.end() + '</td>');
 			} else {
-				row.append('<td class="giraffe-table-feature-data">' + f.end() + '</td>');
-				row.append('<td class="giraffe-table-feature-data">' + f.start() + '</td>');
+				row.append('<td>' + f.end() + '</td>');
+				row.append('<td>' + f.start() + '</td>');
 			}
 		}
 
@@ -1265,10 +1271,15 @@ window.GiraffeTable = function ($,gd,dom) {
 
 		// Initialize table
 		orf_table = $('<table></table>')
+			.append('<colgroup>' +
+                        '<col class="giraffe-table-feature-name" />' +
+                        '<col class="giraffe-table-feature-data" />' +
+                        '<col class="giraffe-table-feature-data" />' +
+                    '</colgroup>')
 			.append('<thead><tr>' +
-                        '<th class="giraffe-table-feature-name">ORF Frame</th>' +
-                        '<th class="giraffe-table-feature-data">Start</th>' +
-                        '<th class="giraffe-table-feature-data">End<th>' +
+                        '<th>ORF Frame</th>' +
+                        '<th>Start</th>'     +
+                        '<th>End<th>'        +
                     '</tr></thead>')
 			.append('<tbody></tbody>')
 			.addClass('giraffe-table-orf');
@@ -1279,14 +1290,14 @@ window.GiraffeTable = function ($,gd,dom) {
 				row = $('<tr></tr>').appendTo(orf_table.children('tbody'))
                                     .attr('id', 'feature-' + f.id());
 
-			row.append('<td class="giraffe-table-feature-name">' + f.name().replace(/ORF\s+[fF]rame\s+/, '') + '</td>');
+			row.append('<td>' + f.name().replace(/ORF\s+[fF]rame\s+/, '') + '</td>');
 
 			if (f.clockwise()) {
-				row.append('<td class="giraffe-table-feature-data">' + f.start() + '</td>');
-				row.append('<td class="giraffe-table-feature-data">' + f.end() + '</td>');
+				row.append('<td>' + f.start() + '</td>');
+				row.append('<td>' + f.end() + '</td>');
 			} else {
-				row.append('<td class="giraffe-table-feature-data">' + f.end() + '</td>');
-				row.append('<td class="giraffe-table-feature-data">' + f.start() + '</td>');
+				row.append('<td>' + f.end() + '</td>');
+				row.append('<td>' + f.start() + '</td>');
 			}
 		}
 
@@ -1297,6 +1308,10 @@ window.GiraffeTable = function ($,gd,dom) {
 	if (gd.enzyme_features.length > 0) {
 
 		enzyme_table = $('<table></table>')
+			.append('<colgroup>' +
+                        '<col class="giraffe-table-feature-name" />' +
+                        '<col class="giraffe-table-feature-data" />' +
+                    '</colgroup>')
 			.append('<thead><tr>' +
                         '<th class="giraffe-table-feature-name">Enzyme Name</th>' +
                         '<th class="giraffe-table-feature-data">Cut</th>' +
@@ -1311,8 +1326,8 @@ window.GiraffeTable = function ($,gd,dom) {
 			if (f.default_show_feature() && f.cut_count() == 1) {
 				row = $('<tr></tr>').appendTo(enzyme_table.children('tbody'))
                                     .attr('id', 'feature-' + f.id());
-                row.append('<td class="giraffe-table-feature-name">' + f.name() + '</td>');
-				row.append('<td class="giraffe-table-feature-data">' + f.cut() + '</td>');
+                row.append('<td>' + f.name() + '</td>');
+				row.append('<td>' + f.cut() + '</td>');
 			}
 		}
 
