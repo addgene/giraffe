@@ -562,8 +562,6 @@ window.GiraffeAnalyze = function ($,gd,options) {
 		$(map_panes.panes).find('input[name|="cutters"]').change(function (event) {
 			cutters_to_show = [];
 
-			console.warn(cutters_to_show);
-
 			// Parse out selected options
 			$(this).closest('tbody').find("input[checked]").each(function () {
 				cutters_to_show.push(parseInt($(this).attr('name').match(/\d+/)));
