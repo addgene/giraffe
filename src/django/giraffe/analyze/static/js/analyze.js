@@ -1467,27 +1467,24 @@ window.GiraffeControl = function ($,gd_map,dom) {
 		// Insert header cells in all of the headers to make
 		// the tables the right shape
 		table.find('thead>tr')
-			.prepend('<th>Show Feature</th><th>Label Feature</th>');
+			.prepend('<th class="giraffe-table-feature-show">Show Feature</th>' +
+                     '<th class="giraffe-table-feature-label">Label Feature</th>');
 
 		// Insert show/label checkboxes in all of the body rows
 		table.find('tbody>tr')
-			.prepend(function (index, html) {
-				var pre = '',
-					start = '<td><input type="checkbox" checked="checked" name="',
-					middle = '" value="',
-					end = '" /></td>',
-					types = [ 'show', 'label' ],
-					tx;
+			.each(function (index, html) {
+                // Added in reverse, because of prepend
+				var types = [ 'label', 'show' ], tx;
 
 				for (tx = 0; tx < types.length; tx++) {
-					pre += start;
-					pre += $(this).attr('id');
-					pre += middle;
-					pre += types[tx];
-					pre += end;
+                    var foo = $('<td></td>')
+                        .addClass('giraffe-table-' + types[tx])
+                        .append($('<input type="checkbox" checked="checked" />')
+                            .attr('value', types[tx])
+                            .attr('name', $(this).attr('id')))
+                        .prependTo(this);
 				}
 
-				return pre;
 			});
 					
 		// The table checkboxes
