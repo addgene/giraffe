@@ -527,6 +527,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
 				}
 
 				digest_data_dom.append(list);
+                sequence_viewer_bp_event(digest_data_dom);
 			}
 		})();
 
@@ -1012,8 +1013,8 @@ window.GiraffeAnalyze = function ($,gd,options) {
         global_has_span_td = [];
     }
 
-    function sequence_viewer_bp_event() {
-        $('.giraffe-bp').click(function(evt){
+    function sequence_viewer_bp_event(selection) {
+        $(selection).find('.giraffe-bp').click(function(evt){
             sequence_viewer_clear_highlight();
             $(this).addClass('giraffe-bp-click-source');
             evt.preventDefault();
