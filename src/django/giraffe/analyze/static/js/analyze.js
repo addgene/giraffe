@@ -1242,15 +1242,15 @@ window.GiraffeTable = function ($,gd,dom) {
 								   .children().last()
 								   .attr('id', 'feature-' + f.id());
 
-			row.append('<td>' + f.name() + '</td>');
-			row.append('<td>' + type_code_to_name(f.type(), gd) + '</td>');
+			row.append('<td class="giraffe-table-feature-name">' + f.name() + '</td>');
+			row.append('<td class="giraffe-table-feature-type">' + type_code_to_name(f.type(), gd) + '</td>');
 
 			if (f.clockwise()) {
-				row.append('<td>' + f.start() + '</td>');
-				row.append('<td>' + f.end() + '</td>');
+				row.append('<td class="giraffe-table-feature-data">' + f.start() + '</td>');
+				row.append('<td class="giraffe-table-feature-data">' + f.end() + '</td>');
 			} else {
-				row.append('<td>' + f.end() + '</td>');
-				row.append('<td>' + f.start() + '</td>');
+				row.append('<td class="giraffe-table-feature-data">' + f.end() + '</td>');
+				row.append('<td class="giraffe-table-feature-data">' + f.start() + '</td>');
 			}
 		}
 
@@ -1271,14 +1271,14 @@ window.GiraffeTable = function ($,gd,dom) {
 			var f = gd.orf_features[fx],
 				row = orf_table.children('tbody').append('<tr></tr>').children().last();
 
-			row.append('<td>' + f.name().replace(/ORF\s+[fF]rame\s+/, '') + '</td>');
+			row.append('<td class="giraffe-table-feature-name">' + f.name().replace(/ORF\s+[fF]rame\s+/, '') + '</td>');
 
 			if (f.clockwise()) {
-				row.append('<td>' + f.start() + '</td>');
-				row.append('<td>' + f.end() + '</td>');
+				row.append('<td class="giraffe-table-feature-data">' + f.start() + '</td>');
+				row.append('<td class="giraffe-table-feature-data">' + f.end() + '</td>');
 			} else {
-				row.append('<td>' + f.end() + '</td>');
-				row.append('<td>' + f.start() + '</td>');
+				row.append('<td class="giraffe-table-feature-data">' + f.end() + '</td>');
+				row.append('<td class="giraffe-table-feature-data">' + f.start() + '</td>');
 			}
 		}
 
@@ -1299,8 +1299,8 @@ window.GiraffeTable = function ($,gd,dom) {
 
 			if (f.default_show_feature() && f.cut_count() == 1) {
 				row = enzyme_table.children('tbody').append('<tr></tr>').children().last();
-				row.append('<td>' + f.name() + '</td>');
-				row.append('<td>' + f.cut() + '</td>');
+                row.append('<td class="giraffe-table-feature-name">' + f.name() + '</td>');
+				row.append('<td class="giraffe-table-feature-data">' + f.cut() + '</td>');
 			}
 		}
 
