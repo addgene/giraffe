@@ -114,4 +114,33 @@ body .ui-tooltip { border-width:2px; }
 /* giraffe customized tooltip CSS */
 .ui-tooltip { font-size:12px; }
 
+/* giraffe customized feature list css */
+.giraffe-table {
+	width: 710px;
+	border-collapse: collapse;
+	margin: 1em auto;
+}
+.giraffe-table * {
+	padding: 0.25em 0;
+}
+
+.giraffe-table .giraffe-table-feature-show,
+.giraffe-table .giraffe-table-feature-label {
+	width: 125px;
+}
+.giraffe-table .giraffe-table-feature-type {
+	width: 100px;
+}
+.giraffe-table .giraffe-table-feature-data {
+	width: 60px;
+}
+.giraffe-table-enzyme .giraffe-table-feature-data {
+	width: 120px;
+}
+.giraffe-table .giraffe-table-feature-name {
+	width: 365px;
+}
+.giraffe-table-feature .giraffe-table-feature-name{
+	width: 265px;
+}
 
