@@ -315,6 +315,8 @@ window.GiraffeAnalyze = function ($,gd,options) {
 
         $('svg path, svg text').mouseover(function(){ $(help).show(); });
         $('svg path, svg text').mouseout(function(){ $(help).hide(); });
+
+        sequence_viewer_bp_event(dom);
     }
 
 
@@ -1250,7 +1252,7 @@ window.GiraffeTable = function ($,gd,dom) {
 				row = $('<tr></tr>').appendTo(feature_table.children('tbody'))
                                     .attr('id', 'feature-' + f.id());
 
-			row.append('<td>' + f.name() + '</td>');
+            row.append('<td class="giraffe-table-feature-name">' + f.name() + '</td>');
 			row.append('<td>' + type_code_to_name(f.type(), gd) + '</td>');
 
 			if (f.clockwise()) {
@@ -1288,7 +1290,7 @@ window.GiraffeTable = function ($,gd,dom) {
 				row = $('<tr></tr>').appendTo(orf_table.children('tbody'))
                                     .attr('id', 'feature-' + f.id());
 
-			row.append('<td>' + f.name().replace(/ORF\s+[fF]rame\s+/, '') + '</td>');
+            row.append('<td class="giraffe-table-feature-name">' + f.name().replace(/ORF\s+[fF]rame\s+/, '') + '</td>');
 
 			if (f.clockwise()) {
 				row.append('<td>' + f.start() + '</td>');
@@ -1324,7 +1326,8 @@ window.GiraffeTable = function ($,gd,dom) {
 			if (f.default_show_feature() && f.cut_count() == 1) {
 				row = $('<tr></tr>').appendTo(enzyme_table.children('tbody'))
                                     .attr('id', 'feature-' + f.id());
-                row.append('<td>' + f.name() + '</td>');
+
+                row.append('<td class="giraffe-table-feature-name">' + f.name() + '</td>');
 				row.append('<td>' + f.cut() + '</td>');
 			}
 		}
@@ -1527,6 +1530,23 @@ window.GiraffeControl = function ($,gd_map,dom) {
 				gd_map.hide_feature(feat_id);
 			}
 		});
+
+        // Make the names in the table function as links instead
+        table.find('td.giraffe-table-feature-name').each(function() {
+            var nonnum = new RegExp('\\D', 'g')
+                id = parseInt($(this)
+                                .closest('tr')
+                                .attr('id').replace(nonnum, '')),
+                f = gd_map.gd.all_features[id];
+
+            $(this)
+                .empty()
+                .append($('<a></a>').text(f.name().replace(/ORF\s+[fF]rame\s+/, ''))
+                .attr('href', '#')
+                .attr('seq-title', f.name())
+                .attr('bp', [f.start(), f.end()].join(','))
+                .addClass('giraffe-bp'));
+        });
 
 		controls.append(table);
 	}
