@@ -114,7 +114,7 @@
 
             // return just such an object
             return new F();
-        }
+        };
     }
 
     // Function.prototype.bind polyfill
@@ -185,7 +185,7 @@
         primer:  "#090",
         origin:  "#333",
         enzyme:  "#00c",
-        orf:     "#00c8c8",
+        orf:     "#00c8c8"
     };
 
 /**
@@ -281,17 +281,17 @@ window.GiraffeDraw = function () {
         // Private data members, from the properties of the feature argument
         // since hash tables and objects are one and the same in js
         var _name = feat.feature;
-        var _start = parseInt(feat.start);
-        var _end = parseInt(feat.end);
-        var _type = parseInt(feat.type_id);
+        var _start = parseInt(feat.start, 10);
+        var _end = parseInt(feat.end, 10);
+        var _type = parseInt(feat.type_id, 10);
         var _default_show_feature = 1;
         // Not all features have this option, e.g. annotated ones we
         // have to show the feature.
         if ('show_feature' in feat) {
-            _default_show_feature = parseInt(feat.show_feature);
+            _default_show_feature = parseInt(feat.show_feature, 10);
         }
         var _clockwise = feat.clockwise;
-        var _cut = parseInt(feat.cut); // only for enzymes;
+        var _cut = parseInt(feat.cut, 10); // only for enzymes;
         var _other_cutters = []; // only for enzymes;
         var _id = Feature.nfeat;
 
@@ -301,12 +301,12 @@ window.GiraffeDraw = function () {
         this.end = function() { return _end; };
         this.type = function() { return _type; };
         this.clockwise = function() { return _clockwise; };
-        this.default_show_feature = function() { return _default_show_feature; }
+        this.default_show_feature = function() { return _default_show_feature; };
         // returns - 1 if not enzyme        
-        this.cut = function() { return _type == ft.enzyme ? _cut : -1 }; 
+        this.cut = function() { return _type == ft.enzyme ? _cut : -1; }; 
 
-        this.is_enzyme = function() { return _type == ft.enzyme; }
-        this.is_orf = function() { return _type == ft.orf; }
+        this.is_enzyme = function() { return _type == ft.enzyme; };
+        this.is_orf = function() { return _type == ft.orf; };
 
         this.crosses_boundary = function () { return _end < _start; };
         this.id = function () { return _id; };
@@ -320,7 +320,7 @@ window.GiraffeDraw = function () {
         this.set_other_cutters = function(c) {
             if (_type == ft.enzyme)
                 _other_cutters = c;
-        }
+        };
 
         this.clockwise_sequence = function() {
             if (full_sequence.length < this.start() ||
@@ -335,11 +335,11 @@ window.GiraffeDraw = function () {
                     full_sequence.substring(0,this.end()-1+1);
             }
             return s;
-        }
+        };
 
         Feature.nfeat++;
         return this;
-    }; // END Basic Feature Class
+    } // END Basic Feature Class
 
     Feature.nfeat = 0;
 
@@ -367,7 +367,7 @@ window.GiraffeDraw = function () {
         thi$.draw_head = false;
         thi$.opacity = map.feature_opacity();
         thi$.opaque = false; // holds opacity for clicks
-        set_properties()
+        set_properties();
 
         // Type-based property selection
         function set_properties() {
@@ -375,8 +375,10 @@ window.GiraffeDraw = function () {
             switch(thi$.type()) {
                 case ft.promoter:
                 case ft.primer:
-                    thi$.draw_head = true; // Promotors and primers are the only primer-colored
-                case ft.terminator:   // features with heads
+                    thi$.draw_head = true; 
+                    thi$.color = colors.primer;
+                    break;
+                case ft.terminator:   
                     thi$.color = colors.primer;
                     break;
                 case ft.regulatory:
@@ -390,8 +392,12 @@ window.GiraffeDraw = function () {
                     break;
                 case ft.orf:
                     thi$.color = colors.orf;
+                    thi$.draw_head = true;
+                    break;
                 case ft.gene:
                     thi$.draw_head = true;
+                    break;
+                default:
                     break;
             }
         }
@@ -400,7 +406,7 @@ window.GiraffeDraw = function () {
             this.feature_set = this.map.paper.set();
             this.arrow_set = this.map.paper.set();
             this.label_set = this.map.paper.set();
-        }
+        };
 
         // Actions for interactivity
         // Generic fading animation/property setting mechanism
@@ -429,7 +435,7 @@ window.GiraffeDraw = function () {
                 sets.attr(props);
                 lines.attr(line_props); 
             }
-        }
+        };
 
         thi$.bolder = function () {
             var props = {"opacity": this.map.bold_opacity(),
@@ -440,7 +446,7 @@ window.GiraffeDraw = function () {
             var line_props = {"stroke": colors.plasmid, 
                               "stroke-width": this.map.label_line_bold_weight()};
             this.fade(props, line_props);
-        }
+        };
 
         thi$.lighter = function () {
             var props = {"opacity": this.opacity,
@@ -451,7 +457,7 @@ window.GiraffeDraw = function () {
             var line_props = {"stroke": colors.bg_text,
                               "stroke-width": this.map.label_line_weight()};
             this.fade(props, line_props);
-        }
+        };
 
         // Toggle solid/light upon click
         thi$.click = function(event) {
@@ -466,8 +472,7 @@ window.GiraffeDraw = function () {
                     this.opaque = true;
                 }
             }
-        }
-       
+        };
 
         // Hovering: solid/light upon mouseover
         thi$.mouse_over = function (event) {
@@ -538,7 +543,7 @@ window.GiraffeDraw = function () {
                 label_name += " (" + this.cut() + ")";
             }
             return label_name;
-        } // END DrawnFeature::label_name()
+        }; // END DrawnFeature::label_name()
 
         return thi$;
     } // END DrawnFeature()
@@ -629,16 +634,16 @@ window.GiraffeDraw = function () {
             thi$.final_width = 640;
             thi$.final_height = 640;
             if ('map_width' in options) {
-                thi$.final_width = parseInt(options['map_width']);
+                thi$.final_width = parseInt(options['map_width'], 10);
             }
             if ('map_height' in options) {
-                thi$.final_height = parseInt(options['map_height']);
+                thi$.final_height = parseInt(options['map_height'], 10);
             }
 
             // Animation properties
             thi$.fade_time = 0;
             if ('fade_time' in options) {
-                thi$.fade_time = parseInt(options['fade_time'])
+                thi$.fade_time = parseInt(options['fade_time'], 10);
             }
 
             // Callback
@@ -673,7 +678,7 @@ window.GiraffeDraw = function () {
                 ef = new this.FeatureType(df);
                 this.features.push(ef);
             }
-        }
+        };
 
         thi$.initialize_features = function() { 
             var fx;
@@ -681,7 +686,7 @@ window.GiraffeDraw = function () {
             for (fx = 0; fx < this.features.length; fx++) {
                 this.features[fx].initialize();
             }
-        } 
+        };
 
         // Make sure that the appropriate cutters are shown
         thi$.show_hide_cutters = function () {
@@ -710,22 +715,22 @@ window.GiraffeDraw = function () {
                     f.clear_label();
                 }
             }
-        }
+        };
 
         thi$.redraw_cutters = function (new_cutters_to_show) {
             _cutters_to_show = new_cutters_to_show;
             this.redraw(false);
-        }
+        };
 
         thi$.show_extra_features = function () {
             this.show_all_features = true;
             this.redraw(true);
-        }
+        };
 
         thi$.hide_extra_features = function () {
             this.show_all_features = false;
             this.redraw(true);
-        }
+        };
 
         // any number of arguments will work. accessed via arguments object
         function apply_to_feature_type(recalc) {
@@ -779,7 +784,7 @@ window.GiraffeDraw = function () {
             for (fx = 0; fx < this.features.length; fx++) {
                 this.features[fx].draw();
             }
-        }
+        };
 
         thi$.draw = function() { // Draw the map
             // Extend basic features to get list of circular features:
@@ -787,7 +792,7 @@ window.GiraffeDraw = function () {
             this.extend_features();
 
             this.update(true);
-        }
+        };
 
         thi$.clear = function () {
             var map_dom,
@@ -801,19 +806,19 @@ window.GiraffeDraw = function () {
             for (kx = 0; kx < kids.length; kx++) {
                 map_dom.removeChild(kids[kx]);
             }
-        }
+        };
 
         thi$.redraw = function (recalc) {
             this.clear();
             this.update(recalc);
-        }
+        };
 
         thi$.recalculate_positions = function() { // Redraw the map
             // Resolve conflicts on the circle, push some overlapping
             // features to other radii
             this.max_extent = this.resolve_conflicts();
             this.label_pos = this.max_extent + this.label_offset; 
-        }
+        };
 
         thi$.update = function(recalc) { // Redraw the map
             var fx, f;
@@ -852,7 +857,7 @@ window.GiraffeDraw = function () {
             this.draw_labels(); // Draw only the necessary labels
 
             this.rescale();
-        }
+        };
 
         // Centralized mechanism for exposing public properties of maps to the ouside user
         // Do not expose any of the mechanics, just an API of utility methods useful
@@ -877,11 +882,11 @@ window.GiraffeDraw = function () {
                 hide_extra_features: this.hide_extra_features.bind(this),
                 is_digest: this.is_digest,
                 gd: gd
-            }
-        }
+            };
+        };
 
         return thi$;
-    };
+    }
 
     // Utility function for creating wrapper closures around Map classes
     Map.make = function (MapType) {
@@ -924,7 +929,7 @@ window.GiraffeDraw = function () {
         var outer_radius = plasmid_radius + radius_spacing;
         thi$.label_offset = 10;
         if ('label_offset' in options) {
-            thi$.label_offset = parseInt(options['label_offset']);
+            thi$.label_offset = parseInt(options['label_offset'], 10);
         }
 
         var head_width = 25;
@@ -1130,6 +1135,7 @@ window.GiraffeDraw = function () {
                 }
 
                 // Arc drawing
+                var xy0, xy1, arc;
                 if ((this.crosses_boundary() || a1 < a0) && this.type() != ft.enzyme) {
                     // Compensating for the head may have "taken up" all
                     // the room on the plasmid, in which case no arc needs
@@ -1139,13 +1145,13 @@ window.GiraffeDraw = function () {
                     // arcs are drawn counterclockwise, even though the plasmid
                     // sequence increases clockwise, so we flip the
                     // indices
-                    var xy0 = convert.polar_to_rect(thi$.radius, a1);
-                    var xy1 = convert.polar_to_rect(thi$.radius, a0);
+                    xy0 = convert.polar_to_rect(thi$.radius, a1);
+                    xy1 = convert.polar_to_rect(thi$.radius, a0);
 
                     // The arc has no fill-color: it's just a thick line
                     var large_angle = thi$.real_size() > 180 ? 1 : 0;
 
-                    var arc = this.map.paper.path(svg.move(xy0.x, xy0.y) +
+                    arc = this.map.paper.path(svg.move(xy0.x, xy0.y) +
                                          svg.arc(thi$.radius, xy1.x, xy1.y,
                                                  large_angle));
                     arc.attr({"stroke-width": this.width});
@@ -1153,13 +1159,13 @@ window.GiraffeDraw = function () {
                     this.arrow_set.push(arc);
                 } else if (this.type() == ft.enzyme) { 
                     // Restriction enzymes get drawn on their own
-                    var xy0 = convert.polar_to_rect(thi$.radius - this.map.enzyme_width()/2.0, 
+                    xy0 = convert.polar_to_rect(thi$.radius - this.map.enzyme_width()/2.0, 
                             (a0+a1)/2.0);
-                    var xy1 = convert.polar_to_rect(thi$.radius + this.map.enzyme_width()/2.0, 
+                    xy1 = convert.polar_to_rect(thi$.radius + this.map.enzyme_width()/2.0, 
                             (a0+a1)/2.0);
                     // Not really an arc, just a line, but left this way
                     // for consistency
-                    var arc = this.map.paper.path(svg.move(xy0.x, xy0.y) +
+                    arc = this.map.paper.path(svg.move(xy0.x, xy0.y) +
                                          svg.line(xy1.x, xy1.y));
                     arc.attr({"stroke-width": this.map.enzyme_weight()});
                     arc.toBack();
@@ -1181,7 +1187,7 @@ window.GiraffeDraw = function () {
                     this.feature_set.attr("title", this.label_name());
                 }
 
-            } // END CircularFeature::draw()
+            }; // END CircularFeature::draw()
 
             // Should we draw the label?
             thi$.should_draw_label = function () {
@@ -1189,7 +1195,7 @@ window.GiraffeDraw = function () {
                 if (!this.visible || !this.labeled) 
                     return false;
                 return true;
-            } // END CircularFeature::should_draw_label()
+            }; // END CircularFeature::should_draw_label()
 
             // Set which label list this feature's label should be in
             thi$.set_label_list = function () {
@@ -1207,7 +1213,7 @@ window.GiraffeDraw = function () {
                 var l = label_f_c[section].length;
                 label_f_c[section][l] = [adjust_a_c,thi$.label_name()];
 
-            } // END CircularFeature::set_label_list()
+            }; // END CircularFeature::set_label_list()
 
             // Draw the label associated with that feature
             thi$.draw_label = function () {
@@ -1227,7 +1233,8 @@ window.GiraffeDraw = function () {
                 // the grid up into eight sections.
                 var section = Math.floor((plasmid_start - a_c)/label_section_degree);
                 // Figure out position in the label list.
-                var pos_ls = 0
+                var pos_ls = 0;
+
                 for (pos_ls=0; pos_ls<label_f_c[section].length; pos_ls++) {
                     if (label_f_c[section][pos_ls][0] == adjust_a_c) {
                         // Claim this spot, 999 is not a valid value for
@@ -1238,9 +1245,9 @@ window.GiraffeDraw = function () {
                 }
                 var sec_labels = label_f_c[section].length;
                 var y_shift = pos_ls*label_letter_height;
-                var xy1 = {}
-                xy1.x = label_list_pos[section][0]
-                xy1.y = label_list_pos[section][1]
+                var xy1 = {};
+                xy1.x = label_list_pos[section][0];
+                xy1.y = label_list_pos[section][1];
                 
                 // We want to minimize the number of label lines that
                 // cross. Which means depends on which section we are in,
@@ -1251,7 +1258,7 @@ window.GiraffeDraw = function () {
                 // circle, drawing label for the feature with higher
                 // bp first. label_f_c has the lower x and y
                 // coordinates of each section.
-                if (section == 0 || section == 1) {
+                if (section === 0 || section == 1) {
                     // upper right, higher bp at bottom
                     xy1.y -= y_shift;
                 }
@@ -1305,10 +1312,10 @@ window.GiraffeDraw = function () {
 
                 this.labeled = true;
                 this.label_drawn = true;
-            } // END CircularFeature::draw_label()
+            }; // END CircularFeature::draw_label()
 
             return thi$;
-        }; // END CircularFeature Class
+        } // END CircularFeature Class
 
         ///////////////////////////////////////////////////////////////////
         // Drawing utility functions
@@ -1343,20 +1350,19 @@ window.GiraffeDraw = function () {
             var plasmid = this.paper.circle(cx, cy, plasmid_radius);
             plasmid.attr("stroke", colors.plasmid);
             var title = seq_length + ' bp';
-            if (this.plasmid_name() != "") {
+            if (this.plasmid_name() !== "") {
                 title = this.plasmid_name() + "\n\n" + title;
             }
             var plasmid_label = this.paper.text(cx, cy, title);
             plasmid_label.attr({"fill":      colors.plasmid,
-                                "font-size": this.plasmid_font_size(), });
+                                "font-size": this.plasmid_font_size() });
 
             for (var ang = 0; ang < 360; ang += 30) {
                 draw_tic_mark(ang);
             }
-        }
+        };
 
         // Move features that overlap to other radii.
-        // XXX THIS FUNCTION IS A SPEED BOTTLENECK
         thi$.resolve_conflicts = function () {
             var conflicts = 0,
                 rad = plasmid_radius, // current radius
@@ -1367,6 +1373,61 @@ window.GiraffeDraw = function () {
                 new_rad, new_size,
                 eff_furthest_point, overlap;
 
+            // Utility functions
+            function push(winner, loser) {
+                var ppfx, pfx, pf,
+                    can_push;
+
+                // Record that the push happened
+                winner.pushed_features.push(loser); 
+                conflicts++;
+
+                // Do it
+                loser.radius = new_rad; 
+
+                if (_debug) {
+                    console.warn(loser.name() + 
+                        " (" + loser.real_start() + ", " + loser.real_end() + ")" +
+                        " pushed by " + 
+                        winner.name() + 
+                        " (" + winner.real_start() + ", " + winner.real_end() + ")");
+                }
+                
+                // Since loser was pushed, un-push all the 
+                // features that it pushed, as long as
+                // those features are not in conflict with the winner,
+                // or with their own, previously pushed features, which are
+                // now unpushed
+                for (pfx = 0; pfx < loser.pushed_features.length; pfx++) {
+                    pf = loser.pushed_features[pfx];
+
+                    // Check for conflict with the winner feature itself
+                    // If there's no conflict, we can push it back safely.
+                    if (pf.real_start() - winner.real_end() <= min_overlap_cutoff ||
+                        winner.real_start() - pf.real_end() <= min_overlap_cutoff) {
+
+                        // Check for conflict with previously pushed features
+                        // that may have been unpushed
+                        can_push = true;
+                        for (ppfx = 0; ppfx < pf.pushed_features.length; ppfx++) {
+                            if (pf.pushed_features[ppfx].radius == rad) {
+                                can_push = false;
+                                break;
+                            }
+                        }
+
+                        // Finally!
+                        if (can_push) {
+                            if (_debug)
+                                console.warn(pf.name() + " unpushed, because " + 
+                                             loser.name() + " pushed by " + winner.name());
+                            pf.radius = rad;
+                        }
+                    }
+                }
+            }
+
+            // Main method body
             // reset radii in case this is being done any time but the first
             for (fx = 0; fx < this.features.length; fx++) 
                 this.features[fx].radius = plasmid_radius;
@@ -1375,7 +1436,7 @@ window.GiraffeDraw = function () {
                 // Keep alternating between inside and outside the plasmid.
                 delta = rx *radius_spacing;
 
-                if (rx %2 == 0) // Even rx
+                if (rx %2 === 0) // Even rx
                     new_rad = rad + delta;
                 else
                     new_rad = rad - delta;
@@ -1467,61 +1528,8 @@ window.GiraffeDraw = function () {
 
             return max_rad;
 
-            function push(winner, loser) {
-                var ppfx, pfx, pf,
-                    can_push;
 
-                // Record that the push happened
-                winner.pushed_features.push(loser); 
-                conflicts++;
-
-                // Do it
-                loser.radius = new_rad; 
-
-                if (_debug) {
-                    console.warn(
-                        loser.name() + 
-                        " (" + loser.real_start() + ", " + loser.real_end() + ")" +
-                        " pushed by " + 
-                        winner.name() + 
-                        " (" + winner.real_start() + ", " + winner.real_end() + ")"
-                    );
-                }
-                
-                // Since loser was pushed, un-push all the 
-                // features that it pushed, as long as
-                // those features are not in conflict with the winner,
-                // or with their own, previously pushed features, which are
-                // now unpushed
-                for (pfx = 0; pfx < loser.pushed_features.length; pfx++) {
-                    pf = loser.pushed_features[pfx];
-
-                    // Check for conflict with the winner feature itself
-                    // If there's no conflict, we can push it back safely.
-                    if (pf.real_start() - winner.real_end() <= min_overlap_cutoff ||
-                        winner.real_start() - pf.real_end() <= min_overlap_cutoff) {
-
-                        // Check for conflict with previously pushed features
-                        // that may have been unpushed
-                        can_push = true;
-                        for (ppfx = 0; ppfx < pf.pushed_features.length; ppfx++) {
-                            if (pf.pushed_features[ppfx].radius == rad) {
-                                can_push = false;
-                                break;
-                            }
-                        }
-
-                        // Finally!
-                        if (can_push) {
-                            if (_debug)
-                                console.warn(pf.name() + " unpushed, because " 
-                                    + loser.name() + " pushed by " + winner.name());
-                            pf.radius = rad;
-                        }
-                    }
-                }
-            }
-        }
+        };
 
         // Global label list: keeps track of which label should be in each
         // label list, and where the label line should point to, so we can
@@ -1539,7 +1547,7 @@ window.GiraffeDraw = function () {
             for (var fx = thi$.features.length - 1; fx >= 0; fx--) {
                 thi$.features[fx].set_label_list();
             }
-        }
+        };
 
         thi$.draw_labels = function() {
 
@@ -1551,7 +1559,7 @@ window.GiraffeDraw = function () {
             // Sort feature center list for each label list, and also
             // figure out where each label list should start
             for (var i=0; i<label_f_c.length; i++) {
-                label_f_c[i].sort(function(a,b){return (a[0]-b[0])})
+                label_f_c[i].sort(function (a,b) {return (a[0]-b[0]);});
                 var section_angle = thi$.label_list_section_angle(i);
                 var xy1 = convert.polar_to_rect(thi$.label_pos, section_angle);
 
@@ -1564,7 +1572,7 @@ window.GiraffeDraw = function () {
                 //
                 // we also compute the lower y coordinate of each
                 // label list below.
-                if (i == 0 || i == 1) {
+                if (i === 0 || i == 1) {
                     xy1.x += 60;
                 }
                 else if (i == 2 || i == 3) {
@@ -1586,7 +1594,7 @@ window.GiraffeDraw = function () {
             for (var fx = thi$.features.length - 1; fx >= 0; fx--) {
                 thi$.features[fx].draw_label();
             }
-        }
+        };
 
         thi$.set_bounding_box = function () {
             // Figure out outter edge of label lists
@@ -1615,7 +1623,7 @@ window.GiraffeDraw = function () {
                 var section_angle = thi$.label_list_section_angle(section);
                 var xy = convert.polar_to_rect(thi$.label_pos,section_angle);
 
-                if (section == 0 || section == 1) {
+                if (section === 0 || section == 1) {
                     // upper right
                     if (min_y > xy.y-list_height) { min_y = xy.y-list_height; }
                     if (max_x < xy.x+list_width) { max_x = xy.x+list_width; }
@@ -1663,19 +1671,19 @@ window.GiraffeDraw = function () {
             thi$.height = bb_height;
             cx = left_x_extend;
             cy = top_y_extend;
-        }
+        };
 
         thi$.rescale = function() { // Rescale
             if (thi$.final_width != thi$.width ||
                 thi$.final_height != thi$.height) {
                 // "center" parameter just adds unnecessary CSS to the container
                 // object to give it an absolute position: not what we need
-                this.paper.changeSize(thi$.final_width,thi$.final_height,false,false)
+                this.paper.changeSize(thi$.final_width,thi$.final_height,false,false);
             }
-        }
+        };
 
         return thi$;
-    }; // End CircMap()
+    } // End CircMap()
 
     ///////////////////////////////////////////////////////////////////
     // Linear Map Drawing Class
@@ -1705,7 +1713,7 @@ window.GiraffeDraw = function () {
         var y_spacing = 20; // spacing
         thi$.label_offset = 50;
         if ('label_offset' in options) {
-            thi$.label_offset = parseInt(options['label_offset']);
+            thi$.label_offset = parseInt(options['label_offset'], 10);
         }
 
         var head_width = 25;
@@ -1725,7 +1733,6 @@ window.GiraffeDraw = function () {
             }
         };
 
-        // TODO: MAJOR CODE REORGANIZATION: MERGE COMMON ELEMENTS INTO ONE CLASS
         ///////////////////////////////////////////////////////////////////
         // Circular Feature class
         function LinearFeature(basic_feature) {
@@ -1740,7 +1747,7 @@ window.GiraffeDraw = function () {
 
             thi$.real_center = function() {
                 return (this.real_start() + this.real_end()) / 2.0;
-            }
+            };
 
             // Degree conversion, for overlap calculation:
             // for these functions, the sequence starts at 90 degrees and goes down.
@@ -1823,13 +1830,14 @@ window.GiraffeDraw = function () {
                 }
 
                 // Body drawing
+                var body;
                 if (x0 < x1 && this.type() != ft.enzyme) { 
                     // Compensating for the head may have "taken up" all
                     // the room on the plasmid, in which case no arc needs
                     // to be drawn
 
                     // The body has no fill-color: it's just a thick line
-                    var body = this.map.paper.path(svg.move(x0, y) +
+                    body = this.map.paper.path(svg.move(x0, y) +
                                           svg.line(x1, y));
                     body.attr({"stroke-width": this.width});
 
@@ -1838,7 +1846,7 @@ window.GiraffeDraw = function () {
                     // Restriction enzymes get drawn on their own
                     var x_m = (x0 + x1)/2;
 
-                    var body = this.map.paper.path(svg.move(x_m, y - this.width/2.0) +
+                    body = this.map.paper.path(svg.move(x_m, y - this.width/2.0) +
                                           svg.line(x_m, y + this.width/2.0));
                     body.attr({"stroke-width": this.map.enzyme_weight()});
                     body.toBack();
@@ -1860,7 +1868,7 @@ window.GiraffeDraw = function () {
                     this.feature_set.attr("title", this.label_name());
                 }
 
-            } // END LinearFeature::draw()
+            }; // END LinearFeature::draw()
 
             // Should we draw the label?
             thi$.should_draw_label = function () {
@@ -1868,7 +1876,7 @@ window.GiraffeDraw = function () {
                 if (!this.visible || !this.labeled || this.crosses_boundary()) 
                     return false;
                 return true;
-            } // END LinearFeature::should_draw_label()
+            }; // END LinearFeature::should_draw_label()
 
             thi$.label_size = function() {
                 var fake_label = this.map.paper.text(0, 0, this.label_name());
@@ -1877,10 +1885,10 @@ window.GiraffeDraw = function () {
                 fake_label.remove();
 
                 return { width: w, height: h };
-            }
+            };
 
             thi$.draw_label = function (height, pos) {
-                if (!this.should_draw_label()) { return; }
+                if (!this.should_draw_label()) { return undefined; }
 
                 if (this.label_drawn)
                     this.clear_label();
@@ -1921,10 +1929,10 @@ window.GiraffeDraw = function () {
                 this.label_drawn = true;
 
                 return label.getBBox();
-            } // END LinearFeature::draw_label()
+            }; // END LinearFeature::draw_label()
 
             return thi$;
-        }; // END LinearFeature Class
+        } // END LinearFeature Class
 
         thi$.draw_plasmid = function() {
 
@@ -1953,21 +1961,21 @@ window.GiraffeDraw = function () {
 
             plasmid.attr("stroke", colors.plasmid);
             var title = seq_length + ' bp';
-            if (this.plasmid_name() != "") {
+            if (this.plasmid_name() !== "") {
                 title = this.plasmid_name() + ": " + title;
             }
             var plasmid_label = this.paper.text(cx, title_y, title);
             plasmid_label.attr({"fill":      colors.plasmid,
-                                "font-size": this.plasmid_font_size(), });
+                                "font-size": this.plasmid_font_size() });
 
             // Set the scale to be the order of magnitude of seq_length
             // i.e. 100, 1000, 10, etc.
-            var scale = Math.pow(10, Math.floor(Math.log(seq_length)/Math.log(10)))
+            var scale = Math.pow(10, Math.floor(Math.log(seq_length)/Math.log(10)));
             for (var xx = scale; xx <= seq_length; xx += scale) {
                 draw_tic_mark(xx);
             }
 
-        }
+        };
 
         thi$.resolve_conflicts = function () {
             var conflicts,
@@ -1977,6 +1985,56 @@ window.GiraffeDraw = function () {
                 biggest_size, biggest_feature, furthest_point, 
                 new_size, overlap,
                 fx, f;
+
+            // Utility functions
+            function push(winner, loser) {
+                var ppfx, pfx, pf,
+                    can_push;
+
+
+                // Record that the push happened
+                winner.pushed_features.push(loser); 
+                conflicts++;
+
+                // Do it
+                loser.y = new_y; 
+
+                if (_debug) console.warn(loser.name() + " pushed by " + winner.name());
+
+                // Since loser was pushed, un-push all the 
+                // features that it pushed, as long as
+                // those features are not in conflict with the winner,
+                // or with their own, previously pushed features, which are
+                // now unpushed
+                for (pfx = 0; pfx < loser.pushed_features.length; pfx++) {
+                    pf = loser.pushed_features[pfx];
+                    // Check for conflict with the winner feature itself
+                    // If there's no conflict, we can push it back safely.
+                    if (winner.real_end() - pf.real_start() <= min_overlap_cutoff ||
+                        pf.real_end() - winner.real_start() <= min_overlap_cutoff) {
+
+                        // Check for conflict with previously pushed features
+                        // that may have been unpushed
+                        can_push = true;
+                        for (ppfx = 0; ppfx < pf.pushed_features.length; ppfx++) {
+                            if (pf.pushed_features[ppfx].y == y) {
+                                can_push = false;
+                                break;
+                            }
+                        }
+
+                        // Finally!
+                        if (can_push) {
+                            if (_debug)
+                                console.warn(pf.name() + " unpushed, because " + 
+                                             loser.name() + " pushed by " + winner.name());
+                            pf.y = y;
+                        }
+                    }
+                }
+            }
+
+            // Main body
 
             // reset radii in case this is being done any time but the first
             for (fx = 0; fx < this.features.length; fx++) 
@@ -2050,53 +2108,7 @@ window.GiraffeDraw = function () {
 
             return max_dist;
 
-            function push(winner, loser) {
-                var ppfx, pfx, pf,
-                    can_push;
-
-
-                // Record that the push happened
-                winner.pushed_features.push(loser); 
-                conflicts++;
-
-                // Do it
-                loser.y = new_y; 
-
-                if (_debug) console.warn(loser.name() + " pushed by " + winner.name());
-
-                // Since loser was pushed, un-push all the 
-                // features that it pushed, as long as
-                // those features are not in conflict with the winner,
-                // or with their own, previously pushed features, which are
-                // now unpushed
-                for (pfx = 0; pfx < loser.pushed_features.length; pfx++) {
-                    pf = loser.pushed_features[pfx];
-                    // Check for conflict with the winner feature itself
-                    // If there's no conflict, we can push it back safely.
-                    if (winner.real_end() - pf.real_start() <= min_overlap_cutoff ||
-                        pf.real_end() - winner.real_start() <= min_overlap_cutoff) {
-
-                        // Check for conflict with previously pushed features
-                        // that may have been unpushed
-                        can_push = true;
-                        for (ppfx = 0; ppfx < pf.pushed_features.length; ppfx++) {
-                            if (pf.pushed_features[ppfx].y == y) {
-                                can_push = false;
-                                break;
-                            }
-                        }
-
-                        // Finally!
-                        if (can_push) {
-                            if (_debug)
-                                console.warn(pf.name() + " unpushed, because " 
-                                    + loser.name() + " pushed by " + winner.name());
-                            pf.y = y;
-                        }
-                    }
-                }
-            }
-        }
+        };
 
         var label_pos, label_lists;
 
@@ -2138,7 +2150,7 @@ window.GiraffeDraw = function () {
             //                 top  bottom
             list_offset = [20, -20];
             for (ix = 0; ix < nlists; ix++) {
-                if (ix % 2 == 0) {
+                if (ix % 2 === 0) {
 
                     if (label_lists[0][ix].length >= 1) {
                         // Top label: just to the right of the last feature
@@ -2162,7 +2174,7 @@ window.GiraffeDraw = function () {
                 }
             }
 
-        }
+        };
 
         thi$.draw_labels = function () {
 
@@ -2186,7 +2198,7 @@ window.GiraffeDraw = function () {
                                 comp_factor * feat.y;
                         }
                         return key(a) - key(b);
-                    })
+                    });
 
                     var num_labels = ll.length;
 
@@ -2204,9 +2216,11 @@ window.GiraffeDraw = function () {
                     }
                 }
             }
-        }
+        };
 
         thi$.set_bounding_box = function () {
+            var ix, lx, ll, sx;
+
             // Figure out outer edge of label lists
             //
             // Just an educated guess based on 13pt font. we will use
@@ -2225,19 +2239,19 @@ window.GiraffeDraw = function () {
             var max_x = thi$.width;
 
             // Iterate over every list in a level
-            for (var sx = 0; sx < label_pos[0].length; sx++) {
-                for (var lx = 0; lx < 2; lx++) {
-                    var ll = label_lists[lx][sx];
+            for (sx = 0; sx < label_pos[0].length; sx++) {
+                for (lx = 0; lx < 2; lx++) {
+                    ll = label_lists[lx][sx];
 
                     var list_max_letters = 0;
-                    for (var ix = 0; ix < ll.length; ix++) {
+                    for (ix = 0; ix < ll.length; ix++) {
                         var num_letts = ll[ix].label_name().length; 
                         if (num_letts > list_max_letters) {
                             list_max_letters = num_letts;
                         }
                     }
 
-                    if (lx == 0) { // Top lists: move top and right
+                    if (lx === 0) { // Top lists: move top and right
                         var list_top = plasmid_y - thi$.label_pos - 
                             label_letter_height * (ll.length + 1);
                         if (list_top < min_y)
@@ -2274,13 +2288,13 @@ window.GiraffeDraw = function () {
             plasmid_right -= min_x;
 
             // Shift the label positions as well, to compensate
-            for (var lx = 0; lx < label_pos.length; lx++) {
-                for (var ix = 0; ix < label_pos[lx].length; ix++) {
+            for (lx = 0; lx < label_pos.length; lx++) {
+                for (ix = 0; ix < label_pos[lx].length; ix++) {
                     label_pos[lx][ix] -= min_x;
                 }
             }
 
-        }
+        };
 
         thi$.rescale = function() { 
             // Rescale
@@ -2293,14 +2307,15 @@ window.GiraffeDraw = function () {
 
                 // "center" parameter just adds unnecessary CSS to the container
                 // object to give it an absolute position: not what we need
-                this.paper.changeSize(thi$.final_width,thi$.final_height,false,true)
+                this.paper.changeSize(thi$.final_width,thi$.final_height,false,true);
             }
-        }
+        };
         
         return thi$;
-    }; // End LinMap()
+    } // END LinMap()
 
     return this;
-}})();
+};// END GiraffeDraw
+})(); // END GiraffeDraw Namespace
 
 // ex: set expandtab:ts=4:sw=4
