@@ -1369,7 +1369,6 @@ window.GiraffeControl = function ($,gd_map,dom) {
 	if (draw_enzyme_controls) {
 		controls.find('tbody').append(
 			'<tr><td class="enzymes"><table>' +
-			'<thead></thead>' + 
 			'<tbody>' +
 				'<tr><th>Restriction Enzymes</th>' +
 				'<td><label><input type="checkbox" checked="checked"' +
@@ -1380,12 +1379,15 @@ window.GiraffeControl = function ($,gd_map,dom) {
 				'2-cutters</label></td>' +
 				'<td><label><input type="checkbox"' +
 					          'name="cutters-3" value="show" />' +
-				'3-cutters</label></td></tr>' +
+				'3-cutters</label></td>' +
+				'<td><label><input type="checkbox"' +
+					          'name="no-cutters" value="show" />' +
+				'no cutters</label></td></tr>' +
 			'</tbody>' +
 			'</table></td></tr>')
 
 		// Changes to the Restriction Enzyme selection
-		controls.find('input[name|="cutters"]').change(function (event) {
+		controls.find('input[name|="cutters"]').click(function (event) {
 			var opts = [];
 
 			// Parse out selected options
@@ -1393,7 +1395,28 @@ window.GiraffeControl = function ($,gd_map,dom) {
 				opts.push(parseInt($(this).attr('name').match(/\d+/)));
 			});
 
+            // Automatically check and uncheck the no-cutters checkbox,
+            // depending on whether or not there are actually cutters shown
+            if (opts.length > 0) {
+                controls.find('input[name="no-cutters"]').removeAttr("checked");
+            } else {
+                controls.find('input[name="no-cutters"]').attr("checked", "checked");
+            }
+
 			gd_map.redraw_cutters(opts);
+		});
+
+
+		// No-cutter textbox
+		controls.find('input[name="no-cutters"]').click(function (event) {
+            if ($(this).attr("checked")) {
+                controls.find('input[name|="cutters"]').removeAttr("checked");
+                gd_map.redraw_cutters([]);
+            } else {
+                // When 'no cutters' is the only selected checkbox, make it impossible 
+                // to deselect by clicking on itself.
+                $(this).attr("checked", "checked");
+            }
 		});
 	}
 	
