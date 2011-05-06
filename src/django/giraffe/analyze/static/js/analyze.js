@@ -1495,26 +1495,27 @@ window.GiraffeControl = function ($,gd_map,dom) {
 		});
 	}
 
+    function GiraffeControlTable() {
+        var the_table;
 
-	if (draw_table) {
 		// INDIVIDUAL FEATURE TABLE
-		table = GiraffeTable($, gd_map.gd, 
+		the_table = GiraffeTable($, gd_map.gd, 
 			$('<div></div>')
 				.attr('id', random_dom_id())
 				.addClass('giraffe-control-table'))
 
-		table.find('colgroup')
+		the_table.find('colgroup')
 			.prepend('<col class="giraffe-table-feature-show"  />' +
                      '<col class="giraffe-table-feature-label" />');
 
 		// Insert header cells in all of the headers to make
 		// the tables the right shape
-		table.find('thead>tr')
+		the_table.find('thead>tr')
 			.prepend('<th>Show Feature</th>' +
                      '<th>Label Feature</th>');
 
 		// Insert show/label checkboxes in all of the body rows
-		table.find('tbody>tr')
+		the_table.find('tbody>tr')
 			.each(function (index, html) {
                 // Added in reverse, because of prepend
 				var types = [ 'label', 'show' ], tx;
@@ -1530,7 +1531,7 @@ window.GiraffeControl = function ($,gd_map,dom) {
 			});
 					
 		// The table checkboxes
-		table.find('input[value="label"]').click(function (event) {
+		the_table.find('input[value="label"]').click(function (event) {
 			var feat_id = parseInt($(this).attr("name").replace(/\D/g, ''));
 
 			if ($(this).attr("checked")) {
@@ -1540,7 +1541,7 @@ window.GiraffeControl = function ($,gd_map,dom) {
 			}
 		});
 
-		table.find('input[value="show"]').click(function (event) {
+		the_table.find('input[value="show"]').click(function (event) {
 			var feat_id = parseInt($(this).attr("name").replace(/\D/g, '')),
 				label_checkbox = $(this).parent().siblings().children('input').first();
 
@@ -1555,7 +1556,7 @@ window.GiraffeControl = function ($,gd_map,dom) {
 		});
 
         // Make the names in the table function as links instead
-        table.find('td.giraffe-table-feature-name').each(function() {
+        the_table.find('td.giraffe-table-feature-name').each(function() {
             var nonnum = new RegExp('\\D', 'g')
                 id = parseInt($(this)
                                 .closest('tr')
@@ -1571,7 +1572,11 @@ window.GiraffeControl = function ($,gd_map,dom) {
                 .addClass('giraffe-bp'));
         });
 
-		controls.append(table);
+        return the_table;
+    }
+
+	if (draw_table) {
+		controls.append(GiraffeControlTable);
 	}
 
 	$(dom).append(controls);
