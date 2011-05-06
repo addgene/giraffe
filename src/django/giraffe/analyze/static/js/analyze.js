@@ -1576,7 +1576,8 @@ window.GiraffeControl = function ($,gd_map,dom) {
     }
 
 	if (draw_table) {
-		controls.append(GiraffeControlTable);
+        table = GiraffeControlTable();
+		controls.append(table);
 	}
 
 	$(dom).append(controls);
