@@ -1382,7 +1382,7 @@ window.GiraffeControl = function ($,gd_map,dom) {
 				'3-cutters</label></td>' +
 				'<td><label><input type="checkbox"' +
 					          'name="no-cutters" value="show" />' +
-				'no cutters</label></td></tr>' +
+				'hide all</label></td></tr>' +
 			'</tbody>' +
 			'</table></td></tr>')
 
