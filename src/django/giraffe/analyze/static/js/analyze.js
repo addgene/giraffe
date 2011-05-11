@@ -562,11 +562,11 @@ window.GiraffeAnalyze = function ($,gd,options) {
 		});
 
 		// Force rewriting the digest data when the cutter controls are changed
-		$(map_panes.panes).find('input[name|="cutters"]').change(function (event) {
+		$(map_panes.panes).find('input[name*="cutters"]').click(function (event) {
 			cutters_to_show = [];
 
 			// Parse out selected options
-			$(this).closest('tbody').find("input[checked]").each(function () {
+			$(this).closest('tbody').find('input[checked][name|="cutters"]').each(function () {
 				cutters_to_show.push(parseInt($(this).attr('name').match(/\d+/)));
 			});
 
