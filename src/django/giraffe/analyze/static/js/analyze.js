@@ -561,6 +561,12 @@ window.GiraffeAnalyze = function ($,gd,options) {
 			write_digest_data();
 		});
 
+        // Change the name of the "hide all" label to non-cutters
+		$(map_panes.panes).find('input[name="no-cutters"]')
+                          .siblings('.cutter-label')
+                          .text('non-cutters');
+
+
 		// Force rewriting the digest data when the cutter controls are changed
 		$(map_panes.panes).find('input[name*="cutters"]').click(function (event) {
 			cutters_to_show = [];
@@ -1373,16 +1379,16 @@ window.GiraffeControl = function ($,gd_map,dom) {
 				'<tr><th>Restriction Enzymes</th>' +
 				'<td><label><input type="checkbox" checked="checked"' +
 					         'name="cutters-1" value="show" />' +
-				'1-cutters</label></td>' +
+				'<span class="cutter-label">1-cutters</span></label></td>' +
 				'<td><label><input type="checkbox"' +
 					          'name="cutters-2" value="show" />' +
-				'2-cutters</label></td>' +
+				'<span class="cutter-label">2-cutters</span></label></td>' +
 				'<td><label><input type="checkbox"' +
 					          'name="cutters-3" value="show" />' +
-				'3-cutters</label></td>' +
+				'<span class="cutter-label">3-cutters</span></label></td>' +
 				'<td><label><input type="checkbox"' +
 					          'name="no-cutters" value="show" />' +
-				'hide all</label></td></tr>' +
+				'<span class="cutter-label">hide all</span></label></td></tr>' +
 			'</tbody>' +
 			'</table></td></tr>')
 
