@@ -1485,9 +1485,35 @@ window.GiraffeControl = function ($,gd_map,dom) {
 				gd_map.show_feature_type(feat_type_name);
 				label_checkbox.removeAttr("disabled");
 				label_checkbox.attr("checked", "checked");
+
+                if (draw_table) {
+                    $('.giraffe-control-table').find('tr').each(function () {
+                        var fid = parseInt($(this).attr('id').replace(/\D/g, ''), 10);
+                        var feat = gd_map.gd.all_features[fid];
+                        if (typeof(feat) !== 'undefined' && feat.type() === gd_map.gd.Feature_Type[feat_type_name]) {
+                            $(this).find('input[value="show"]').attr("checked", "checked");
+                            $(this).find('input[value="label"]').removeAttr("disabled");
+                            $(this).find('input[value="label"]').attr("checked", "checked");
+                        }
+                    });
+                }
+
 			} else {
 				gd_map.hide_feature_type(feat_type_name);
 				label_checkbox.attr("disabled", "disabled");
+
+                if (draw_table) {
+                    $('.giraffe-control-table').find('tr').each(function () {
+                        console.warn(typeof(feat));
+                        var fid = parseInt($(this).attr('id').replace(/\D/g, ''), 10);
+                        var feat = gd_map.gd.all_features[fid];
+                        if (typeof(feat) !== 'undefined' && feat.type() === gd_map.gd.Feature_Type[feat_type_name]) {
+                            $(this).find('input[value="show"]').removeAttr("checked");
+                            $(this).find('input[value="label"]').attr("disabled", "disabled");
+                        }
+                    });
+                }
+
 			}
 		});
 
@@ -1496,8 +1522,30 @@ window.GiraffeControl = function ($,gd_map,dom) {
 
 			if ($(this).attr("checked")) {
 				gd_map.show_feature_label_type(feat_type_name);
+
+                if (draw_table) {
+                    $('.giraffe-control-table').find('tr').each(function () {
+                        var fid = parseInt($(this).attr('id').replace(/\D/g, ''), 10);
+                        var feat = gd_map.gd.all_features[fid];
+                        if (typeof(feat) !== 'undefined' && feat.type() === gd_map.gd.Feature_Type[feat_type_name]) {
+                            $(this).find('input[value="label"]').attr("checked", "checked");
+                        }
+                    });
+                }
+
 			} else {
 				gd_map.hide_feature_label_type(feat_type_name);
+
+                if (draw_table) {
+                    $('.giraffe-control-table').find('tr').each(function () {
+                        var fid = parseInt($(this).attr('id').replace(/\D/g, ''), 10);
+                        var feat = gd_map.gd.all_features[fid];
+                        if (typeof(feat) !== 'undefined' && feat.type() === gd_map.gd.Feature_Type[feat_type_name]) {
+                            $(this).find('input[value="label"]').removeAttr("checked");
+                        }
+                    });
+                }
+
 			}
 		});
 
