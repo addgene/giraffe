@@ -398,7 +398,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
             ['Cutters', 'Linear Digest', 'Circular Digest']
         );
 
-   		// Digest maps above: need to pass in digest panes so that
+        // Digest maps above: need to pass in digest panes so that
 		// the map controls can pick the corresponding digest pane
 		var map_panes = digest_map_panes(dom);
 		var cutters_to_show = [1];
@@ -422,15 +422,17 @@ window.GiraffeAnalyze = function ($,gd,options) {
 					for (var i = 0; i < all.length; i++) {
 						var all_of_this = all[i].other_cutters();
 						var cuts = [];
+						var fids = [];
 						for (var c = 0; c < all_of_this.length; c++) {
 							cuts.push(gd.all_features[all_of_this[c]].cut());
+							fids.push(gd.all_features[all_of_this[c]].id());
 						}
 
 						if (cutters_to_show.indexOf(cuts.length) >= 0) {
 							var name = $('<label></label>').append(all[i].name());
 							for (var c = 0; c < cuts.length; c++) {
-								cuts[c] = '<a href="#" seq-title="'+all[i].name()
-										  +' cut site" bp="'+cuts[c]+'" class="giraffe-bp">'+cuts[c]+'</a>';
+								cuts[c] = '<a href="#" seq-title="'+all[i].name() +
+                                    ' cut site" bp="feature-'+fids[c]+'" class="giraffe-bp">'+cuts[c]+'</a>';
 							}
 							var s = $('<p>Cuts after '+cuts.join(', ')+'</p>');
 							var item = $('<li></li>').append(name).append(s);
@@ -1023,14 +1025,29 @@ window.GiraffeAnalyze = function ($,gd,options) {
 
     function sequence_viewer_bp_event(selection) {
         $(selection).find('.giraffe-bp').click(function(evt){
+            var bpstr, title, bp, 
+                fid, feature;
+
             sequence_viewer_clear_highlight();
             $(this).addClass('giraffe-bp-click-source');
             evt.preventDefault();
 
-            var bpstr = $(this).attr('bp');
-            var title = $(this).attr('seq-title');
-            var bp = bpstr.split(',');
-            if (bp.length > 0) { sequence_viewer_bp_event_highlight(bp,title); }
+            bpstr = $(this).attr('bp');
+
+            // Check for feature-style or range-style bp-data
+            if (bpstr.indexOf('feature-') === 0) {
+                fid = parseInt(bpstr.replace(/\D/g, ''), 10);
+                feature = gd.all_features[fid];
+                // Fancy highlight that shows cut sites for enzymes
+                map_feature_click_callback(feature);
+            } else {
+                title = $(this).attr('seq-title');
+                bp = bpstr.split(',');
+
+                if (bp.length > 0) { 
+                    sequence_viewer_bp_event_highlight(bp,title); 
+                }
+            }
         });
     }
 
@@ -1574,7 +1591,7 @@ window.GiraffeControl = function ($,gd_map,dom) {
                 .append($('<a></a>').text(f.name().replace(/ORF\s+[fF]rame\s+/, ''))
                 .attr('href', '#')
                 .attr('seq-title', f.name())
-                .attr('bp', [f.start(), f.end()].join(','))
+                .attr('bp', 'feature-' + id)
                 .addClass('giraffe-bp'));
         });
 
