@@ -1426,6 +1426,23 @@ window.GiraffeControl = function ($,gd_map,dom) {
                 controls.find('input[name="no-cutters"]').attr("checked", "checked");
             }
 
+            if (draw_table) {
+                $('.giraffe-control-table').find('tr').each(function () {
+                    var fid = parseInt($(this).attr('id').replace(/\D/g, ''), 10);
+                    var feat = gd_map.gd.all_features[fid];
+                    if (typeof(feat) !== 'undefined' && feat.type() === gd_map.gd.Feature_Type.enzyme) {
+                        if (opts.indexOf(feat.cut_count()) >= 0) {
+                            $(this).find('input[value="show"]').attr("checked", "checked");
+                            $(this).find('input[value="label"]').removeAttr("disabled");
+                            $(this).find('input[value="label"]').attr("checked", "checked");
+                        } else {
+                            $(this).find('input[value="show"]').removeAttr("checked");
+                            $(this).find('input[value="label"]').attr("disabled", "disabled");
+                        }
+                    } 
+                });
+            }
+
 			gd_map.redraw_cutters(opts);
 		});
 
@@ -1439,6 +1456,17 @@ window.GiraffeControl = function ($,gd_map,dom) {
                 // When 'no cutters' is the only selected checkbox, make it impossible 
                 // to deselect by clicking on itself.
                 $(this).attr("checked", "checked");
+            }
+
+            if (draw_table) {
+                $('.giraffe-control-table').find('tr').each(function () {
+                    var fid = parseInt($(this).attr('id').replace(/\D/g, ''), 10);
+                    var feat = gd_map.gd.all_features[fid];
+                    if (typeof(feat) !== 'undefined' && feat.type() === gd_map.gd.Feature_Type.enzyme) {
+                        $(this).find('input[value="show"]').removeAttr("checked");
+                        $(this).find('input[value="label"]').attr("disabled", "disabled");
+                    } 
+                });
             }
 		});
 	}
