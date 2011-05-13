@@ -39,17 +39,17 @@ function random_dom_id() {
 
 window.GiraffeAnalyze = function ($,gd,options) {
     var dom_id = 'giraffe-analyze';
-    if ('dom_id' in options) { dom_id = options['dom_id']; }
+    if ('dom_id' in options) { dom_id = options.dom_id; }
     var name = 'Sequence';
-    if ('name' in options) { name = options['name']; }
+    if ('name' in options) { name = options.name; }
     var map_width = 640;
-    if ('map_width' in options) { map_width = options['map_width']; }
+    if ('map_width' in options) { map_width = options.map_width; }
     var map_height = 640;
-    if ('map_height' in options) { map_height = options['map_height']; }
+    if ('map_height' in options) { map_height = options.map_height; }
     var analyzer_width = 1340;
-    if ('analyzer_width' in options) { analyzer_width = options['analyzer_width']; }
+    if ('analyzer_width' in options) { analyzer_width = options.analyzer_width; }
     var starts_with_linear_map = false;
-    if ('linear_map' in options && options['linear_map']) { starts_with_linear_map = true; }
+    if ('linear_map' in options && options.linear_map) { starts_with_linear_map = true; }
 
     var viewer_segs_per_line = 5;
 
@@ -63,15 +63,16 @@ window.GiraffeAnalyze = function ($,gd,options) {
 		var current_pane;
 
         function hide_all() {
-            for (var i in divs) { $(divs[i]).hide(); } 
-            for (var i in links) { $(links[i]).removeClass('giraffe-link-on'); } 
+            var i;
+            for (i in divs) { $(divs[i]).hide(); } 
+            for (i in links) { $(links[i]).removeClass('giraffe-link-on'); } 
 			current_pane = undefined;
         }
         function show(i) {
             hide_all();
             $(links[i]).addClass('giraffe-link-on');
             $(divs[i]).show();
-			current_pane = parseInt(i);
+			current_pane = parseInt(i, 10);
         }
         function link(i) { return links[i]; }
         function pane(i) { return divs[i]; }
@@ -80,18 +81,20 @@ window.GiraffeAnalyze = function ($,gd,options) {
         var links_dom = $('<p></p>');
         var divs_dom = $('<div></div>');
 
+        function pane_click(evt) {
+                evt.preventDefault();
+                var i = $(this).attr('pane'); show(i);
+        }
         for (var i in panes) {
             var link_text = panes[i];
-            var link_title = undefined;
+            var link_title;
+
             if (typeof panes[i] == typeof []) {
                 link_text = panes[i][0];
                 link_title = panes[i][1];
             }
             divs[i] = $('<div></div>');
-            links[i] = $('<a pane="'+i+'" href="#">'+link_text+'</a>').click(function(evt) {
-                evt.preventDefault();
-                var i = $(this).attr('pane'); show(i);
-            });
+            links[i] = $('<a pane="'+i+'" href="#">'+link_text+'</a>').click(pane_click);
             if (link_title !== undefined) { links[i].attr('title',link_title); }
             $(links_dom).append(links[i]);
             if (i < panes.length-1) { $(links_dom).append(' | '); }
@@ -105,8 +108,8 @@ window.GiraffeAnalyze = function ($,gd,options) {
             'link' : link,
             'show' : show,
             'current' : current,
-            'hide_all' : hide_all,
-        }
+            'hide_all' : hide_all
+        };
     }
 
     // Abstraction for handling cutters
@@ -131,26 +134,31 @@ window.GiraffeAnalyze = function ($,gd,options) {
         }
         this.__unique.sort(__cutter_sorter);
         return this.__unique;
-    }
+    };
 
     Cutter_List.prototype.all=function(){
         if (this.__all) { return this.__all; }
         this.__all = [];
-        var check = new Array();
+        var check = [];
         for (var i in this.enzymes) {
-            if (this.enzymes[i].name() in check) { }
-            else {
+            if (!(this.enzymes[i].name() in check)) {
                 this.__all.push(this.enzymes[i]);
                 check[this.enzymes[i].name()] = 1;
             }
         }
         this.__all.sort(__cutter_sorter);
         return this.__all; 
-    }
+    };
 
     Cutter_List.prototype.non=function(){
+        var i;
+        var all_cutters;
+        var all_cutters_hash;
+        var have_these;
+
         if (this.__non) { return this.__non; }
-        var all_cutters = [
+
+        all_cutters = [
             'AatII', 'Acc65I', 'AccI', 'AclI', 'AfeI', 'AflII',
             'AgeI', 'ApaI', 'ApaLI', 'ApoI', 'AscI', 'AseI',
             'AsiSI', 'AvrII', 'BamHI', 'BclI', 'BglII', 'Bme1580I',
@@ -167,20 +175,22 @@ window.GiraffeAnalyze = function ($,gd,options) {
             'SphI', 'SspI', 'StuI', 'SwaI', 'XbaI', 'XhoI',
             'XmaI'
         ];
-        var all_cutters_hash = new Array();
-        for (var i in all_cutters) {
+        all_cutters_hash = [];
+
+
+        for (i in all_cutters) {
             all_cutters_hash[all_cutters[i]] = 1;
         }
-        var have_these = this.all();
-        for (var i in have_these) {
+        have_these = this.all();
+        for (i in have_these) {
             delete all_cutters_hash[have_these[i].name()];
         }
         this.__non = [];
-        for (var i in all_cutters_hash) {
+        for (i in all_cutters_hash) {
             this.__non.push(i);
         }
         return this.__non;
-    }
+    };
 
     function sequence_tab(dom) {
         var copy_all = 'To copy sequence: click on sequence, hit ctrl/cmd-A, then ctrl/cmd-C';
@@ -201,7 +211,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
         for (var i in gd.all_features) {
             if (gd.all_features[i].is_enzyme()) { continue; }
             var type = "misc_feature";
-            var label = gd.all_features[i].name()
+            var label = gd.all_features[i].name();
             var gene = "";
             if (gd.all_features[i].type() == gd.Feature_Type.origin) {
                 type = "rep_origin";
@@ -227,7 +237,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
                 end : gd.all_features[i].end(),
                 clockwise : gd.all_features[i].clockwise(),
                 clockwise_sequence : gd.all_features[i].clockwise_sequence()
-            }
+            };
             features.push(f); 
         }
 
@@ -393,7 +403,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
         $(dom)
             .append(label_panes.links);
 
-   		// Digest data below
+        // Digest data below
         var digest = Switch_Panes(
             ['Cutters', 'Linear Digest', 'Circular Digest']
         );
@@ -416,54 +426,60 @@ window.GiraffeAnalyze = function ($,gd,options) {
 			var non = cutters.non();
 
 			function make_cutter_list() {
+                var c, i;
+                var all_of_this, cuts, fids;
+                var name, s, item;
 
 				if (cutters_to_show.length > 0) {
 
-					for (var i = 0; i < all.length; i++) {
-						var all_of_this = all[i].other_cutters();
-						var cuts = [];
-						var fids = [];
-						for (var c = 0; c < all_of_this.length; c++) {
+					for (i = 0; i < all.length; i++) {
+						all_of_this = all[i].other_cutters();
+						cuts = [];
+						fids = [];
+						for (c = 0; c < all_of_this.length; c++) {
 							cuts.push(gd.all_features[all_of_this[c]].cut());
 							fids.push(gd.all_features[all_of_this[c]].id());
 						}
 
 						if (cutters_to_show.indexOf(cuts.length) >= 0) {
-							var name = $('<label></label>').append(all[i].name());
-							for (var c = 0; c < cuts.length; c++) {
+							name = $('<label></label>').append(all[i].name());
+							for (c = 0; c < cuts.length; c++) {
 								cuts[c] = '<a href="#" seq-title="'+all[i].name() +
                                     ' cut site" bp="feature-'+fids[c]+'" class="giraffe-bp">'+cuts[c]+'</a>';
 							}
-							var s = $('<p>Cuts after '+cuts.join(', ')+'</p>');
-							var item = $('<li></li>').append(name).append(s);
+							s = $('<p>Cuts after '+cuts.join(', ')+'</p>');
+							item = $('<li></li>').append(name).append(s);
 							$(list).append(item);
 						}
 					}
 				} else {
 					// Non-cutters
 					digest_data_dom.append(
-						'<p>The following cutters do not cut this sequence.</p>')
-					for (var i = 0; i < non.length; i++) {
-						var name = $('<label></label>').append(non[i]);
-						var item = $('<li></li>').append(name);
+						'<p>The following cutters do not cut this sequence.</p>');
+					for (i = 0; i < non.length; i++) {
+						name = $('<label></label>').append(non[i]);
+						item = $('<li></li>').append(name);
 						$(list).append(item);
 					}
 				}
-				
-			};
+			}
 
 			function make_digest_list(circular) {
+                var a0;
+
 				if (cutters_to_show.length < 1) {
 					return;
 				}
 
+                function cutter_sort(a,b) {
+						return gd.all_features[a].start() -
+							gd.all_features[b].start();
+                }
+
 				for (var i = 0; i < all.length; i++) {
 					var cuts = [];
 					var all_of_this = all[i].other_cutters();
-					all_of_this.sort(function(a,b){
-						return gd.all_features[a].start() -
-							gd.all_features[b].start();
-					});
+					all_of_this.sort(cutter_sort);
 					for (var c = 0; c < all_of_this.length; c++) {
 						cuts.push(gd.all_features[all_of_this[c]].cut());
 					}
@@ -472,33 +488,33 @@ window.GiraffeAnalyze = function ($,gd,options) {
 						var name = $('<label></label>').append(all[i].name());
 						var digests = [];
 						for (var j=0; j<cuts.length; j++) {
-							if (j == 0 && !circular) {
-								var a0 = '<a href="#" class="giraffe-bp" '
-										 +'seq-title="Fragment cut by '
-										 +all[i].name()+'" bp="1,'+cuts[j]+'">';
+							if (j === 0 && !circular) {
+								a0 = '<a href="#" class="giraffe-bp" ' +
+                                    'seq-title="Fragment cut by ' +
+                                    all[i].name() + '" bp="1,'+cuts[j]+'">';
 								digests.push(a0+'1-'+(cuts[j])+'</a> ('+cuts[j]+' bp)');
 							}
 							if (j+1 == cuts.length) {
 								if (circular) {
-									var a0 = '<a href="#" class="giraffe-bp" '
-											 +'seq-title="Fragment cut by '
-											 +all[i].name()+'" bp="'
-											 +(cuts[j]+1)+','+cuts[0]+'">';
+									a0 = '<a href="#" class="giraffe-bp" ' +
+                                        'seq-title="Fragment cut by ' + 
+                                        all[i].name()+'" bp="' +
+                                        (cuts[j]+1)+','+cuts[0]+'">';
 									digests.push(a0+(cuts[j]+1)+'-'+cuts[0]+'</a> ('+
 												 (seqlen-(cuts[j]+1)+1+cuts[0])+' bp)');
 								} else {
-									var a0 = '<a href="#" class="giraffe-bp" '
-											 +'seq-title="Fragment cut by '
-											 +all[i].name()+'" bp="'
-											 +(cuts[j]+1)+','+seqlen+'">';
+									a0 = '<a href="#" class="giraffe-bp" ' +
+                                        'seq-title="Fragment cut by ' +
+                                        all[i].name()+'" bp="' +
+                                        (cuts[j]+1)+','+seqlen+'">';
 									digests.push(a0+(cuts[j]+1)+'-'+seqlen+'</a> ('+
 												 (seqlen-(cuts[j]+1)+1)+' bp)');
 								}
 							} else {
-								var a0 = '<a href="#" class="giraffe-bp" '
-										 +'seq-title="Fragment cut by '
-										 +all[i].name()+'" bp="'
-										 +(cuts[j]+1)+','+cuts[j+1]+'">';
+								a0 = '<a href="#" class="giraffe-bp" ' +
+                                    'seq-title="Fragment cut by ' +
+                                    all[i].name()+'" bp="' +
+                                    (cuts[j]+1)+','+cuts[j+1]+'">';
 								digests.push(a0+(cuts[j]+1)+'-'+(cuts[j+1])+'</a> ('+
 											 (cuts[j+1]-(cuts[j]+1)+1)+' bp)');
 							}
@@ -518,13 +534,13 @@ window.GiraffeAnalyze = function ($,gd,options) {
 
 				switch (label_panes.current()) {
 					case 0:
-						make_cutter_list()
+						make_cutter_list();
 						break;
 					case 1:
-						make_digest_list(false)
+						make_digest_list(false);
 						break;
 					case 2:
-						make_digest_list(true)
+						make_digest_list(true);
 						break;
 					default:
 						break;
@@ -532,7 +548,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
 
 				digest_data_dom.append(list);
                 sequence_viewer_bp_event(digest_data_dom);
-			}
+			};
 		})();
 
 		$(label_panes.links).click(function (event) {
@@ -548,6 +564,9 @@ window.GiraffeAnalyze = function ($,gd,options) {
 				case 2:
 					pane = 1;
 					break;
+                default:
+                    pane = 0;
+                    break;
 			}
 			
 			// Show the appropriate pane
@@ -556,7 +575,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
 			// Update cutters_to_show to reflect the checkboxes selected in that pane
 			cutters_to_show = [];
 			$(map_panes.pane(pane)).find("input[checked]").each(function () {
-				cutters_to_show.push(parseInt($(this).attr('name').match(/\d+/)));
+				cutters_to_show.push(parseInt($(this).attr('name').match(/\d+/), 10));
 			});
 
 			// Redraw the digest
@@ -575,7 +594,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
 
 			// Parse out selected options
 			$(this).closest('tbody').find('input[checked][name|="cutters"]').each(function () {
-				cutters_to_show.push(parseInt($(this).attr('name').match(/\d+/)));
+				cutters_to_show.push(parseInt($(this).attr('name').match(/\d+/), 10));
 			});
 
 			write_digest_data();
@@ -587,6 +606,12 @@ window.GiraffeAnalyze = function ($,gd,options) {
     }
 
     function translate_tab(dom) {
+        var starts_with, gene_desc;
+        var i, j, f, g, f_end, g_end;
+
+        var seq_start, seq_end, title, t;
+        var s, p, overlay_switch;
+
         panes = Switch_Panes(
             ['ORFs',
              "5'3' Frame 1",
@@ -604,19 +629,19 @@ window.GiraffeAnalyze = function ($,gd,options) {
         $(panes.pane(0))
             .append('<p>Click on ORF bp numbers to highlight sequence.</p>');
 
-        var starts_with = 1;
-        for (var i in gd.orf_features) {
-            var f = gd.orf_features[i];
+        starts_with = 1;
+        for (i in gd.orf_features) {
+            f = gd.orf_features[i];
 
             // does this ORF cover, or is the same as, a gene?
-            var gene_desc = '';
-            for (var j in gd.all_features) {
+            gene_desc = '';
+            for (j in gd.all_features) {
                 if (gd.all_features[j].type() == gd.Feature_Type.gene &&
                     gd.all_features[j].clockwise() == f.clockwise()) {
-                    var g = gd.all_features[j];
-                    var f_end = f.end();
+                    g = gd.all_features[j];
+                    f_end = f.end();
                     if (f.end() < f.start()) { f_end = f_end+seqlen; }
-                    var g_end = g.end();
+                    g_end = g.end();
                     if (g.end() < g.start()) { g_end = g_end+seqlen; }
                     if (g.start() >= f.start() && g_end <= f_end) {
                         gene_desc = 'contains '+g.name();
@@ -632,10 +657,8 @@ window.GiraffeAnalyze = function ($,gd,options) {
             }
 
             starts_with = 0;
-            var s = f.clockwise_sequence();
+            s = f.clockwise_sequence();
 
-            var p;
-            var seq_start, seq_end;
             if (f.clockwise()) {
                 s = new BioJS.DNASequence(s);
                 p = s.translate();
@@ -649,22 +672,22 @@ window.GiraffeAnalyze = function ($,gd,options) {
                 seq_end = f.start();
             }
         
-            var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
+            overlay_switch = Switch_Panes(['AA only', 'With DNA']);
             $(overlay_switch.pane(0)).append(p.format_html_with_bp());
             $(overlay_switch.pane(1)).append(s.format_html_with_aa(seq_start,seq_end));
             overlay_switch.show(0);
 
-            var title = 'ORF';
+            title = 'ORF';
             if (gene_desc !== '') { title += ', '+gene_desc; }
-            var t = 'ORF <a href="#" class="giraffe-bp" '
-                     +'seq-title="'+title+'" bp="'
-                     +f.start()+','+f.end()+'">';
+            t = 'ORF <a href="#" class="giraffe-bp" ' +
+                'seq-title="'+title+'" bp="' + 
+                f.start()+','+f.end()+'">';
             if (f.clockwise()) { t += f.start()+' - '+f.end(); }
             else { t += f.end()+' - '+f.start()+' antisense'; }
             t += '</a> ('+s.length()/3+' aa)';
             if (gene_desc !== '') { t += ', '+gene_desc; }
             
-            var title = $('<p></p>').append(t);
+            title = $('<p></p>').append(t);
             $(title).append(overlay_switch.links);
 
             $(panes.pane(0))
@@ -686,8 +709,8 @@ window.GiraffeAnalyze = function ($,gd,options) {
                        );
         }
 
-        var p = sequence.translate();
-        var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
+        p = sequence.translate();
+        overlay_switch = Switch_Panes(['AA only', 'With DNA']);
         $(overlay_switch.pane(0)).append(p.format_html_with_bp());
         $(overlay_switch.pane(1)).append(sequence.format_html_with_aa());
         overlay_switch.show(0);
@@ -703,9 +726,9 @@ window.GiraffeAnalyze = function ($,gd,options) {
                 .addClass('giraffe-left-last')
         );
 
-        var s = sequence.substring(1);
-        var p = s.translate();
-        var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
+        s = sequence.substring(1);
+        p = s.translate();
+        overlay_switch = Switch_Panes(['AA only', 'With DNA']);
         $(overlay_switch.pane(0)).append(p.format_html_with_bp());
         $(overlay_switch.pane(1)).append(s.format_html_with_aa(2));
         overlay_switch.show(0);
@@ -721,9 +744,9 @@ window.GiraffeAnalyze = function ($,gd,options) {
                 .addClass('giraffe-left-last')
         );
 
-        var s = sequence.substring(2);
-        var p = s.translate();
-        var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
+        s = sequence.substring(2);
+        p = s.translate();
+        overlay_switch = Switch_Panes(['AA only', 'With DNA']);
         $(overlay_switch.pane(0)).append(p.format_html_with_bp());
         $(overlay_switch.pane(1)).append(s.format_html_with_aa(3));
         overlay_switch.show(0);
@@ -739,9 +762,9 @@ window.GiraffeAnalyze = function ($,gd,options) {
                 .addClass('giraffe-left-last')
         );
 
-        var s = sequence.reverse_complement();
-        var p = s.translate();
-        var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
+        s = sequence.reverse_complement();
+        p = s.translate();
+        overlay_switch = Switch_Panes(['AA only', 'With DNA']);
         $(overlay_switch.pane(0)).append(p.format_html_with_bp());
         $(overlay_switch.pane(1)).append(s.format_html_with_aa(sequence.length(),1));
         overlay_switch.show(0);
@@ -757,9 +780,9 @@ window.GiraffeAnalyze = function ($,gd,options) {
                 .addClass('giraffe-left-last')
         );
         
-        var s = sequence.reverse_complement().substring(1);
-        var p = s.translate();
-        var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
+        s = sequence.reverse_complement().substring(1);
+        p = s.translate();
+        overlay_switch = Switch_Panes(['AA only', 'With DNA']);
         $(overlay_switch.pane(0)).append(p.format_html_with_bp());
         $(overlay_switch.pane(1)).append(s.format_html_with_aa(sequence.length()-1,1));
         overlay_switch.show(0);
@@ -775,9 +798,9 @@ window.GiraffeAnalyze = function ($,gd,options) {
                 .addClass('giraffe-left-last')
         );
 
-        var s = sequence.reverse_complement().substring(2);
-        var p = s.translate();
-        var overlay_switch = Switch_Panes(['AA only', 'With DNA']);
+        s = sequence.reverse_complement().substring(2);
+        p = s.translate();
+        overlay_switch = Switch_Panes(['AA only', 'With DNA']);
         $(overlay_switch.pane(0)).append(p.format_html_with_bp());
         $(overlay_switch.pane(1)).append(s.format_html_with_aa(sequence.length()-2,1));
         overlay_switch.show(0);
@@ -908,43 +931,48 @@ window.GiraffeAnalyze = function ($,gd,options) {
         $(seq_viewer).append(table);
 
         var row;
+        var start;
+        var end;
         var lines_10 = BioJS.wrap(sequence.sequence(),10);
+        function seq_mouseenter() {
+            $(this).addClass('giraffe-seq-mouseover');
+            var title = $(this).attr('start')+'-'+$(this).attr('end');
+            $(sequence_viewer_topbar_mouseover).html(title);
+        }
+        function seq_mouseleave() {
+            $(this).removeClass('giraffe-seq-mouseover');
+            $(sequence_viewer_topbar_mouseover).html("");
+        }
+    
         for (var i=0,j=0; i<lines_10.length; i++) {
-            if (j == 0) {
+            if (j === 0) {
                 row = $('<tr></tr>');
                 $(table).append(row);
-                var start = i*10+1;
+                start = i*10+1;
                 $(row).append
                     ('<td class="giraffe-bp-marker giraffe-bp-marker-left">'+start+'</td>');
             }
-            var start = i*10+1;
-            var end = (i+1)*10;
+            start = i*10+1;
+            end = (i+1)*10;
             var td = $('<td></td>')
                 .attr('id','giraffe-bp-'+start)
                 .attr('start',start)
                 .attr('end',end)
-                .mouseenter(function(){
-                    $(this).addClass('giraffe-seq-mouseover');
-                    var title = $(this).attr('start')+'-'+$(this).attr('end');
-                    $(sequence_viewer_topbar_mouseover).html(title);
-                 })
-                .mouseleave(function(){
-                    $(this).removeClass('giraffe-seq-mouseover');
-                    $(sequence_viewer_topbar_mouseover).html("");
-                 })
+                .mouseenter(seq_mouseenter)
+                .mouseleave(seq_mouseleave)
                 .append(lines_10[i]);
             $(row).append(td);
             j++;
             if (j == viewer_segs_per_line && i+1 < lines_10.length) {
                 j = 0;
-                var end = (i+1)*10;
+                end = (i+1)*10;
                 $(row).append
                     ('<td class="giraffe-bp-marker giraffe-bp-marker-right">'+end+'</td>');
             }
             if (i+1 == lines_10.length) {
                 $(row).append
-                    ('<td class="giraffe-bp-marker giraffe-bp-marker-right">'
-                     +sequence.length()+'</td>');
+                    ('<td class="giraffe-bp-marker giraffe-bp-marker-right">' +
+                     sequence.length()+'</td>');
             }
         }
 
@@ -1052,7 +1080,10 @@ window.GiraffeAnalyze = function ($,gd,options) {
     }
 
     function sequence_viewer_bp_event_highlight(bp,title) {
-        for (var i in bp) { bp[i] = parseInt(bp[i]); }
+        var i;
+        var t, new_t;
+
+        for (i in bp) { bp[i] = parseInt(bp[i], 10); }
         // find start bp position for the first td
         var first_td = Math.floor((bp[0]-1)/10)*10+1;
         // find start bp position of the last td
@@ -1069,17 +1100,21 @@ window.GiraffeAnalyze = function ($,gd,options) {
 
         // draw first
         var first_td_dom = $('#giraffe-bp-'+first_td);
-        var t = $(first_td_dom).text();
+        t = $(first_td_dom).text();
         t = t.replace(/\s/g,'');
         
+        var span_starts_at, span_ends_before;
+        var span0_starts_at, span0_ends_before;
+        var span1_starts_at, span1_ends_before;
+
         if (first_td == last_td && bp[0]>bp[1]) {
             // yikes... difficult, need to draw two spans
-            var span0_starts_at = 0;
-            var span0_ends_before = bp[1]+1-first_td;
-            var span1_starts_at = bp[0]-first_td;
-            var span1_ends_before = 10;
-            var new_t = '';
-            for (var i=0; i<t.length; i++) {
+            span0_starts_at = 0;
+            span0_ends_before = bp[1]+1-first_td;
+            span1_starts_at = bp[0]-first_td;
+            span1_ends_before = 10;
+            new_t = '';
+            for (i=0; i<t.length; i++) {
                 if (i == span0_starts_at || i == span1_starts_at) {
                     new_t += '<span class="giraffe-seq-highlight">';
                 }
@@ -1092,13 +1127,13 @@ window.GiraffeAnalyze = function ($,gd,options) {
             global_has_span_td.push(first_td_dom);
         }
         else {
-            var span_starts_at = bp[0]-first_td;
-            var span_ends_before = 10;
+            span_starts_at = bp[0]-first_td;
+            span_ends_before = 10;
             if (last_td == first_td && bp[0] <= bp[1]) {
                 span_ends_before = bp[1]+1-first_td;
             }
-            var new_t = '';
-            for (var i=0; i<t.length; i++) {
+            new_t = '';
+            for (i=0; i<t.length; i++) {
                 if (i == span_starts_at) {
                     new_t += '<span class="giraffe-seq-highlight">';
                 }
@@ -1112,17 +1147,19 @@ window.GiraffeAnalyze = function ($,gd,options) {
         }
 
         // draw everything in between
+        var td;
+
         if (first_td <= last_td && bp[0] <= bp[1]) {
-            for (var td=first_td+10; td<last_td; td+=10) {
+            for (td=first_td+10; td<last_td; td+=10) {
                 $('#giraffe-bp-'+td).addClass('giraffe-seq-highlight');
             }
         }
         else {
             var end_td = Math.floor((seqlen-1)/10)*10+1;
-            for (var td=first_td+10; td<=end_td; td+= 10) {
+            for (td=first_td+10; td<=end_td; td+= 10) {
                 $('#giraffe-bp-'+td).addClass('giraffe-seq-highlight');
             }
-            for (var td=1; td<last_td; td+=10) {
+            for (td=1; td<last_td; td+=10) {
                 $('#giraffe-bp-'+td).addClass('giraffe-seq-highlight');
             }
         }
@@ -1134,12 +1171,12 @@ window.GiraffeAnalyze = function ($,gd,options) {
             }
             else {
                 var last_td_dom = $('#giraffe-bp-'+last_td);
-                var t = $(last_td_dom).text();
+                t = $(last_td_dom).text();
                 t = t.replace(/\s/g,'');
-                var span_starts_at = 0;
-                var span_ends_before = bp[1]-last_td+1;
-                var new_t = '';
-                for (var i=0; i<t.length; i++) {
+                span_starts_at = 0;
+                span_ends_before = bp[1]-last_td+1;
+                new_t = '';
+                for (i=0; i<t.length; i++) {
                     if (i == span_starts_at) {
                         new_t += '<span class="giraffe-seq-highlight">';
                     }
@@ -1224,7 +1261,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
 
     full_widget();
 
-}
+};
 
 // Private utility function with no external or closure use
 function title_case(str) {
@@ -1246,7 +1283,9 @@ function type_code_to_name(code, gd) {
 window.GiraffeTable = function ($,gd,dom) {	
  	var enzyme_table,
 	    feature_table,
-		orf_table;
+		orf_table,
+        fx, f,
+        row;
 
 	// Read the features in for each table, only displaying the table
 	// if there are features for it
@@ -1270,9 +1309,9 @@ window.GiraffeTable = function ($,gd,dom) {
 			.append('<tbody></tbody>')
 			.addClass('giraffe-table-feature');
 
-		for (var fx = 0; fx < gd.std_features.length; fx++) {
-			var f = gd.std_features[fx],
-				row = $('<tr></tr>').appendTo(feature_table.children('tbody'))
+		for (fx = 0; fx < gd.std_features.length; fx++) {
+			f = gd.std_features[fx];
+            row = $('<tr></tr>').appendTo(feature_table.children('tbody'))
                                     .attr('id', 'feature-' + f.id());
 
             row.append('<td class="giraffe-table-feature-name">' + f.name() + '</td>');
@@ -1307,11 +1346,10 @@ window.GiraffeTable = function ($,gd,dom) {
 			.append('<tbody></tbody>')
 			.addClass('giraffe-table-orf');
 
-		for (var fx = 0; fx < gd.orf_features.length; fx++) {
-
-			var f = gd.orf_features[fx],
-				row = $('<tr></tr>').appendTo(orf_table.children('tbody'))
-                                    .attr('id', 'feature-' + f.id());
+		for (fx = 0; fx < gd.orf_features.length; fx++) {
+			f = gd.orf_features[fx];
+            row = $('<tr></tr>').appendTo(orf_table.children('tbody'))
+                                .attr('id', 'feature-' + f.id());
 
             row.append('<td class="giraffe-table-feature-name">' + f.name().replace(/ORF\s+[fF]rame\s+/, '') + '</td>');
 
@@ -1342,9 +1380,8 @@ window.GiraffeTable = function ($,gd,dom) {
 			.append('<tbody></tbody>')
 			.addClass('giraffe-table-enzyme');
 
-		for (var fx = 0; fx < gd.enzyme_features.length; fx++) {
-			var f = gd.enzyme_features[fx],
-				row;
+		for (fx = 0; fx < gd.enzyme_features.length; fx++) {
+			f = gd.enzyme_features[fx];
 
 			if (f.default_show_feature() && f.cut_count() == 1) {
 				row = $('<tr></tr>').appendTo(enzyme_table.children('tbody'))
@@ -1407,7 +1444,7 @@ window.GiraffeControl = function ($,gd_map,dom) {
 					          'name="no-cutters" value="show" />' +
 				'<span class="cutter-label">hide all</span></label></td></tr>' +
 			'</tbody>' +
-			'</table></td></tr>')
+			'</table></td></tr>');
 
 		// Changes to the Restriction Enzyme selection
 		controls.find('input[name|="cutters"]').click(function (event) {
@@ -1415,7 +1452,7 @@ window.GiraffeControl = function ($,gd_map,dom) {
 
 			// Parse out selected options
 			$(this).closest('tbody').find("input[checked]").each(function () {
-				opts.push(parseInt($(this).attr('name').match(/\d+/)));
+				opts.push(parseInt($(this).attr('name').match(/\d+/), 10));
 			});
 
             // Automatically check and uncheck the no-cutters checkbox,
@@ -1601,7 +1638,7 @@ window.GiraffeControl = function ($,gd_map,dom) {
 		the_table = GiraffeTable($, gd_map.gd, 
 			$('<div></div>')
 				.attr('id', random_dom_id())
-				.addClass('giraffe-control-table'))
+				.addClass('giraffe-control-table'));
 
 		the_table.find('colgroup')
 			.prepend('<col class="giraffe-table-feature-show"  />' +
@@ -1631,7 +1668,7 @@ window.GiraffeControl = function ($,gd_map,dom) {
 					
 		// The table checkboxes
 		the_table.find('input[value="label"]').click(function (event) {
-			var feat_id = parseInt($(this).attr("name").replace(/\D/g, ''));
+			var feat_id = parseInt($(this).attr("name").replace(/\D/g, ''), 10);
 
 			if ($(this).attr("checked")) {
 				gd_map.show_feature_label(feat_id);
@@ -1641,7 +1678,7 @@ window.GiraffeControl = function ($,gd_map,dom) {
 		});
 
 		the_table.find('input[value="show"]').click(function (event) {
-			var feat_id = parseInt($(this).attr("name").replace(/\D/g, '')),
+			var feat_id = parseInt($(this).attr("name").replace(/\D/g, ''), 10),
 				label_checkbox = $(this).parent().siblings().children('input').first();
 
 			if ($(this).attr("checked")) {
@@ -1656,10 +1693,10 @@ window.GiraffeControl = function ($,gd_map,dom) {
 
         // Make the names in the table function as links instead
         the_table.find('td.giraffe-table-feature-name').each(function() {
-            var nonnum = new RegExp('\\D', 'g')
+            var nonnum = new RegExp('\\D', 'g'),
                 id = parseInt($(this)
                                 .closest('tr')
-                                .attr('id').replace(nonnum, '')),
+                                .attr('id').replace(nonnum, ''), 10),
                 f = gd_map.gd.all_features[id];
 
             $(this)
