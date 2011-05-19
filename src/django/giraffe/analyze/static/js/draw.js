@@ -69,6 +69,8 @@
 //
 //  digest_fade_factor: fade the features by this much (multiplicative, in [0,1.0])
 //  Defaults to 0.5.
+//
+//  draw_tic_mark: true or false.
 //  
 // FRAMEWORK
 // GiraffeDraw()
@@ -539,7 +541,7 @@ window.GiraffeDraw = function () {
         /** Automatically provide the cut site in cutter labels */
         thi$.label_name = function () {
             var label_name = this.name();
-            if (this.type() == ft.enzyme) {
+            if (this.type() == ft.enzyme && this.cut()) {
                 label_name += " (" + this.cut() + ")";
             }
             return label_name;
@@ -561,7 +563,7 @@ window.GiraffeDraw = function () {
             _feature_width, _enzyme_width, 
             _enzyme_weight, enzyme_bold_weight,
             _label_line_weight, _label_line_bold_weight, _label_font_size,
-            _plasmid_font_size, _plasmid_name,
+            _plasmid_font_size, _plasmid_name, _draw_tic_mark,
             thi$ = {};
 
         init();
@@ -595,6 +597,16 @@ window.GiraffeDraw = function () {
             _plasmid_name = '';
             if ('plasmid_name' in options) {
                 _plasmid_name = options['plasmid_name'];
+            }
+
+            // Draw tic mark
+            _draw_tic_mark = true;
+            if ('draw_tic_mark' in options &&
+                (options['draw_tic_mark'] === 0 ||
+                 options['draw_tic_mark'] === '0' ||
+                 options['draw_tic_mark'] === false ||
+                 options['draw_tic_mark'] === 'false')) {
+                _draw_tic_mark = false;
             }
 
             // Opacities
@@ -668,6 +680,7 @@ window.GiraffeDraw = function () {
         thi$.label_font_size = function() { return  _label_font_size; };
         thi$.plasmid_font_size = function() { return  _plasmid_font_size; };
         thi$.plasmid_name = function() { return  _plasmid_name; };
+        thi$.draw_tic_mark = function() { return  _draw_tic_mark; };
 
         thi$.extend_features = function () {
             var bfx,
@@ -1357,8 +1370,10 @@ window.GiraffeDraw = function () {
             plasmid_label.attr({"fill":      colors.plasmid,
                                 "font-size": this.plasmid_font_size() });
 
-            for (var ang = 0; ang < 360; ang += 30) {
-                draw_tic_mark(ang);
+            if (this.draw_tic_mark()) {
+                for (var ang = 0; ang < 360; ang += 30) {
+                    draw_tic_mark(ang);
+                }
             }
         };
 
@@ -1970,9 +1985,11 @@ window.GiraffeDraw = function () {
 
             // Set the scale to be the order of magnitude of seq_length
             // i.e. 100, 1000, 10, etc.
-            var scale = Math.pow(10, Math.floor(Math.log(seq_length)/Math.log(10)));
-            for (var xx = scale; xx <= seq_length; xx += scale) {
-                draw_tic_mark(xx);
+            if (this.draw_tic_mark()) {
+                var scale = Math.pow(10, Math.floor(Math.log(seq_length)/Math.log(10)));
+                for (var xx = scale; xx <= seq_length; xx += scale) {
+                    draw_tic_mark(xx);
+                }
             }
 
         };
