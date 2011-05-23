@@ -178,8 +178,9 @@
             return this.to_path(['M', x, y]);
         },
         arc: function (r, x, y, l) {
-            if (arguments.length < 4)
+            if (arguments.length < 4) {
                 l = 0;
+            }
             return this.to_path(['A', r, r, 0, l, 0, x, y]);
         },
         line: function (x, y) {
@@ -277,17 +278,19 @@ window.GiraffeDraw = function () {
                 // Store indices, not Feature objects, because
                 // the objects will change, depending on
                 // the kind of map is drawn
-                if (f.name() in cut_counts)
+                if (f.name() in cut_counts) {
                     cut_counts[f.name()].push(fx);
-                else
+                } else {
                     cut_counts[f.name()] = [fx];
+                }
             }
         }
         // Store them for each enzyme feature
         for (fx = 0; fx < all_features.length; fx++) {
             f = all_features[fx];
-            if (f.type() == ft.enzyme)
+            if (f.type() == ft.enzyme) {
                 f.set_other_cutters(cut_counts[f.name()]);
+            }
         }
     }
 
@@ -335,8 +338,9 @@ window.GiraffeDraw = function () {
         this.other_cutters = function() { return _other_cutters; };
         // Mutator for other_cutters: only for enzymes
         this.set_other_cutters = function(c) {
-            if (_type == ft.enzyme)
+            if (_type == ft.enzyme) {
                 _other_cutters = c;
+            }
         };
 
         this.clockwise_sequence = function() {
@@ -494,14 +498,16 @@ window.GiraffeDraw = function () {
         // Hovering: solid/light upon mouseover
         thi$.mouse_over = function (event) {
             // this object context will change when called, so we use thi$
-            if (!this.opaque)
+            if (!this.opaque) {
                 this.bolder();
+            }
         };
 
         thi$.mouse_up = function (event) {
             // this object context will change when called, so we use thi$
-            if (!this.opaque)
+            if (!this.opaque) {
                 this.lighter();
+            }
         };
 
         // Showing and hiding
@@ -633,8 +639,9 @@ window.GiraffeDraw = function () {
             }
             _bold_opacity = 1.0;
 
-            if (_is_digest)
+            if (_is_digest) {
                 _feature_opacity = _feature_opacity * _digest_fade_factor;
+            }
 
             // Cutters to show
             _cutters_to_show = [1];
@@ -1033,10 +1040,11 @@ window.GiraffeDraw = function () {
             // Calculated properties
 
             function normalize(deg) {
-                if (deg < plasmid_start - 360)
+                if (deg < plasmid_start - 360) {
                     deg += 360;
-                else if (deg > plasmid_start)
+                } else if (deg > plasmid_start) {
                     deg -= 360;
+                }
 
                 return deg;
             }
@@ -1063,10 +1071,11 @@ window.GiraffeDraw = function () {
 
                 cd = thi$.real_start() - thi$.real_size()/2.0;
 
-                if (cd < plasmid_start - 360)
+                if (cd < plasmid_start - 360) {
                     cd += 360;
-                else if (cd > plasmid_start)
+                } else if (cd > plasmid_start) {
                     cd -= 360;
+                }
 
                 return normalize(cd);
             };
@@ -1089,11 +1098,12 @@ window.GiraffeDraw = function () {
             thi$.real_size = function() {
                 var szd; // size in degrees
                 // Normal definition of size
-                if (thi$.crosses_boundary()) 
+                if (thi$.crosses_boundary()) {
                     // Start and end are flipped here: non-intuitive
                     szd = convert.seq_length_to_angle(seq_length - thi$.start() + thi$.end() + 1);
-                else
+                } else {
                     szd = convert.seq_length_to_angle(thi$.end() - thi$.start() + 1);
+                }
 
                 // Head size: return this if it's bigger
                 if (this.draw_head) {
@@ -1103,8 +1113,9 @@ window.GiraffeDraw = function () {
                     var r_p = Math.sqrt(thi$.radius*thi$.radius + 
                             head_length*head_length);
                     var hszd = Raphael.deg(Math.asin(head_length/r_p));
-                    if (hszd > szd)
+                    if (hszd > szd) {
                         szd = hszd;
+                    }
                 }
 
                 return szd;
@@ -1220,8 +1231,9 @@ window.GiraffeDraw = function () {
             // Should we draw the label?
             thi$.should_draw_label = function () {
                 // Don't bother unless we need to
-                if (!this.visible || !this.labeled) 
+                if (!this.visible || !this.labeled) {
                     return false;
+                }
                 return true;
             }; // END CircularFeature::should_draw_label()
 
@@ -1247,8 +1259,9 @@ window.GiraffeDraw = function () {
             thi$.draw_label = function () {
                 if (!thi$.should_draw_label()) { return; }
 
-                if (this.label_drawn)
+                if (this.label_drawn) {
                     thi$.clear_label();
+                }
 
                 // Figure out the center of the feature
                 var a_c = thi$.real_center();
@@ -1448,9 +1461,10 @@ window.GiraffeDraw = function () {
 
                         // Finally!
                         if (can_push) {
-                            if (_debug)
+                            if (_debug) {
                                 console.warn(pf.name() + " unpushed, because " + 
                                              loser.name() + " pushed by " + winner.name());
+                            }
                             pf.radius = rad;
                         }
                     }
@@ -1459,17 +1473,19 @@ window.GiraffeDraw = function () {
 
             // Main method body
             // reset radii in case this is being done any time but the first
-            for (fx = 0; fx < this.features.length; fx++) 
+            for (fx = 0; fx < this.features.length; fx++) {
                 this.features[fx].radius = plasmid_radius;
+            }
 
             do {
                 // Keep alternating between inside and outside the plasmid.
                 delta = rx *radius_spacing;
 
-                if (rx %2 === 0) // Even rx
+                if (rx %2 === 0) { // Even rx 
                     new_rad = rad + delta;
-                else
+                } else {
                     new_rad = rad - delta;
+                }
 
                 conflicts = 0; // Assume you have no conflicts until you find some
 
@@ -1493,8 +1509,9 @@ window.GiraffeDraw = function () {
                         // but the first, update the furthest_point so that its
                         // now expressed in numbers that will make sense to 
                         // features on the other side of the boundary
-                        if (fx >= this.features.length && furthest_point <= 0)
+                        if (fx >= this.features.length && furthest_point <= 0) {
                             furthest_point += 360;
+                        }
 
                         // Calculate the effective furthest point: first, convert from 
                         // a true angle to a number taht starts at 0 (not plasmid_start)
@@ -1528,8 +1545,9 @@ window.GiraffeDraw = function () {
                                                            // move the original to the
                                                            // new radius
                                 push(f, biggest_feature);
-                                if (_debug)
+                                if (_debug) {
                                     console.warn(fx + ", " + rx + ": overlap=" + overlap);
+                                }
 
                                 // Update the new top dog
                                 biggest_size = new_size;
@@ -1547,8 +1565,9 @@ window.GiraffeDraw = function () {
                 }
 
                 // Keep track of the biggest radius reached
-                if (rad > max_rad)
+                if (rad > max_rad) {
                     max_rad = rad;
+                }
 
                 // Move on to the next radius
                 rad = new_rad;
@@ -1817,8 +1836,9 @@ window.GiraffeDraw = function () {
                       convert.pos_to_x(thi$.start());
 
                 // Head size: return this if it's bigger
-                if (this.draw_head && head_length > rsz)
+                if (this.draw_head && head_length > rsz) {
                         rsz = head_length;
+                }
 
                 return rsz;
             };
@@ -1903,8 +1923,9 @@ window.GiraffeDraw = function () {
             // Should we draw the label?
             thi$.should_draw_label = function () {
                 // Don't bother unless we need to
-                if (!this.visible || !this.labeled || this.crosses_boundary()) 
+                if (!this.visible || !this.labeled || this.crosses_boundary()) {
                     return false;
+                }
                 return true;
             }; // END LinearFeature::should_draw_label()
 
@@ -1920,8 +1941,9 @@ window.GiraffeDraw = function () {
             thi$.draw_label = function (height, pos) {
                 if (!this.should_draw_label()) { return undefined; }
 
-                if (this.label_drawn)
+                if (this.label_drawn) {
                     this.clear_label();
+                }
 
                 // Figure out the center of the feature
                 var x_c = this.real_center();
@@ -2031,7 +2053,9 @@ window.GiraffeDraw = function () {
                 // Do it
                 loser.y = new_y; 
 
-                if (_debug) console.warn(loser.name() + " pushed by " + winner.name());
+                if (_debug) {
+                    console.warn(loser.name() + " pushed by " + winner.name());
+                }
 
                 // Since loser was pushed, un-push all the 
                 // features that it pushed, as long as
@@ -2057,9 +2081,10 @@ window.GiraffeDraw = function () {
 
                         // Finally!
                         if (can_push) {
-                            if (_debug)
+                            if (_debug) {
                                 console.warn(pf.name() + " unpushed, because " + 
                                              loser.name() + " pushed by " + winner.name());
+                            }
                             pf.y = y;
                         }
                     }
@@ -2069,8 +2094,9 @@ window.GiraffeDraw = function () {
             // Main body
 
             // reset radii in case this is being done any time but the first
-            for (fx = 0; fx < this.features.length; fx++) 
+            for (fx = 0; fx < this.features.length; fx++) {
                 this.features[fx].y = 0;
+            }
 
 
             do {
@@ -2129,8 +2155,9 @@ window.GiraffeDraw = function () {
                 // Keep track of the biggest distance from the plasmid 
                 // reached
                 new_dist = Math.abs(y);
-                if (new_dist > max_dist)
+                if (new_dist > max_dist) {
                     max_dist = new_dist;
+                }
 
                 // Move on to the next radius
                 y = new_y;
@@ -2286,22 +2313,26 @@ window.GiraffeDraw = function () {
                     if (lx === 0) { // Top lists: move top and right
                         var list_top = plasmid_y - thi$.label_pos - 
                             label_letter_height * (ll.length + 1);
-                        if (list_top < min_y)
+                        if (list_top < min_y) {
                             min_y = list_top;
+                        }
                         var list_right =  label_pos[lx][sx] + 
                             label_letter_width * list_max_letters;
-                        if (list_right > max_x)
+                        if (list_right > max_x) {
                             max_x = list_right;
+                        }
 
                     } else if (lx == 1) { // Bot lists: move bot and left
                         var list_bot = plasmid_y + thi$.label_pos + 
                             label_letter_height * (ll.length + 1);
-                        if (list_bot > max_y)
+                        if (list_bot > max_y) {
                             max_y = list_bot;
+                        }
                         var list_left =  label_pos[lx][sx] - 
                             label_letter_width * list_max_letters;
-                        if (list_left < min_x)
+                        if (list_left < min_x) {
                             min_x = list_left;
+                        }
                     }
                 }
             }
