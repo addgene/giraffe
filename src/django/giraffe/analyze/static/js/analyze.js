@@ -64,8 +64,8 @@ window.GiraffeAnalyze = function ($,gd,options) {
 
         function hide_all() {
             var i;
-            for (i in divs) { $(divs[i]).hide(); } 
-            for (i in links) { $(links[i]).removeClass('giraffe-link-on'); } 
+            for (i = 0; i < divs.length; i++) { $(divs[i]).hide(); } 
+            for (i = 0; i < links.length; i++) { $(links[i]).removeClass('giraffe-link-on'); } 
 			current_pane = undefined;
         }
         function show(i) {
@@ -85,7 +85,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
                 evt.preventDefault();
                 var i = $(this).attr('pane'); show(i);
         }
-        for (var i in panes) {
+        for (var i = 0; i < panes.length; i++) {
             var link_text = panes[i];
             var link_title;
 
@@ -127,7 +127,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
     Cutter_List.prototype.unique=function(){
         if (this.__unique) { return this.__unique; }
         this.__unique = [];
-        for (var i in this.enzymes) {
+        for (var i = 0; i < this.enzymes.length; i++) {
             if (this.enzymes[i].cut_count() == 1) {
                 this.__unique.push(this.enzymes[i]);
             }
@@ -140,7 +140,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
         if (this.__all) { return this.__all; }
         this.__all = [];
         var check = [];
-        for (var i in this.enzymes) {
+        for (var i = 0; i < this.enzymes.length; i++) {
             if (!(this.enzymes[i].name() in check)) {
                 this.__all.push(this.enzymes[i]);
                 check[this.enzymes[i].name()] = 1;
@@ -178,15 +178,15 @@ window.GiraffeAnalyze = function ($,gd,options) {
         all_cutters_hash = [];
 
 
-        for (i in all_cutters) {
+        for (i = 0; i < all_cutters.length; i++) {
             all_cutters_hash[all_cutters[i]] = 1;
         }
         have_these = this.all();
-        for (i in have_these) {
+        for (i = 0; i < have_these.length; i++) {
             delete all_cutters_hash[have_these[i].name()];
         }
         this.__non = [];
-        for (i in all_cutters_hash) {
+        for (i = 0; i < all_cutters_hash.length; i++) {
             this.__non.push(i);
         }
         return this.__non;
@@ -208,7 +208,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
                         .val(BioJS.fasta(sequence,name,false)));
 
         var features = [];
-        for (var i in gd.all_features) {
+        for (var i = 0; i < gd.all_features.length; i++) {
             if (gd.all_features[i].is_enzyme()) { continue; }
             var type = "misc_feature";
             var label = gd.all_features[i].name();
@@ -630,12 +630,12 @@ window.GiraffeAnalyze = function ($,gd,options) {
             .append('<p>Click on ORF bp numbers to highlight sequence.</p>');
 
         starts_with = 1;
-        for (i in gd.orf_features) {
+        for (i = 0; i < gd.orf_features.length; i++) {
             f = gd.orf_features[i];
 
             // does this ORF cover, or is the same as, a gene?
             gene_desc = '';
-            for (j in gd.all_features) {
+            for (j = 0; j < gd.all_features.length; j++) {
                 if (gd.all_features[j].type() == gd.Feature_Type.gene &&
                     gd.all_features[j].clockwise() == f.clockwise()) {
                     g = gd.all_features[j];
@@ -1043,7 +1043,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
         $(sequence_viewer_topbar_highlight).html("");
         $('.giraffe-seq-highlight').removeClass('giraffe-seq-highlight');
         $('.giraffe-bp-click-source').removeClass('giraffe-bp-click-source');
-        for (var i in global_has_span_td) {
+        for (i = 0; i < global_has_span_td.length; i++) {
             var t = $(global_has_span_td[i]).text();
             t = t.replace(/\s/g,'');
             $(global_has_span_td[i]).html(t);
@@ -1083,7 +1083,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
         var i;
         var t, new_t;
 
-        for (i in bp) { bp[i] = parseInt(bp[i], 10); }
+        for (i = 0; i < bp.length; i++) { bp[i] = parseInt(bp[i], 10); }
         // find start bp position for the first td
         var first_td = Math.floor((bp[0]-1)/10)*10+1;
         // find start bp position of the last td
@@ -1271,6 +1271,7 @@ function title_case(str) {
 
 // Private utility function with no external or closure use
 function type_code_to_name(code, gd) {
+    // Iterate over the MEMBERS of gd.Feature_Type: NOT AN ARRAY
 	for (var type in gd.Feature_Type) {
 		if (code == gd.Feature_Type[type]) {
 			return title_case(type);

@@ -321,7 +321,7 @@ window.BioJS = function(){
             }
 
             if (!in_tag) {
-                for (var j in PROTEIN_TAGS) {
+                for (var j = 0; j < PROTEIN_TAGS.length; j++) {
                     var l = PROTEIN_TAGS[j][1].length;
                     if (this.__sequence.substr(i,l).toLowerCase() ==
                         PROTEIN_TAGS[j][1].toLowerCase()) {
@@ -445,7 +445,7 @@ window.BioJS = function(){
                 __repeat(sp,21)+"/mol_type=\"other DNA\""+delim;
         }
 
-        for (i in features) {
+        for (i = 0; i < features.length; i++) {
             var type = features[i].type;
             var tran;
             if (type == 'CDS' && features[i].clockwise_sequence &&
