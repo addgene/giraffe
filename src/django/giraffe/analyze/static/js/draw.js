@@ -140,6 +140,21 @@
       };
     }
 
+    // Implement Array.indexOf
+    // courtesy: http://soledadpenades.com/2007/05/17/arrayindexof-in-internet-explorer/
+    if (typeof(Array.indexOf) !== 'function') {
+	    Array.prototype.indexOf = function(obj) {
+	        for(var i= 0; i < this.length; i++){
+	            if(this[i] === obj){
+	                return i;
+	            }
+	        }
+
+	        return -1;
+	    };
+	}
+
+
     ///////////////////////////////////////////////////////////////////
     // Package-scope variables
     var _debug,
