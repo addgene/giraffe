@@ -1,5 +1,38 @@
 
 window.BioJS = function(){
+    if (typeof Array.prototype.map !== 'function') {
+
+        /**
+         * Mapping functions onto arrays
+         *
+         * @param   {Function} callback the callback function
+         *                              given array item as first argument
+         * @param   {Object}   ctxt    [optional] object to use as 
+         *                             this pointer for callback call
+         * @returns {Array}             a new array with the results of
+         *                              callback mapped to every element of this
+         * @ignore
+         */
+        Array.prototype.map = function (callback, ctxt) {
+            var ix;
+            var context;
+            var mapped = new Array(this.length);
+
+            for (ix = 0; ix < this.length; ix++) {
+                // If second agrument was provided, use the right context
+                if (arguments.length > 1) {
+                    context = ctxt;
+                } else {
+                    context = this[ix];
+                }
+
+                mapped[ix] = callback.call(context, this[ix]);
+
+            }
+
+            return mapped;
+        };
+    }
     // Translation code was from 
     // http://plindenbaum.blogspot.com/2010/12/server-side-javascript-translating-dna.html
 
