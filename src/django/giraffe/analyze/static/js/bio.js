@@ -4,35 +4,35 @@ window.BioJS = function(){
     // http://plindenbaum.blogspot.com/2010/12/server-side-javascript-translating-dna.html
 
     function TranslationTable(name,ncbiString) {
-   	    this.name=name;
-   	    this.ncbiString=ncbiString;
+        this.name=name;
+        this.ncbiString=ncbiString;
     };
     TranslationTable.STANDARD=new TranslationTable(
-   	    "standard",
-   	    "FFLLSSSSYY**CC*WLLLLPPPPHHQQRRRRIIIMTTTTNNKKSSRRVVVVAAAADDEEGGGG"
+        "standard",
+        "FFLLSSSSYY**CC*WLLLLPPPPHHQQRRRRIIIMTTTTNNKKSSRRVVVVAAAADDEEGGGG"
     );
     TranslationTable.prototype.base2index=function(c) {
-   	    switch(c) {
-   		    case 'T':case 't': return 0;
-   		    case 'C':case 'c': return 1;
-   		    case 'A':case 'a': return 2;
-   		    case 'G':case 'g': return 3;
-   		    default: return -1;
+        switch(c) {
+            case 'T':case 't': return 0;
+            case 'C':case 'c': return 1;
+            case 'A':case 'a': return 2;
+            case 'G':case 'g': return 3;
+            default: return -1;
         }
     };
     TranslationTable.prototype.translate=function(b1, b2, b3) {
-   	    if (arguments.length==1) {
-      	    var prot="";
-      	    for(var i=0; i+2<b1.length; i+=3) {
-         	    prot+= this.translate(b1[i],b1[i+1],b1[i+2]);
+        if (arguments.length==1) {
+            var prot="";
+            for(var i=0; i+2<b1.length; i+=3) {
+                prot+= this.translate(b1[i],b1[i+1],b1[i+2]);
             }
-      	    return prot;
+            return prot;
         }
-   	    var base1= this.base2index(b1);
-   	    var base2= this.base2index(b2);
-   	    var base3= this.base2index(b3);
-   	    if (base1==-1 || base2==-1 || base3==-1) { return '?'; }
-   	    else { return this.ncbiString[base1*16+base2*4+base3]; }
+        var base1= this.base2index(b1);
+        var base2= this.base2index(b2);
+        var base3= this.base2index(b3);
+        if (base1==-1 || base2==-1 || base3==-1) { return '?'; }
+        else { return this.ncbiString[base1*16+base2*4+base3]; }
     }
 
     var PROTEIN_TAGS = [
