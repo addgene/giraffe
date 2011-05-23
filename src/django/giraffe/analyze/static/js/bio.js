@@ -6,7 +6,8 @@ window.BioJS = function(){
     function TranslationTable(name,ncbiString) {
         this.name=name;
         this.ncbiString=ncbiString;
-    };
+    }
+
     TranslationTable.STANDARD=new TranslationTable(
         "standard",
         "FFLLSSSSYY**CC*WLLLLPPPPHHQQRRRRIIIMTTTTNNKKSSRRVVVVAAAADDEEGGGG"
@@ -33,7 +34,7 @@ window.BioJS = function(){
         var base3= this.base2index(b3);
         if (base1==-1 || base2==-1 || base3==-1) { return '?'; }
         else { return this.ncbiString[base1*16+base2*4+base3]; }
-    }
+    };
 
     var PROTEIN_TAGS = [
         ["FLAG","DYKDDDDK"],
@@ -57,7 +58,11 @@ window.BioJS = function(){
     ];
 
     function __repeat(s,n) {
-        var r=""; for (var a=0;a<n;a++) r+=s; return r;
+        var r=""; 
+        for (var a=0;a<n;a++) { 
+            r+=s; 
+        }
+        return r;
     }
 
     function __normalize(c) {
@@ -109,8 +114,8 @@ window.BioJS = function(){
 
     function DNASequence(seq_string) { this.__sequence = seq_string; }
 
-    DNASequence.prototype.sequence=function() { return this.__sequence; }
-    DNASequence.prototype.length=function() { return this.__sequence.length; }
+    DNASequence.prototype.sequence=function() { return this.__sequence; };
+    DNASequence.prototype.length=function() { return this.__sequence.length; };
 
     DNASequence.prototype.reverse_complement=function(){
         if (this.__reverse_complement) { return this.__reverse_complement; }
@@ -138,13 +143,13 @@ window.BioJS = function(){
         var p = TranslationTable.STANDARD.translate(this.__sequence);
         this.__translation = new ProteinSequence(p);
         return this.__translation;
-    }
+    };
 
     // Returns 1-indexed bp position of the first occurance of the
     // query sequence, or -1. start, also 1-indexed, can be the start
     // position to search, or -1.
     DNASequence.prototype.find=function(query,start){
-        if (query === undefined || query.length == 0) { return -1; }
+        if (query === undefined || query.length === 0) { return -1; }
         if (this.__sequence_lc === undefined) {
             this.__sequence_lc = this.__sequence.toLowerCase();
         }
@@ -157,7 +162,7 @@ window.BioJS = function(){
         }
         if (n >= 0) { return n+1; }
         return n;
-    }
+    };
 
     // Returns substring
     DNASequence.prototype.substring=function(i,j){
@@ -165,7 +170,7 @@ window.BioJS = function(){
         if (j === undefined) { a = this.__sequence.substring(i); }
         else { a = this.__sequence.substring(i,j); }
         return new DNASequence(a);
-    }
+    };
 
     // Format DNA sequence to HTML
     DNASequence.prototype.format_html=function() {
@@ -178,7 +183,7 @@ window.BioJS = function(){
         }
         this.__html = s;
         return this.__html;
-    }
+    };
 
     // Format DNA sequence, with amino acid sequence overlay.
     // seq_start and seq_end should be 1-indexed base pair numbers in
@@ -187,8 +192,12 @@ window.BioJS = function(){
     DNASequence.prototype.format_html_with_aa=function(seq_start,seq_end) {
         if (this.__aa_html) { return this.__aa_html; }
         
-        if (seq_start == undefined) { seq_start = 1; }
-        if (seq_end == undefined) { seq_end = this.__sequence.length+seq_start-1; }
+        if (seq_start === undefined) {
+            seq_start = 1;
+        }
+        if (seq_end === undefined) { 
+            seq_end = this.__sequence.length+seq_start-1;
+        }
         var aa = this.translate();
 
         // line_width MUST BE multiple of 3
@@ -242,12 +251,12 @@ window.BioJS = function(){
 
         this.__aa_html = table;
         return this.__aa_html;
-    }
+    };
 
     function ProteinSequence(seq_string) { this.__sequence = seq_string; }
 
-    ProteinSequence.prototype.sequence=function() { return this.__sequence; }
-    ProteinSequence.prototype.length=function() { return this.__sequence.length; }
+    ProteinSequence.prototype.sequence=function() { return this.__sequence; };
+    ProteinSequence.prototype.length=function() { return this.__sequence.length; };
 
     // Format protein to HTML, with bp markers. Also highlight tags
     // with giraffe-tag CSS class.
@@ -272,8 +281,11 @@ window.BioJS = function(){
         var line = 0;
         var seg = 0;
         for (var i=0; i<this.__sequence.length; i++) {
-            if (line == 0) { left_markers.push((i+1)); }
-            else if (seg == 0) { res += '&nbsp;'; }
+            if (line === 0) { 
+                left_markers.push((i+1)); 
+            } else if (seg === 0) { 
+                res += '&nbsp;';
+            }
 
             if (!in_tag) {
                 for (var j in PROTEIN_TAGS) {
@@ -292,7 +304,7 @@ window.BioJS = function(){
 
             if (in_tag) { // found a new tag or was already in new tag
                 tag_length--; 
-                if (tag_length == 0) {
+                if (tag_length === 0) {
                     in_tag = false;
                     res += '</span>';
                 }
@@ -321,7 +333,7 @@ window.BioJS = function(){
 
         this.__html = table;
         return this.__html;
-    }
+    };
 
     // Returns FASTA format of sequence
     function fasta(seq_object,name,html) {
@@ -357,6 +369,8 @@ window.BioJS = function(){
         if (html === undefined) { html = true; }
         if (features === undefined) { features = []; }
 
+        var i, j;
+
         var sp = "&nbsp;";
         var delim = "<br/>";
         var tab = sp+sp+sp+sp;
@@ -379,7 +393,7 @@ window.BioJS = function(){
             for (var i=0; i<p.length; i++) {
                 line += p[i];
                 ctr++;
-                if ((res.length == 0 && ctr >= 44) || ctr >= 58) {
+                if ((res.length === 0 && ctr >= 44) || ctr >= 58) {
                     res.push(line);
                     line = __repeat(sp,21);
                     ctr = 0;
@@ -390,17 +404,17 @@ window.BioJS = function(){
         }
 
         if (features.length) {
-            s += "FEATURES"+__repeat(sp,13)
-                 +"Location/Qualifiers"+delim+__repeat(sp,5)+"source";
+            s += "FEATURES"+__repeat(sp,13) +
+                "Location/Qualifiers"+delim+__repeat(sp,5)+"source";
             s += __repeat(sp, 16-"source".length);
-            s += "1.."+seq_object.length()+delim+__repeat(sp,21)
-                +"/organism=\""+name+"\""+delim
-                +__repeat(sp,21)+"/mol_type=\"other DNA\""+delim;
+            s += "1.."+seq_object.length()+delim+__repeat(sp,21) +
+                "/organism=\""+name+"\""+delim +
+                __repeat(sp,21)+"/mol_type=\"other DNA\""+delim;
         }
 
-        for (var i in features) {
+        for (i in features) {
             var type = features[i].type;
-            var tran = undefined;
+            var tran;
             if (type == 'CDS' && features[i].clockwise_sequence &&
                 features[i].clockwise_sequence !== '') {
                 if (features[i].clockwise) {
@@ -411,9 +425,11 @@ window.BioJS = function(){
                         .reverse_complement().translate();
                 }
             }
-            s += __repeat(sp,5)+type
+            s += __repeat(sp,5)+type;
             var nsp = 16-type.length;
-            if (nsp < 0) nsp = 0;
+            if (nsp < 0) {
+                nsp = 0;
+            }
             s += __repeat(sp, nsp);
             if (features[i].clockwise) {
                 s += features[i].start+".."+features[i].end+delim;
@@ -437,8 +453,8 @@ window.BioJS = function(){
         s += 'ORIGIN'+delim;
 
         var lines_10 = wrap(seq_object.sequence(),10);
-        for (var i=0,j=0; i<lines_10.length; i++) {
-            if (j == 0) {
+        for (i=0,j=0; i<lines_10.length; i++) {
+            if (j === 0) {
                 var start = i*10+1;
                 if (start < 10) { s += __repeat(sp,4); }
                 else if (start < 100) { s += __repeat(sp,3); }
@@ -530,7 +546,7 @@ window.BioJS = function(){
         'NCBI_blast2_form' : NCBI_blast2_form,
         'NCBI_blastp_form' : NCBI_blastp_form,
         'NCBI_recent_results_link' : NCBI_recent_results_link
-    }
+    };
 }();
 
 
