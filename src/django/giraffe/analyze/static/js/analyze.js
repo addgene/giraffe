@@ -1570,7 +1570,6 @@ window.GiraffeControl = function ($,gd_map,dom) {
 
                 if (draw_table) {
                     $('.giraffe-control-table').find('tr').each(function () {
-                        console.warn(typeof(feat));
                         var fid = parseInt($(this).attr('id').replace(/\D/g, ''), 10);
                         var feat = gd_map.gd.all_features[fid];
                         if (typeof(feat) !== 'undefined' && feat.type() === gd_map.gd.Feature_Type[feat_type_name]) {

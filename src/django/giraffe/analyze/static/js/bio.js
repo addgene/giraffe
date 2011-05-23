@@ -459,7 +459,7 @@ window.BioJS = function(){
                 }
             }
             s += __repeat(sp,5)+type;
-            var nsp = 16-type.length;
+            var nsp = 16 - type.length;
             if (nsp < 0) {
                 nsp = 0;
             }
