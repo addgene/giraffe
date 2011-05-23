@@ -1,6 +1,6 @@
 
 window.BioJS = function(){
-    if (typeof Array.prototype.map !== 'function') {
+    if (typeof(Array.map) !== 'function') {
 
         /**
          * Mapping functions onto arrays

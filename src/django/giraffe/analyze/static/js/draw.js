@@ -90,7 +90,7 @@
 // Protect scope, but ensure that GiraffeDraw() is global
 (function () {
 
-    if (typeof Object.create !== 'function') {
+    if (typeof(Object.create) !== 'function') {
 
         /**
          * Crockford-stype prototypal inheritence.
@@ -120,9 +120,9 @@
     }
 
     // Function.prototype.bind polyfill
-    if ( !Function.prototype.bind ) {
+    if (typeof(Function.bind) !== 'function') {
 
-      Function.prototype.bind = function( obj ) {
+      Function.prototype.bind = function (obj) {
         var slice = [].slice,
             args = slice.call(arguments, 1), 
             self = this, 
