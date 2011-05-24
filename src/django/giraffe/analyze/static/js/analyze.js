@@ -921,8 +921,8 @@ window.GiraffeAnalyze = function ($,gd,options) {
 
         var topbar = $('<div></div>').addClass('giraffe-viewer-topbar')
             .append(sequence_viewer_search)
-            .append(sequence_viewer_topbar_mouseover)
             .append(sequence_viewer_topbar_highlight)
+            .append(sequence_viewer_topbar_mouseover)
             .append('&nbsp;');
 
         // Sequence viewer is basically a table, each cell has 10 bps.
