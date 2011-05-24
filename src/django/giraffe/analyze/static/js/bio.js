@@ -133,7 +133,7 @@ window.BioJS = function(){
             var res = [];
             var line = '';
             for (var i=0; i<seq_string.length; i++) {
-                line += seq_string[i];
+                line += seq_string.charAt(i);
                 if (line.length >= width){
                     res.push(line);
                     line = '';
@@ -331,7 +331,7 @@ window.BioJS = function(){
                     }
                 }
             }
-            res += this.__sequence[i];
+            res += this.__sequence.charAt(i);
             line++;
             seg++;
 
@@ -424,7 +424,7 @@ window.BioJS = function(){
             var line = '';
             var ctr = 0;
             for (var i=0; i<p.length; i++) {
-                line += p[i];
+                line += p.charAt(i);
                 ctr++;
                 if ((res.length === 0 && ctr >= 44) || ctr >= 58) {
                     res.push(line);

@@ -1118,7 +1118,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
                 if (i == span0_starts_at || i == span1_starts_at) {
                     new_t += '<span class="giraffe-seq-highlight">';
                 }
-                new_t += t[i];
+                new_t += t.charAt(i);
                 if (i == span0_ends_before-1 || i == span1_ends_before-1) {
                     new_t += '</span>';
                 }
@@ -1137,7 +1137,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
                 if (i == span_starts_at) {
                     new_t += '<span class="giraffe-seq-highlight">';
                 }
-                new_t += t[i];
+                new_t += t.charAt(i);
                 if (i == span_ends_before-1) {
                     new_t += '</span>';
                 }
@@ -1180,7 +1180,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
                     if (i == span_starts_at) {
                         new_t += '<span class="giraffe-seq-highlight">';
                     }
-                    new_t += t[i];
+                    new_t += t.charAt(i);
                     if (i == span_ends_before-1) {
                         new_t += '</span>';
                     }
@@ -1266,7 +1266,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
 // Private utility function with no external or closure use
 function title_case(str) {
 	str = str.replace(/\W/, ' ');
-	return str[0].toUpperCase() + str.slice(1);
+	return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 // Private utility function with no external or closure use
