@@ -1208,7 +1208,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
 
 		// Only if it's an enzyme:
 		var sequence;
-		var cut_marker = '<sup>&#x25BC</sup>';
+		var cut_marker = '<sup>&#x25BC;</sup>';
 		var cut_position = feature.cut() - feature.start() + 1;
 
         sequence_viewer_clear_highlight();
