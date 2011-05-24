@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * GiraffeDraw: Javascript API for drawing plasmid maps from 
+ * GiraffeDraw: Javascript API for drawing plasmid maps from
  *              JSON plasmid feature data
  *
  * Copyright 2011 Addgene, Inc
@@ -33,7 +33,7 @@
 // Options to the drawing function are passed in via a dictionary argument. For
 // example:
 //
-//    <script> 
+//    <script>
 //    gd.CircularMap({ "map_dom_id" : "some_id", ... })
 //    </script>
 //
@@ -71,7 +71,7 @@
 //  Defaults to 0.5.
 //
 //  draw_tic_mark: true or false.
-//  
+//
 // FRAMEWORK
 // GiraffeDraw()
 // |
@@ -81,10 +81,10 @@
 // |  feature parsing into "local" features object
 // |
 // |- CircularMap()
-// |  circular feature drawing, which creates clones of the original Feature 
+// |  circular feature drawing, which creates clones of the original Feature
 // |  objects with extended properties
 // |
-// `- LinearMap() 
+// `- LinearMap()
 //    linear feature drawing, which makes its own extended clones of objects
 
 // Protect scope, but ensure that GiraffeDraw() is global
@@ -110,7 +110,7 @@
             F.prototype = o;
 
             // Now, all objects created with F as a constructor will have their
-            // internal __proto__ prototype pointer pointing to o, which means 
+            // internal __proto__ prototype pointer pointing to o, which means
             // that they will, effectively, use o as a "parent" for any properies
             // that they do not explicitly define.
 
@@ -124,12 +124,12 @@
 
       Function.prototype.bind = function (obj) {
         var slice = [].slice,
-            args = slice.call(arguments, 1), 
-            self = this, 
-            nop = function () {}, 
+            args = slice.call(arguments, 1),
+            self = this,
+            nop = function () {},
             bound = function () {
-              return self.apply( this instanceof nop ? this : ( obj || {} ), 
-                                  args.concat( slice.call(arguments) ) );    
+              return self.apply( this instanceof nop ? this : ( obj || {} ),
+                                  args.concat( slice.call(arguments) ) );
             };
 
         nop.prototype = self.prototype;
@@ -143,16 +143,16 @@
     // Implement Array.indexOf
     // courtesy: http://soledadpenades.com/2007/05/17/arrayindexof-in-internet-explorer/
     if (typeof(Array.indexOf) !== 'function') {
-	    Array.prototype.indexOf = function(obj) {
-	        for(var i= 0; i < this.length; i++){
-	            if(this[i] === obj){
-	                return i;
-	            }
-	        }
+        Array.prototype.indexOf = function(obj) {
+            for(var i= 0; i < this.length; i++){
+                if(this[i] === obj){
+                    return i;
+                }
+            }
 
-	        return -1;
-	    };
-	}
+            return -1;
+        };
+    }
 
 
     ///////////////////////////////////////////////////////////////////
@@ -161,11 +161,11 @@
         ft,
         svg,
         colors;
-    
+
     _debug = false;
 
     // Feature types: numerical codes to names
-    ft = { 
+    ft = {
         feature:    1, promoter:   2, primer:        3,
         enzyme:     4, gene:       5, origin:        6,
         regulatory: 7, terminator: 8, exact_feature: 9,
@@ -228,7 +228,7 @@ window.GiraffeDraw = function () {
 
     ///////////////////////////////////////////////////////////////////
     // Public data members
-    
+
     // Expose the feature types
     this.Feature_Type = ft;
 
@@ -245,10 +245,10 @@ window.GiraffeDraw = function () {
         for (var ix = 0; ix < features_json.length; ix++) {
             var f = new Feature(features_json[ix]);
             all_features.push(f);
-            if (f.is_enzyme()) { 
-                enzyme_features.push(f); 
-            } else if (f.is_orf()) { 
-                orf_features.push(f); 
+            if (f.is_enzyme()) {
+                enzyme_features.push(f);
+            } else if (f.is_orf()) {
+                orf_features.push(f);
             } else {
                 std_features.push(f);
             }
@@ -264,11 +264,11 @@ window.GiraffeDraw = function () {
         // of each cutter type there are.
         cut_counts();
     };
-    
+
     // Private function
     // Calculate cut counts of all restriction enzyme
     function cut_counts() {
-        var cut_counts = {}, 
+        var cc = {},
             f, fx;
 
         // Calculate the counts
@@ -278,10 +278,10 @@ window.GiraffeDraw = function () {
                 // Store indices, not Feature objects, because
                 // the objects will change, depending on
                 // the kind of map is drawn
-                if (f.name() in cut_counts) {
-                    cut_counts[f.name()].push(fx);
+                if (f.name() in cc) {
+                    cc[f.name()].push(fx);
                 } else {
-                    cut_counts[f.name()] = [fx];
+                    cc[f.name()] = [fx];
                 }
             }
         }
@@ -289,7 +289,7 @@ window.GiraffeDraw = function () {
         for (fx = 0; fx < all_features.length; fx++) {
             f = all_features[fx];
             if (f.type() == ft.enzyme) {
-                f.set_other_cutters(cut_counts[f.name()]);
+                f.set_other_cutters(cc[f.name()]);
             }
         }
     }
@@ -322,8 +322,8 @@ window.GiraffeDraw = function () {
         this.type = function() { return _type; };
         this.clockwise = function() { return _clockwise; };
         this.default_show_feature = function() { return _default_show_feature; };
-        // returns - 1 if not enzyme        
-        this.cut = function() { return _type == ft.enzyme ? _cut : -1; }; 
+        // returns - 1 if not enzyme
+        this.cut = function() { return _type == ft.enzyme ? _cut : -1; };
 
         this.is_enzyme = function() { return _type == ft.enzyme; };
         this.is_orf = function() { return _type == ft.orf; };
@@ -396,10 +396,10 @@ window.GiraffeDraw = function () {
             switch(thi$.type()) {
                 case ft.promoter:
                 case ft.primer:
-                    thi$.draw_head = true; 
+                    thi$.draw_head = true;
                     thi$.color = colors.primer;
                     break;
-                case ft.terminator:   
+                case ft.terminator:
                     thi$.color = colors.primer;
                     break;
                 case ft.regulatory:
@@ -449,12 +449,12 @@ window.GiraffeDraw = function () {
                 }
             }
 
-            if (this.map.fade_time) { 
-                sets.animate(props, this.map.fade_time); 
-                lines.animateWith(sets, line_props, this.map.fade_time); 
-            } else { 
+            if (this.map.fade_time) {
+                sets.animate(props, this.map.fade_time);
+                lines.animateWith(sets, line_props, this.map.fade_time);
+            } else {
                 sets.attr(props);
-                lines.attr(line_props); 
+                lines.attr(line_props);
             }
         };
 
@@ -464,7 +464,7 @@ window.GiraffeDraw = function () {
             if (this.type() == ft.enzyme) {
                 props["stroke-width"] = this.map.enzyme_bold_weight;
             }
-            var line_props = {"stroke": colors.plasmid, 
+            var line_props = {"stroke": colors.plasmid,
                               "stroke-width": this.map.label_line_bold_weight()};
             this.fade(props, line_props);
         };
@@ -576,12 +576,12 @@ window.GiraffeDraw = function () {
     ///////////////////////////////////////////////////////////////////
     // Generic Map prototype class
     function Map(options) {
-        
-        var _cutters_to_show, 
+
+        var _cutters_to_show,
             _is_digest,
             _digest_fade_factor,
             _feature_opacity, _enzyme_opacity, _bold_opacity,
-            _feature_width, _enzyme_width, 
+            _feature_width, _enzyme_width,
             _enzyme_weight, enzyme_bold_weight,
             _label_line_weight, _label_line_bold_weight, _label_font_size,
             _plasmid_font_size, _plasmid_name, _draw_tic_mark,
@@ -593,12 +593,12 @@ window.GiraffeDraw = function () {
             // Digest flag: read-only, set once
             _is_digest = false;
             if ('digest' in options) {
-                _is_digest = options['digest'];
+                _is_digest = options.digest;
             }
 
             _digest_fade_factor = 0.15;
             if ('digest_fade_factor' in options) {
-                _digest_fade_factor = options['digest_fade_factor'];
+                _digest_fade_factor = options.digest_fade_factor;
             }
 
             // Feature visual properties
@@ -617,16 +617,16 @@ window.GiraffeDraw = function () {
             _plasmid_font_size = '16pt';
             _plasmid_name = '';
             if ('plasmid_name' in options) {
-                _plasmid_name = options['plasmid_name'];
+                _plasmid_name = options.plasmid_name;
             }
 
             // Draw tic mark
             _draw_tic_mark = true;
             if ('draw_tic_mark' in options &&
-                (options['draw_tic_mark'] === 0 ||
-                 options['draw_tic_mark'] === '0' ||
-                 options['draw_tic_mark'] === false ||
-                 options['draw_tic_mark'] === 'false')) {
+                (options.draw_tic_mark === 0 ||
+                 options.draw_tic_mark === '0' ||
+                 options.draw_tic_mark === false ||
+                 options.draw_tic_mark === 'false')) {
                 _draw_tic_mark = false;
             }
 
@@ -634,8 +634,8 @@ window.GiraffeDraw = function () {
             _feature_opacity = 0.7;
             _enzyme_opacity = 0.7;
             if ('opacity' in options) {
-                _feature_opacity = parseFloat(options['opacity']);
-                _enzyme_opacity = parseFloat(options['opacity']);
+                _feature_opacity = parseFloat(options.opacity);
+                _enzyme_opacity  = parseFloat(options.opacity);
             }
             _bold_opacity = 1.0;
 
@@ -646,13 +646,13 @@ window.GiraffeDraw = function () {
             // Cutters to show
             _cutters_to_show = [1];
             if ('cutters' in options) {
-                _cutters_to_show = options['cutters'];
+                _cutters_to_show = options.cutters;
             }
 
             // Where to draw the map
             thi$.map_dom_id = 'giraffe-draw-map';
             if ('map_dom_id' in options) {
-                thi$.map_dom_id = options['map_dom_id'];
+                thi$.map_dom_id = options.map_dom_id;
             }
 
             thi$.paper  = undefined; // To be used for RaphaelJS;
@@ -668,22 +668,22 @@ window.GiraffeDraw = function () {
             thi$.final_width = 640;
             thi$.final_height = 640;
             if ('map_width' in options) {
-                thi$.final_width = parseInt(options['map_width'], 10);
+                thi$.final_width = parseInt(options.map_width, 10);
             }
             if ('map_height' in options) {
-                thi$.final_height = parseInt(options['map_height'], 10);
+                thi$.final_height = parseInt(options.map_height, 10);
             }
 
             // Animation properties
             thi$.fade_time = 0;
             if ('fade_time' in options) {
-                thi$.fade_time = parseInt(options['fade_time'], 10);
+                thi$.fade_time = parseInt(options.fade_time, 10);
             }
 
             // Callback
             thi$.feature_click_callback = undefined;
             if ('feature_click_callback' in options) {
-                thi$.feature_click_callback = options['feature_click_callback'];
+                thi$.feature_click_callback = options.feature_click_callback;
             }
         }
 
@@ -715,7 +715,7 @@ window.GiraffeDraw = function () {
             }
         };
 
-        thi$.initialize_features = function() { 
+        thi$.initialize_features = function() {
             var fx;
 
             for (fx = 0; fx < this.features.length; fx++) {
@@ -852,7 +852,7 @@ window.GiraffeDraw = function () {
             // Resolve conflicts on the circle, push some overlapping
             // features to other radii
             this.max_extent = this.resolve_conflicts();
-            this.label_pos = this.max_extent + this.label_offset; 
+            this.label_pos = this.max_extent + this.label_offset;
         };
 
         thi$.update = function(recalc) { // Redraw the map
@@ -883,7 +883,7 @@ window.GiraffeDraw = function () {
             this.set_label_lists();
 
             this.set_bounding_box();
-        
+
             this.paper = ScaleRaphael(this.map_dom_id, this.width, this.height); // global
             this.initialize_features();
 
@@ -903,7 +903,7 @@ window.GiraffeDraw = function () {
             // Export the main properties as part of a Map-like object
             // descendant classes inheret this ability, and because of the
             // this pointer, will return /Their own/ draw and features objects
-            return { 
+            return {
                 redraw_cutters: this.redraw_cutters.bind(this),
                 show_feature_type: this.show_feature_type.bind(this),
                 hide_feature_type: this.hide_feature_type.bind(this),
@@ -940,7 +940,7 @@ window.GiraffeDraw = function () {
 
     this.CircularMap = Map.make(CircMap);
     this.LinearMap = Map.make(LinMap);
-    
+
     ///////////////////////////////////////////////////////////////////
     // Circular Map Drawing Class
     function CircMap(options) {
@@ -960,11 +960,11 @@ window.GiraffeDraw = function () {
         // Loop radii
         var radius_spacing = 20; // spacing
         var plasmid_radius = 200;
-        var inner_radius = plasmid_radius - radius_spacing; 
+        var inner_radius = plasmid_radius - radius_spacing;
         var outer_radius = plasmid_radius + radius_spacing;
         thi$.label_offset = 10;
         if ('label_offset' in options) {
-            thi$.label_offset = parseInt(options['label_offset'], 10);
+            thi$.label_offset = parseInt(options.label_offset, 10);
         }
 
         var head_width = 25;
@@ -974,7 +974,7 @@ window.GiraffeDraw = function () {
         var min_overlap_cutoff = -0.1;// in degrees
         var min_overlap_pct = 0.01;
         var min_overlap_feature_size = 0.5; // in degrees
-        
+
         var label_letter_height = 0;
         var label_letter_width = 0;
 
@@ -986,7 +986,7 @@ window.GiraffeDraw = function () {
         ///////////////////////////////////////////////////////////////////
         // Internals start here
 
-        // Conversion Object: local to this function because it assumes a 
+        // Conversion Object: local to this function because it assumes a
         // circular geometry
         // Groups conversions into handy section
         var convert = {
@@ -1031,7 +1031,7 @@ window.GiraffeDraw = function () {
             var thi$ = Object.create(basic_feature);
 
             // The result of this function will be a CircularFeature object
-            
+
 
             // Radius is public, unlike other properties, which are permanent
             thi$.radius = plasmid_radius; // Default to plasmid radius, can be changed
@@ -1053,10 +1053,10 @@ window.GiraffeDraw = function () {
             // for these functions, the sequence starts at 90 degrees and goes down.
             thi$.real_start = function() {
                 var sd;
-                // Take the minimum head size into account. Only need to do this 
+                // Take the minimum head size into account. Only need to do this
                 // when the head is drawn and pointing clockwise, to
                 // "push the start back."
-                if (this.draw_head && thi$.clockwise()) { 
+                if (this.draw_head && thi$.clockwise()) {
                     sd = convert.pos_to_angle(thi$.end()) + thi$.real_size();
                 } else { // Headless feature, or head is pointing the wrong way.
                          // Just give its typical start position
@@ -1082,8 +1082,8 @@ window.GiraffeDraw = function () {
 
             thi$.real_end = function() {
                 var ed;
-                // Take the minimum head size into account. Only need to do this 
-                // when the head is drawn and pointing counterclockwise, to 
+                // Take the minimum head size into account. Only need to do this
+                // when the head is drawn and pointing counterclockwise, to
                 // "push the end forward."
                 if (this.draw_head && !thi$.clockwise()) { // Take the minimum head size into account
                     ed = convert.pos_to_angle(thi$.start()) - thi$.real_size();
@@ -1110,7 +1110,7 @@ window.GiraffeDraw = function () {
                     // Convert the head length into degrees, just as you do
                     // in the draw() method. Must recalcualte every time, as
                     // radius may have changed
-                    var r_p = Math.sqrt(thi$.radius*thi$.radius + 
+                    var r_p = Math.sqrt(thi$.radius*thi$.radius +
                             head_length*head_length);
                     var hszd = Raphael.deg(Math.asin(head_length/r_p));
                     if (hszd > szd) {
@@ -1130,18 +1130,18 @@ window.GiraffeDraw = function () {
                 var a0 = convert.pos_to_angle(thi$.start());
                 var a1 = convert.pos_to_angle(thi$.end());
 
-                // Create the draw feature, a set which will have the head 
+                // Create the draw feature, a set which will have the head
                 // and arc pushed onto it as necessary.
-                
+
                 // Arrowhead drawing, if needed
                 if (this.draw_head) {
 
                     // Arrow tip point lines up with a0 or a1 and it points
                     // tangent to the circle.
                     // We need to figure out how many radians the arrow takes up
-                    // in order to adjust a0 or a1 by that amount, and to set the 
+                    // in order to adjust a0 or a1 by that amount, and to set the
                     // base of the triangle even with that angle
-                    var r_p = Math.sqrt(thi$.radius*thi$.radius + 
+                    var r_p = Math.sqrt(thi$.radius*thi$.radius +
                             head_length*head_length);
                     // "height" of the arrowhead, in degrees
                     var a_b;
@@ -1157,7 +1157,7 @@ window.GiraffeDraw = function () {
                         a0  = a_b;      // adjust arc edge
                     }
                     var xy_p = convert.polar_to_rect(thi$.radius, a_p);
-                    
+
                     // bottom and top points, rectangular
                     var xy_b = convert.polar_to_rect(thi$.radius - head_width/2.0, a_b);
                     var xy_t = convert.polar_to_rect(thi$.radius + head_width/2.0, a_b);
@@ -1166,7 +1166,7 @@ window.GiraffeDraw = function () {
                     // then created entirely with the fill color
                     var head = this.map.paper.path(svg.move(xy_p.x, xy_p.y) +
                                           svg.line(xy_b.x, xy_b.y) +
-                                          svg.line(xy_t.x, xy_t.y) + 
+                                          svg.line(xy_t.x, xy_t.y) +
                                           svg.close());
                     head.attr({"stroke-width": 0,
                                "fill":         this.color});
@@ -1180,7 +1180,7 @@ window.GiraffeDraw = function () {
                     // the room on the plasmid, in which case no arc needs
                     // to be drawn
 
-                    // Rectangular coordinates of the edges of the arc: 
+                    // Rectangular coordinates of the edges of the arc:
                     // arcs are drawn counterclockwise, even though the plasmid
                     // sequence increases clockwise, so we flip the
                     // indices
@@ -1196,11 +1196,11 @@ window.GiraffeDraw = function () {
                     arc.attr({"stroke-width": this.width});
 
                     this.arrow_set.push(arc);
-                } else if (this.type() == ft.enzyme) { 
+                } else if (this.type() == ft.enzyme) {
                     // Restriction enzymes get drawn on their own
-                    xy0 = convert.polar_to_rect(thi$.radius - this.map.enzyme_width()/2.0, 
+                    xy0 = convert.polar_to_rect(thi$.radius - this.map.enzyme_width()/2.0,
                             (a0+a1)/2.0);
-                    xy1 = convert.polar_to_rect(thi$.radius + this.map.enzyme_width()/2.0, 
+                    xy1 = convert.polar_to_rect(thi$.radius + this.map.enzyme_width()/2.0,
                             (a0+a1)/2.0);
                     // Not really an arc, just a line, but left this way
                     // for consistency
@@ -1242,7 +1242,7 @@ window.GiraffeDraw = function () {
                 if (!thi$.should_draw_label()) { return; }
 
                 // Figure out the center of the feature
-                var a_c = thi$.real_center(); 
+                var a_c = thi$.real_center();
                 var adjust_a_c = a_c;
                 if (adjust_a_c < 0) { adjust_a_c += 360; }
 
@@ -1269,7 +1269,7 @@ window.GiraffeDraw = function () {
                 if (adjust_a_c < 0) { adjust_a_c += 360; }
 
                 var xy0 = convert.polar_to_rect(thi$.radius, a_c);
-                
+
                 // Figure out which section this label is in: divide
                 // the grid up into eight sections.
                 var section = Math.floor((plasmid_start - a_c)/label_section_degree);
@@ -1289,7 +1289,7 @@ window.GiraffeDraw = function () {
                 var xy1 = {};
                 xy1.x = label_list_pos[section][0];
                 xy1.y = label_list_pos[section][1];
-                
+
                 // We want to minimize the number of label lines that
                 // cross. Which means depends on which section we are in,
                 // we draw labels in different orders. See draw_labels on
@@ -1422,21 +1422,21 @@ window.GiraffeDraw = function () {
                     can_push;
 
                 // Record that the push happened
-                winner.pushed_features.push(loser); 
+                winner.pushed_features.push(loser);
                 conflicts++;
 
                 // Do it
-                loser.radius = new_rad; 
+                loser.radius = new_rad;
 
                 if (_debug) {
-                    console.warn(loser.name() + 
+                    console.warn(loser.name() +
                         " (" + loser.real_start() + ", " + loser.real_end() + ")" +
-                        " pushed by " + 
-                        winner.name() + 
+                        " pushed by " +
+                        winner.name() +
                         " (" + winner.real_start() + ", " + winner.real_end() + ")");
                 }
-                
-                // Since loser was pushed, un-push all the 
+
+                // Since loser was pushed, un-push all the
                 // features that it pushed, as long as
                 // those features are not in conflict with the winner,
                 // or with their own, previously pushed features, which are
@@ -1462,7 +1462,7 @@ window.GiraffeDraw = function () {
                         // Finally!
                         if (can_push) {
                             if (_debug) {
-                                console.warn(pf.name() + " unpushed, because " + 
+                                console.warn(pf.name() + " unpushed, because " +
                                              loser.name() + " pushed by " + winner.name());
                             }
                             pf.radius = rad;
@@ -1481,7 +1481,7 @@ window.GiraffeDraw = function () {
                 // Keep alternating between inside and outside the plasmid.
                 delta = rx *radius_spacing;
 
-                if (rx %2 === 0) { // Even rx 
+                if (rx %2 === 0) { // Even rx
                     new_rad = rad + delta;
                 } else {
                     new_rad = rad - delta;
@@ -1503,28 +1503,28 @@ window.GiraffeDraw = function () {
                     f = this.features[fx % this.features.length];
 
 
-                    if (f.visible && f.type() != ft.enzyme && f.radius == rad) { 
-                        
-                        // When you cross the plasmid start boundary every time 
+                    if (f.visible && f.type() != ft.enzyme && f.radius == rad) {
+
+                        // When you cross the plasmid start boundary every time
                         // but the first, update the furthest_point so that its
-                        // now expressed in numbers that will make sense to 
+                        // now expressed in numbers that will make sense to
                         // features on the other side of the boundary
                         if (fx >= this.features.length && furthest_point <= 0) {
                             furthest_point += 360;
                         }
 
-                        // Calculate the effective furthest point: first, convert from 
+                        // Calculate the effective furthest point: first, convert from
                         // a true angle to a number taht starts at 0 (not plasmid_start)
                         // and goes up to 360 (or over). Then limit that number to 360, so
                         // that we're always dealing with numbers in the same period,
                         // and then convert back.
-                        eff_furthest_point = plasmid_start - 
+                        eff_furthest_point = plasmid_start -
                             ((plasmid_start - furthest_point) % 360);
 
                         new_size = f.real_size();
                         overlap = -(eff_furthest_point - f.real_start());
 
-                        if (overlap <= min_overlap_cutoff) { 
+                        if (overlap <= min_overlap_cutoff) {
                             // We've cleared all potential conflicts: reset
                             // the indicators
                             biggest_size = new_size;
@@ -1534,10 +1534,10 @@ window.GiraffeDraw = function () {
                         // since we go around twice, it is now possible
                         // for a feature to "conflict with itself," so we
                         // explicitly prevent this
-                        } else if (biggest_feature != f && 
+                        } else if (biggest_feature != f &&
                                    biggest_size > min_overlap_feature_size &&
                                    new_size > min_overlap_feature_size &&
-                                  (overlap <= 0 || 
+                                  (overlap <= 0 ||
                                   (overlap/biggest_size > min_overlap_pct &&
                                    overlap/new_size > min_overlap_pct))) {
                             // Overlap: conflict!
@@ -1572,7 +1572,7 @@ window.GiraffeDraw = function () {
                 // Move on to the next radius
                 rad = new_rad;
                 rx++;
-                
+
             } while (conflicts > 0); // Keep adding levels of resolution
 
             return max_rad;
@@ -1603,7 +1603,7 @@ window.GiraffeDraw = function () {
             // lower x, y starting position for each label list
             label_list_pos = [[0,0], [0,0], [0,0], [0,0],
                               [0,0], [0,0], [0,0], [0,0]];
-        
+
             // Iterate counterclockwise, first get counts
             // Sort feature center list for each label list, and also
             // figure out where each label list should start
@@ -1638,7 +1638,7 @@ window.GiraffeDraw = function () {
                 label_list_pos[i][0] = xy1.x;
                 label_list_pos[i][1] = xy1.y;
             }
-     
+
             // Finally draw labels
             for (var fx = thi$.features.length - 1; fx >= 0; fx--) {
                 thi$.features[fx].draw_label();
@@ -1653,7 +1653,7 @@ window.GiraffeDraw = function () {
             // conservative.
             label_letter_height = 15;
             label_letter_width = 12;
-          
+
             var min_x = thi$.width/2;
             var max_x = thi$.width/2;
             var min_y = thi$.width/2;
@@ -1737,7 +1737,7 @@ window.GiraffeDraw = function () {
     ///////////////////////////////////////////////////////////////////
     // Linear Map Drawing Class
     function LinMap(options) {
-    
+
         // Inherit the common Map functions
         var thi$ = Object.create(new Map(options));
         thi$.FeatureType = LinearFeature;
@@ -1755,14 +1755,14 @@ window.GiraffeDraw = function () {
         // Where to draw the map
         thi$.map_dom_id = 'giraffe-draw-map';
         if ('map_dom_id' in options) {
-            thi$.map_dom_id = options['map_dom_id'];
+            thi$.map_dom_id = options.map_dom_id;
         }
 
         // Heights of levels
         var y_spacing = 20; // spacing
         thi$.label_offset = 50;
         if ('label_offset' in options) {
-            thi$.label_offset = parseInt(options['label_offset'], 10);
+            thi$.label_offset = parseInt(options.label_offset, 10);
         }
 
         var head_width = 25;
@@ -1772,7 +1772,7 @@ window.GiraffeDraw = function () {
         var min_overlap_cutoff = -1;// in pixels
         var min_overlap_pct = 0;
         var min_overlap_feature_size = 0; // in pixels
-        
+
         var label_letter_height = 0;
         var label_letter_width = 0;
 
@@ -1785,7 +1785,7 @@ window.GiraffeDraw = function () {
         ///////////////////////////////////////////////////////////////////
         // Circular Feature class
         function LinearFeature(basic_feature) {
-            
+
             // Create a prototypal descendent of the basic_feature to expand
             var thi$ = Object.create(basic_feature);
 
@@ -1802,10 +1802,10 @@ window.GiraffeDraw = function () {
             // for these functions, the sequence starts at 90 degrees and goes down.
             thi$.real_start = function() {
                 var rs;
-                // Take the minimum head size into account. Only need to do this 
+                // Take the minimum head size into account. Only need to do this
                 // when the head is drawn and pointing clockwise, to
                 // "push the start back."
-                if (this.draw_head && this.clockwise()) { 
+                if (this.draw_head && this.clockwise()) {
                     rs = convert.pos_to_x(this.end()) - this.real_size();
                 } else { // Headless feature, or head is pointing the wrong way.
                          // Just give its typical start position
@@ -1816,8 +1816,8 @@ window.GiraffeDraw = function () {
 
             thi$.real_end = function() {
                 var re;
-                // Take the minimum head size into account. Only need to do this 
-                // when the head is drawn and pointing counterclockwise, to 
+                // Take the minimum head size into account. Only need to do this
+                // when the head is drawn and pointing counterclockwise, to
                 // "push the end forward."
                 if (this.draw_head && !this.clockwise()) { // Take the minimum head size into account
                     re = convert.pos_to_x(this.start()) + this.real_size();
@@ -1830,7 +1830,7 @@ window.GiraffeDraw = function () {
             };
 
             thi$.real_size = function() {
-                var rsz; 
+                var rsz;
                 // Normal definition of size
                 rsz = convert.pos_to_x(thi$.end()) -
                       convert.pos_to_x(thi$.start());
@@ -1881,7 +1881,7 @@ window.GiraffeDraw = function () {
 
                 // Body drawing
                 var body;
-                if (x0 < x1 && this.type() != ft.enzyme) { 
+                if (x0 < x1 && this.type() != ft.enzyme) {
                     // Compensating for the head may have "taken up" all
                     // the room on the plasmid, in which case no arc needs
                     // to be drawn
@@ -1892,7 +1892,7 @@ window.GiraffeDraw = function () {
                     body.attr({"stroke-width": this.width});
 
                     this.arrow_set.push(body);
-                } else if (this.type() == ft.enzyme) { 
+                } else if (this.type() == ft.enzyme) {
                     // Restriction enzymes get drawn on their own
                     var x_m = (x0 + x1)/2;
 
@@ -1951,7 +1951,7 @@ window.GiraffeDraw = function () {
                 // Enzymes show their cut sites in the label
                 var label_name = thi$.label_name();
                 var label = this.map.paper.text(pos, height, label_name);
-                
+
                 // Below, right-justify. Above, left-justify.
                 var anchor = (height >= plasmid_y) ? "end" : "start";
                 label.attr({"fill": this.color,
@@ -2036,7 +2036,7 @@ window.GiraffeDraw = function () {
                 y = 0, // current radius
                 yx = 1,               // radius counter
                 max_dist = 0, new_dist, new_y,
-                biggest_size, biggest_feature, furthest_point, 
+                biggest_size, biggest_feature, furthest_point,
                 new_size, overlap,
                 fx, f;
 
@@ -2047,17 +2047,17 @@ window.GiraffeDraw = function () {
 
 
                 // Record that the push happened
-                winner.pushed_features.push(loser); 
+                winner.pushed_features.push(loser);
                 conflicts++;
 
                 // Do it
-                loser.y = new_y; 
+                loser.y = new_y;
 
                 if (_debug) {
                     console.warn(loser.name() + " pushed by " + winner.name());
                 }
 
-                // Since loser was pushed, un-push all the 
+                // Since loser was pushed, un-push all the
                 // features that it pushed, as long as
                 // those features are not in conflict with the winner,
                 // or with their own, previously pushed features, which are
@@ -2082,7 +2082,7 @@ window.GiraffeDraw = function () {
                         // Finally!
                         if (can_push) {
                             if (_debug) {
-                                console.warn(pf.name() + " unpushed, because " + 
+                                console.warn(pf.name() + " unpushed, because " +
                                              loser.name() + " pushed by " + winner.name());
                             }
                             pf.y = y;
@@ -2105,7 +2105,7 @@ window.GiraffeDraw = function () {
 
                 conflicts = 0; // Assume you have no conflicts until you find some
 
-                // Clear the record of who pushed whom 
+                // Clear the record of who pushed whom
                 for (fx = 0; fx < this.features.length; fx++) {
                     this.features[fx].pushed_features = [];
                 }
@@ -2115,20 +2115,20 @@ window.GiraffeDraw = function () {
 
                 for (fx = 0; fx < this.features.length; fx++) {
                     f = this.features[fx];
-                    if (f.y == y && f.type() != ft.enzyme && f.visible) { 
+                    if (f.y == y && f.type() != ft.enzyme && f.visible) {
                         new_size = f.real_size();
                         overlap = furthest_point - f.real_start();
-                        if (overlap <= min_overlap_cutoff) { 
+                        if (overlap <= min_overlap_cutoff) {
                             // We've cleared all potential conflicts: reset
                             // the indicators
                             biggest_size = new_size;
                             biggest_feature = f;
                             furthest_point = f.real_end();
                         // explicitly prevent conflicts with self
-                        } else if (biggest_feature != f && 
+                        } else if (biggest_feature != f &&
                                    biggest_size > min_overlap_feature_size &&
                                    new_size > min_overlap_feature_size &&
-                                  (overlap <= 0 || 
+                                  (overlap <= 0 ||
                                   (overlap/biggest_size > min_overlap_pct &&
                                    overlap/new_size > min_overlap_pct))) {
                             // Overlap: conflict!
@@ -2152,7 +2152,7 @@ window.GiraffeDraw = function () {
                     }
                 }
 
-                // Keep track of the biggest distance from the plasmid 
+                // Keep track of the biggest distance from the plasmid
                 // reached
                 new_dist = Math.abs(y);
                 if (new_dist > max_dist) {
@@ -2162,7 +2162,7 @@ window.GiraffeDraw = function () {
                 // Move on to the next radius
                 y = new_y;
                 yx++;
-                
+
             } while (conflicts > 0); // Keep adding levels of resolution
 
             return max_dist;
@@ -2181,7 +2181,7 @@ window.GiraffeDraw = function () {
             //                   top                bottom
             label_pos    = [ new Array(nlists), new Array(nlists)];
             label_lists  = [ new Array(nlists), new Array(nlists)];
-                                
+
             // Initialize
             for (ix = 0; ix < nlists; ix++) {
                 for (lx = 0; lx < 2; lx++) {
@@ -2213,21 +2213,21 @@ window.GiraffeDraw = function () {
 
                     if (label_lists[0][ix].length >= 1) {
                         // Top label: just to the right of the last feature
-                        label_pos[0][ix] = 
+                        label_pos[0][ix] =
                             label_lists[0][ix][label_lists[0][ix].length - 1].real_end() +
                             list_offset[0];
                     } else { // Empty list: just put it somewhere
-                        label_pos[0][ix] = plasmid_left + 
+                        label_pos[0][ix] = plasmid_left +
                             ix * plasmid_width / nlists + list_offset[0];
                     }
                 } else {
                     if (label_lists[1][ix].length >= 1) {
                         // Bottom label: just to the left of the first feature
-                        label_pos[1][ix] = 
+                        label_pos[1][ix] =
                             label_lists[1][ix][0].real_start() +
                             list_offset[1];
                     } else { // Empty list: just put it somewhere
-                        label_pos[1][ix] = plasmid_left + 
+                        label_pos[1][ix] = plasmid_left +
                             (ix + 0.5) * plasmid_width / nlists + list_offset[1];
                     }
                 }
@@ -2250,10 +2250,10 @@ window.GiraffeDraw = function () {
                     ll.sort(function (a,b) {
                         // Make some compensation for height as well
                         function key(feat) {
-                            // On top, heigts closer to you are 
+                            // On top, heigts closer to you are
                             // negative, so we flip the sign depending on
                             // whether or not lx is 0 (top) or 1 (bottom)
-                            return feat.real_center() + 
+                            return feat.real_center() +
                                 comp_factor * feat.y;
                         }
                         return key(a) - key(b);
@@ -2265,10 +2265,10 @@ window.GiraffeDraw = function () {
                     for (var ix = 0; ix < num_labels; ix++) {
                         var curr_height;
                         if (lx) { // Bottom list: top to bottom
-                            curr_height = plasmid_y + thi$.label_pos + 
+                            curr_height = plasmid_y + thi$.label_pos +
                                 (ix) * label_height;
                         } else { // Top list: bottom to top
-                            curr_height = plasmid_y - thi$.label_pos - 
+                            curr_height = plasmid_y - thi$.label_pos -
                                 (num_labels - 1 - ix) * label_height;
                         }
                         ll[ix].draw_label(curr_height, label_pos[lx][sx]);
@@ -2287,7 +2287,7 @@ window.GiraffeDraw = function () {
             // conservative.
             label_letter_height = 17;
             label_letter_width = 8;
-          
+
             var min_y = plasmid_y;
             var max_y = plasmid_y;
             // By default, plasmid will scale to width of map, so unless we
@@ -2304,31 +2304,31 @@ window.GiraffeDraw = function () {
 
                     var list_max_letters = 0;
                     for (ix = 0; ix < ll.length; ix++) {
-                        var num_letts = ll[ix].label_name().length; 
+                        var num_letts = ll[ix].label_name().length;
                         if (num_letts > list_max_letters) {
                             list_max_letters = num_letts;
                         }
                     }
 
                     if (lx === 0) { // Top lists: move top and right
-                        var list_top = plasmid_y - thi$.label_pos - 
+                        var list_top = plasmid_y - thi$.label_pos -
                             label_letter_height * (ll.length + 1);
                         if (list_top < min_y) {
                             min_y = list_top;
                         }
-                        var list_right =  label_pos[lx][sx] + 
+                        var list_right =  label_pos[lx][sx] +
                             label_letter_width * list_max_letters;
                         if (list_right > max_x) {
                             max_x = list_right;
                         }
 
                     } else if (lx == 1) { // Bot lists: move bot and left
-                        var list_bot = plasmid_y + thi$.label_pos + 
+                        var list_bot = plasmid_y + thi$.label_pos +
                             label_letter_height * (ll.length + 1);
                         if (list_bot > max_y) {
                             max_y = list_bot;
                         }
-                        var list_left =  label_pos[lx][sx] - 
+                        var list_left =  label_pos[lx][sx] -
                             label_letter_width * list_max_letters;
                         if (list_left < min_x) {
                             min_x = list_left;
@@ -2338,7 +2338,7 @@ window.GiraffeDraw = function () {
             }
 
             // Now we have a new bounding box (height only): min_y to max_y
-            
+
             // Extend or compress the box dimensions to encompas this new size
             thi$.width = max_x - min_x;
             thi$.height = max_y - min_y;
@@ -2359,11 +2359,11 @@ window.GiraffeDraw = function () {
 
         };
 
-        thi$.rescale = function() { 
+        thi$.rescale = function() {
             // Rescale
             if (thi$.final_width != thi$.width ||
                 thi$.final_height != thi$.height) {
-                
+
                 // Make sure not to add additional height to the map, once we've
                 // trimmed it off
                 thi$.final_height = thi$.final_width * (thi$.height/thi$.width);
@@ -2373,7 +2373,7 @@ window.GiraffeDraw = function () {
                 this.paper.changeSize(thi$.final_width,thi$.final_height,false,true);
             }
         };
-        
+
         return thi$;
     } // END LinMap()
 
@@ -2381,4 +2381,4 @@ window.GiraffeDraw = function () {
 };// END GiraffeDraw
 })(); // END GiraffeDraw Namespace
 
-// ex: set expandtab:ts=4:sw=4
+// vi: set expandtab:ts=4:sw=4:sts=4

@@ -1066,6 +1066,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
             if (bpstr.indexOf('feature-') === 0) {
                 fid = parseInt(bpstr.replace(/\D/g, ''), 10);
                 feature = gd.all_features[fid];
+
                 // Fancy highlight that shows cut sites for enzymes
                 map_feature_click_callback(feature);
             } else {
@@ -1417,15 +1418,15 @@ window.GiraffeControl = function ($,gd_map,dom) {
     draw_feature_controls = true;
     //XXX For now, we keep this hidden. Maybe we'll do something with it later.
     draw_extra_features_checkbox = false;
-    
+
     if (gd_map.is_digest()) {
         draw_table = false;
         draw_feature_controls = false;
     }
 
-    controls = $('<form action="" class="giraffe-controls">\
-        <fieldset><legend>Feature Options</legend><table><tbody class="giraffe-controls-layout"></tbody></table>\
-        </fieldset></form>');
+    controls = $('<form action="" class="giraffe-controls">' +
+        '<fieldset><legend>Feature Options</legend><table><tbody class="giraffe-controls-layout"></tbody></table>' +
+        '</fieldset></form>');
 
     if (draw_enzyme_controls) {
         controls.find('tbody').append(
@@ -1529,14 +1530,14 @@ window.GiraffeControl = function ($,gd_map,dom) {
 
         for (ftx = 0; ftx < control_feat_types.length; ftx++) {
             feat_control_table.append(
-            '<tr class="' + control_feat_types[ftx][1] + '">\
-                <td><input type="checkbox" checked="checked"\
-                       name="all-' + control_feat_types[ftx][1] + '" value="show" />\
-                </td>\
-                <td><input type="checkbox" checked="checked"\
-                       name="all-' + control_feat_types[ftx][1] + '" value="label" />\
-                </td>\
-                <td>' +  control_feat_types[ftx][0] + '</td></tr>');
+            '<tr class="' + control_feat_types[ftx][1] + '">' +
+                '<td><input type="checkbox" checked="checked"' +
+                     'name="all-' + control_feat_types[ftx][1] + '" value="show" />' +
+                '</td>' +
+                '<td><input type="checkbox" checked="checked"' +
+                     'name="all-' + control_feat_types[ftx][1] + '" value="label" />' +
+                '</td>' +
+                '<td>' +  control_feat_types[ftx][0] + '</td></tr>');
         }
 
         // Changes to the feature types
@@ -1618,8 +1619,8 @@ window.GiraffeControl = function ($,gd_map,dom) {
 
     if (draw_extra_features_checkbox) {
         controls.children('fieldset')
-            .append('<label><input type="checkbox" name="extra-features" value="show" />\
-                    Show extra features</label>');
+            .append('<label><input type="checkbox" name="extra-features" value="show" />' +
+                    'Show extra features</label>');
 
         // The "extra features" checkbox
         controls.find('input[name="extra-features"]').click(function (event) {
@@ -1723,3 +1724,4 @@ window.GiraffeControl = function ($,gd_map,dom) {
 
 })();
 
+// vi: set expandtab:ts=4:sw=4:sts=4
