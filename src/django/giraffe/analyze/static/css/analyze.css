@@ -92,8 +92,8 @@ svg path { cursor:pointer; }
 .giraffe-enzyme-list li label {
     float:left; width:100px; margin-right:15px; font-weight:bold;
 }
-.giraffe-enzyme-list li p { margin:15px 0px; padding-left:115px; }
-.giraffe-enzyme-list li { clear:left; }
+.giraffe-enzyme-list li p { margin:15px 0px; padding-left:15px; display:inline; }
+.giraffe-enzyme-list li { clear:left; margin: 0.75em 0px;}
 
 /* following are default jquery-ui tooltip module CSS. jquery-ui
  * tooltip is not released yet, so we are including these ourselves */
