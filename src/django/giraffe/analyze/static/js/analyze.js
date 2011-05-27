@@ -139,7 +139,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
     Cutter_List.prototype.all=function(){
         if (this.__all) { return this.__all; }
         this.__all = [];
-        var check = [];
+        var check = {};
         for (var i = 0; i < this.enzymes.length; i++) {
             if (!(this.enzymes[i].name() in check)) {
                 this.__all.push(this.enzymes[i]);
@@ -175,7 +175,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
             'SphI', 'SspI', 'StuI', 'SwaI', 'XbaI', 'XhoI',
             'XmaI'
         ];
-        all_cutters_hash = [];
+        all_cutters_hash = {};
 
 
         for (i = 0; i < all_cutters.length; i++) {
@@ -186,8 +186,10 @@ window.GiraffeAnalyze = function ($,gd,options) {
             delete all_cutters_hash[have_these[i].name()];
         }
         this.__non = [];
-        for (i = 0; i < all_cutters_hash.length; i++) {
-            this.__non.push(i);
+        for (i in all_cutters_hash) {
+            if (all_cutters_hash.hasOwnProperty(i)) {
+                this.__non.push(i);
+            }
         }
         return this.__non;
     };
