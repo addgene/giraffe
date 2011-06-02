@@ -43,6 +43,7 @@ class Giraffe_Mappable_Model(models.Model):
         # remove leading > for FASTA sequence
         if sequence.startswith('>'):
             sequence = re.sub(r'^\>[^\n]*\n','',sequence);
+        # TODO Add more cleaning code here?
 
         # clean the sequence
         sequence = Sequence.strip(sequence)
