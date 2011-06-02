@@ -79,7 +79,7 @@ def detect_orfs(sequence_object):
                         f.clockwise = False
                     f.save()
                     orf_annotated = f
-                    print str(f.to_dict())
+                    #print str(f.to_dict())
 
                     # also try to see if we can find any protein tags
                     # in this ORF
@@ -114,7 +114,7 @@ def detect_orfs(sequence_object):
                             else:
                                 f.clockwise = False
                             f.save()
-                            print str(f.to_dict())
+                            #print str(f.to_dict())
 
                 aa_start = aa_end+1
 
