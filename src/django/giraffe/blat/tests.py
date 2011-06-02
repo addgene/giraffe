@@ -4,6 +4,7 @@ import unittest
 import giraffe.simple_test as st
 st.setup()
 import giraffe.blat.models as models
+import django
 
 class ItDetectsFeaturesInDNASequences(unittest.TestCase):
 
@@ -22,27 +23,63 @@ class ItDetectsFeaturesInDNASequences(unittest.TestCase):
         features = []
         for f in sequence_obj          \
                  .sequence_feature_set \
-                 .select_related( 'feature_db_index__feature'):
+                 .select_related(
+                     'feature_db_index__feature',
+                     'feature_db_index__feature__type',
+                 ):
 
-            features.append({
-                'id': f.feature.id,
-                'name': f.feature.name
-            })
+            features.append(f.to_dict())
 
         return features
 
 
     def test_ItDetectsFeatureOnlySequences(self):
-        """
-        Tests detection of complete feature sequence
-        """
+        """Tests that sequences which consist of only one feature
+        return at least that one feature and nothing else with the
+        same length. """
 
-        # EK feature in default db
-        features = self.find_features('GATGACGACGACAAG');
+        # Pick some random features from the default db
+        feature_ids_to_test = frozenset([
+            39,  184, 153, 54, 96,  183, 31,  22,  80,  71,  108, 73, 114, 147, 10,
+            138, 21,  85,  41, 180, 150, 160, 167, 133, 168, 131, 47, 24,  96,  60
+        ]);
+        # 23 and 82: HIV conflict. avoid for now
+        # 37 and 38: T7 leader conflict. avoid for now
 
-        self.assertEqual(len(features), 1)
-        self.assertEqual(features[0]['id'],   15)
-        self.assertEqual(features[0]['name'], 'EK')
+        
+        django.conf.settings.DEBUG = False;
+
+        with open('fixtures/features/generic.features') as features_file:
+            for (line_num, line) in enumerate(features_file):
+
+                # XXX not reliable, but works or for now
+                feature_id = line_num + 1
+
+                if feature_id in feature_ids_to_test:
+                    line_items = line.split()
+                    feature_sequence = line_items[1]
+                    feature_name = line_items[0].split(':')[1]
+
+                    # Detect the features
+                    features = self.find_features(feature_sequence)
+
+                    # How many of them have the same length?
+                    same_length = [f for f in features
+                         if abs(f['end'] - f['start']) + 1 ==
+                         len(feature_sequence)];
+
+                    # Only one feature has the same length
+                    try:
+                        self.assertEqual(len(same_length), 1);
+                    except:
+                        print same_length
+                        raise
+
+                    # That feature should have same ID and name
+                    self.assertEqual(same_length[0]['feature'], feature_name);
+                    self.assertEqual(same_length[0]['feature_id'], feature_id);
+
+#41 F:U3PPT AAAAAAGAAAAAAGGGTGGACTGGGA
 
 if __name__ == '__main__':
     unittest.main()
