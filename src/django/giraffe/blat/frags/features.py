@@ -1,12 +1,14 @@
 import os
 import tempfile
 
+from django.conf import settings
+
 from giraffe.blat.models import Sequence
 from giraffe.blat.frags.frags_to_features import frags_to_features
 
 # For Debugging
 import time
-_debug = True
+_debug = settings.DEBUG
 def timer():
     t0 = 0
     while True:
