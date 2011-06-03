@@ -8,7 +8,15 @@ import django
 
 class ItDetectsFeaturesInDNASequences(unittest.TestCase):
 
+    # Setup code
+    def setUp(self):
+        """Turns off debugging to prevent spurious output in tests"""
+        django.conf.settings.DEBUG = False;
+
+    # Utility methods
     def find_features(self, sequence, db_name = 'default'):
+        """Returns a dictionary of feature data, given a sequence"""
+
         # Call the feature detection algorithm on the sequence and get out a
         # hash
         hash = models.Giraffe_Mappable_Model.detect_features(sequence, db_name)
@@ -33,6 +41,14 @@ class ItDetectsFeaturesInDNASequences(unittest.TestCase):
         return features
 
 
+    def test_ItDetectsALoneShortFeature(self):
+        """Tests that a very short feature-only sequence detects only itself."""
+        # Detect the features
+        features = self.find_features('GATGACGACGACAAG')
+        self.assertEqual(len(features), 1)
+        self.assertEqual(features[0]['feature'], 'EK');
+        self.assertEqual(features[0]['feature_id'], 15);
+
     def test_ItDetectsFeatureOnlySequences(self):
         """Tests that sequences which consist of only one feature
         return at least that one feature and nothing else with the
@@ -46,8 +62,6 @@ class ItDetectsFeaturesInDNASequences(unittest.TestCase):
         # 23 and 82: HIV conflict. avoid for now
         # 37 and 38: T7 leader conflict. avoid for now
 
-        
-        django.conf.settings.DEBUG = False;
 
         with open('fixtures/features/generic.features') as features_file:
             for (line_num, line) in enumerate(features_file):
@@ -78,6 +92,9 @@ class ItDetectsFeaturesInDNASequences(unittest.TestCase):
                     # That feature should have same ID and name
                     self.assertEqual(same_length[0]['feature'], feature_name);
                     self.assertEqual(same_length[0]['feature_id'], feature_id);
+                    self.assertEqual(same_length[0]['start'], 1);
+                    self.assertEqual(same_length[0]['end'],
+                            len(feature_sequence));
 
 #41 F:U3PPT AAAAAAGAAAAAAGGGTGGACTGGGA
 
