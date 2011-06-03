@@ -1,3 +1,4 @@
+#!/bin/sh
 
 python import_features.py default < features/generic.features
 python import_features.py default < features/generic.primers
