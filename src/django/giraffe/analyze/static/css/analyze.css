@@ -14,9 +14,9 @@ svg path { cursor:pointer; }
 .giraffe-main td { vertical-align:top; }
 /* We want -viewer and -tabs to line up, and -seq-viewer should be
  * contained within -viewer */
-.giraffe-viewer { height:570px; overflow:auto; }
-.giraffe-seq-viewer { height:530px; overflow:auto; }
-.giraffe-tabs { height:570px; overflow:auto; }
+.giraffe-viewer { height:770px; overflow:auto; }
+.giraffe-seq-viewer { height:730px; overflow:auto; }
+.giraffe-tabs { height:770px; overflow:auto; }
 
 /* Generic */
 .giraffe-clear { clear:both; margin:15px; }
