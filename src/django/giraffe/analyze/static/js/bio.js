@@ -1,4 +1,3 @@
-
 window.BioJS = function(){
     if (typeof(Array.map) !== 'function') {
 
@@ -7,7 +6,7 @@ window.BioJS = function(){
          *
          * @param   {Function} callback the callback function
          *                              given array item as first argument
-         * @param   {Object}   ctxt    [optional] object to use as 
+         * @param   {Object}   ctxt    [optional] object to use as
          *                             this pointer for callback call
          * @returns {Array}             a new array with the results of
          *                              callback mapped to every element of this
@@ -33,7 +32,7 @@ window.BioJS = function(){
             return mapped;
         };
     }
-    // Translation code was from 
+    // Translation code was from
     // http://plindenbaum.blogspot.com/2010/12/server-side-javascript-translating-dna.html
 
     function TranslationTable(name,ncbiString) {
@@ -91,9 +90,9 @@ window.BioJS = function(){
     ];
 
     function __repeat(s,n) {
-        var r=""; 
-        for (var a=0;a<n;a++) { 
-            r+=s; 
+        var r="";
+        for (var a=0;a<n;a++) {
+            r+=s;
         }
         return r;
     }
@@ -224,11 +223,11 @@ window.BioJS = function(){
     // reverse complement, then end should be smaller than start.
     DNASequence.prototype.format_html_with_aa=function(seq_start,seq_end) {
         if (this.__aa_html) { return this.__aa_html; }
-        
+
         if (seq_start === undefined) {
             seq_start = 1;
         }
-        if (seq_end === undefined) { 
+        if (seq_end === undefined) {
             seq_end = this.__sequence.length+seq_start-1;
         }
         var aa = this.translate();
@@ -314,9 +313,9 @@ window.BioJS = function(){
         var line = 0;
         var seg = 0;
         for (var i=0; i<this.__sequence.length; i++) {
-            if (line === 0) { 
-                left_markers.push((i+1)); 
-            } else if (seg === 0) { 
+            if (line === 0) {
+                left_markers.push((i+1));
+            } else if (seg === 0) {
                 res += '&nbsp;';
             }
 
@@ -336,7 +335,7 @@ window.BioJS = function(){
             seg++;
 
             if (in_tag) { // found a new tag or was already in new tag
-                tag_length--; 
+                tag_length--;
                 if (tag_length === 0) {
                     in_tag = false;
                     res += '</span>';
@@ -355,7 +354,7 @@ window.BioJS = function(){
         if (in_tag) { res += '</span>'; }
 
         if (line > 0) { res += '<br/>'; }
-       
+
         var table = '<table><tr>'+
             '<td class="giraffe-bp-marker giraffe-bp-marker-left">'+
             left_markers.join('<br/>')+
@@ -582,4 +581,4 @@ window.BioJS = function(){
     };
 }();
 
-
+// vi: set expandtab:ts=4:sw=4:sts=4

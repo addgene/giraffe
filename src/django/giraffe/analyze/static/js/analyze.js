@@ -34,7 +34,7 @@
 (function(){
 
 function random_dom_id() {
-	return 'giraffe-'+Math.floor(Math.random()*100000000);
+    return 'giraffe-'+Math.floor(Math.random()*100000000);
 }
 
 window.GiraffeAnalyze = function ($,gd,options) {
@@ -60,19 +60,19 @@ window.GiraffeAnalyze = function ($,gd,options) {
     function Switch_Panes(panes) {
         var divs = [];
         var links = [];
-		var current_pane;
+        var current_pane;
 
         function hide_all() {
             var i;
             for (i = 0; i < divs.length; i++) { $(divs[i]).hide(); } 
             for (i = 0; i < links.length; i++) { $(links[i]).removeClass('giraffe-link-on'); } 
-			current_pane = undefined;
+            current_pane = undefined;
         }
         function show(i) {
             hide_all();
             $(links[i]).addClass('giraffe-link-on');
             $(divs[i]).show();
-			current_pane = parseInt(i, 10);
+            current_pane = parseInt(i, 10);
         }
         function link(i) { return links[i]; }
         function pane(i) { return divs[i]; }
@@ -139,7 +139,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
     Cutter_List.prototype.all=function(){
         if (this.__all) { return this.__all; }
         this.__all = [];
-        var check = [];
+        var check = {};
         for (var i = 0; i < this.enzymes.length; i++) {
             if (!(this.enzymes[i].name() in check)) {
                 this.__all.push(this.enzymes[i]);
@@ -175,7 +175,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
             'SphI', 'SspI', 'StuI', 'SwaI', 'XbaI', 'XhoI',
             'XmaI'
         ];
-        all_cutters_hash = [];
+        all_cutters_hash = {};
 
 
         for (i = 0; i < all_cutters.length; i++) {
@@ -186,8 +186,10 @@ window.GiraffeAnalyze = function ($,gd,options) {
             delete all_cutters_hash[have_these[i].name()];
         }
         this.__non = [];
-        for (i = 0; i < all_cutters_hash.length; i++) {
-            this.__non.push(i);
+        for (i in all_cutters_hash) {
+            if (all_cutters_hash.hasOwnProperty(i)) {
+                this.__non.push(i);
+            }
         }
         return this.__non;
     };
@@ -260,16 +262,16 @@ window.GiraffeAnalyze = function ($,gd,options) {
     function map_tab(dom) {
         panes = Switch_Panes(['Circular Map', 'Linear Map']);
 
-		var help, // DOMs
-			dom_map_id_c = random_dom_id(), 
-			dom_map_c,
-			dom_control_id_c = random_dom_id(), 
-			dom_control_c,
-			dom_map_id_l = random_dom_id(), 
-			dom_map_l,
-			dom_control_id_l = random_dom_id(), 
-			dom_control_l,
-			gt, gd_c, gd_l, gc_c, gc_l; // GriaffeDraw/Table/Controls
+        var help, // DOMs
+            dom_map_id_c = random_dom_id(), 
+            dom_map_c,
+            dom_control_id_c = random_dom_id(), 
+            dom_control_c,
+            dom_map_id_l = random_dom_id(), 
+            dom_map_l,
+            dom_control_id_l = random_dom_id(), 
+            dom_control_l,
+            gt, gd_c, gd_l, gc_c, gc_l; // GriaffeDraw/Table/Controls
 
         help =
             $('<p id="giraffe-map-help" '+
@@ -285,9 +287,9 @@ window.GiraffeAnalyze = function ($,gd,options) {
             .append(panes.panes);
 
 
-		// Circular map pane
+        // Circular map pane
         dom_map_c = $('<div id="'+dom_map_id_c+'" class="giraffe-analyze-map giraffe-analyze-circular-map"></div>');
-		dom_control_c = $('<div id="' + dom_control_id_c + '" class="giraffe-analyze-map-control"></div>');
+        dom_control_c = $('<div id="' + dom_control_id_c + '" class="giraffe-analyze-map-control"></div>');
         $(panes.pane(0))
             .append(dom_map_c)
             .append(dom_control_c);
@@ -300,11 +302,11 @@ window.GiraffeAnalyze = function ($,gd,options) {
             'map_height' : map_height,
             'feature_click_callback' : map_feature_click_callback
         });
-		gc_c = GiraffeControl($, gd_c, dom_control_c);
+        gc_c = GiraffeControl($, gd_c, dom_control_c);
 
-		// Linear map pane
+        // Linear map pane
         dom_map_l = $('<div id="'+dom_map_id_l+'" class="giraffe-analyze-map giraffe-analyze-linear-map"></div>');
-		dom_control_l = $('<div id="' + dom_control_id_c + '" class="giraffe-analyze-map-control"></div>');
+        dom_control_l = $('<div id="' + dom_control_id_c + '" class="giraffe-analyze-map-control"></div>');
         $(panes.pane(1))
             .append(dom_map_l)
             .append(dom_control_l);
@@ -317,7 +319,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
             'map_height' : map_height,
             'feature_click_callback' : map_feature_click_callback
         });
-		gc_l = GiraffeControl($, gd_l, dom_control_l);
+        gc_l = GiraffeControl($, gd_l, dom_control_l);
 
         panes.hide_all();
         if (starts_with_linear_map) { panes.show(1); }
@@ -330,26 +332,26 @@ window.GiraffeAnalyze = function ($,gd,options) {
     }
 
 
-	function digest_map_panes(dom) {
+    function digest_map_panes(dom) {
 
-		var cpanes,
-			dom_map_c,
-			dom_map_id_c = random_dom_id(),
-			dom_control_c,
-			dom_map_l,
-			dom_map_id_l = random_dom_id(),
-			dom_control_l,
-			circular_digest_map_shrink_factor = 0.7;
+        var cpanes,
+            dom_map_c,
+            dom_map_id_c = random_dom_id(),
+            dom_control_c,
+            dom_map_l,
+            dom_map_id_l = random_dom_id(),
+            dom_control_l,
+            circular_digest_map_shrink_factor = 0.7;
 
-		// Cutter map above
-		cpanes = Switch_Panes(['Linear Digest', 'Circular Digest']);
+        // Cutter map above
+        cpanes = Switch_Panes(['Linear Digest', 'Circular Digest']);
 
-		$(dom)
-			.append(cpanes.panes);
+        $(dom)
+            .append(cpanes.panes);
 
-		// Linear digest pane
+        // Linear digest pane
         dom_map_l = $('<div id="'+ dom_map_id_l+'" class="giraffe-analyze-map giraffe-analyze-linear-map giraffe-digest-map"></div>');
-		dom_control_l = $('<div id="' + random_dom_id()  + '" class="giraffe-analyze-map-control giraffe-digest-control"></div>');
+        dom_control_l = $('<div id="' + random_dom_id()  + '" class="giraffe-analyze-map-control giraffe-digest-control"></div>');
         $(cpanes.pane(0))
             .append(dom_map_l)
             .append(dom_control_l);
@@ -357,17 +359,17 @@ window.GiraffeAnalyze = function ($,gd,options) {
         gd_l = gd.LinearMap({
             'map_dom_id' : dom_map_id_l,
             'plasmid_name' : name,
-			'digest' : true,
+            'digest' : true,
             'cutters': [1],
             'map_width' : map_width,
             'map_height' : map_height,
             'feature_click_callback' : map_feature_click_callback
         });
-		gc_l = GiraffeControl($, gd_l, dom_control_l);
+        gc_l = GiraffeControl($, gd_l, dom_control_l);
 
-		// Circular digest pane
+        // Circular digest pane
         dom_map_c = $('<div id="'+ dom_map_id_c+'" class="giraffe-analyze-map giraffe-analyze-circular-map giraffe-digest-map"></div>');
-		dom_control_c = $('<div id="' + random_dom_id()  + '" class="giraffe-analyze-map-control giraffe-digest-control"></div>');
+        dom_control_c = $('<div id="' + random_dom_id()  + '" class="giraffe-analyze-map-control giraffe-digest-control"></div>');
         $(cpanes.pane(1))
             .append(dom_map_c)
             .append(dom_control_c);
@@ -375,25 +377,25 @@ window.GiraffeAnalyze = function ($,gd,options) {
         gd_c = gd.CircularMap({
             'map_dom_id' : dom_map_id_c,
             'plasmid_name' : name,
-			'digest' : true,
+            'digest' : true,
             'cutters': [1],
             'map_width' : map_width * circular_digest_map_shrink_factor,
             'map_height' : map_height * circular_digest_map_shrink_factor,
             'feature_click_callback' : map_feature_click_callback
         });
-		gc_c = GiraffeControl($, gd_c, dom_control_c);
+        gc_c = GiraffeControl($, gd_c, dom_control_c);
 
-		// Show the linear map by default
+        // Show the linear map by default
         cpanes.hide_all();
         cpanes.show(0);
 
-		return cpanes;
-	}
+        return cpanes;
+    }
 
     function digest_tab(dom) {
 
-		// Labels at the top
-		var label_panes = Switch_Panes(
+        // Labels at the top
+        var label_panes = Switch_Panes(
             [['Cutters','See restriction enzymes that cut the sequence'],
              ['Linear Digest','See restriction digest bands assuming a linear sequence'],
              ['Circular Digest','See restriction digest bands assuming a circular sequence']
@@ -409,199 +411,199 @@ window.GiraffeAnalyze = function ($,gd,options) {
         );
 
         // Digest maps above: need to pass in digest panes so that
-		// the map controls can pick the corresponding digest pane
-		var map_panes = digest_map_panes(dom);
-		var cutters_to_show = [1];
+        // the map controls can pick the corresponding digest pane
+        var map_panes = digest_map_panes(dom);
+        var cutters_to_show = [1];
 
-		var digest_data_dom = 
-			$('<div id="giraffe-digest-data"></div>')
-				.appendTo(dom);
+        var digest_data_dom = 
+            $('<div id="giraffe-digest-data"></div>')
+                .appendTo(dom);
 
-		// Make this function using closures, so that the function
-		// definitions and generic cutter lists get read only once--not each
-		// time this function is called
-		var write_digest_data = (function () {
-			var list;
-			var all = cutters.all();
-			var non = cutters.non();
+        // Make this function using closures, so that the function
+        // definitions and generic cutter lists get read only once--not each
+        // time this function is called
+        var write_digest_data = (function () {
+            var list;
+            var all = cutters.all();
+            var non = cutters.non();
 
-			function make_cutter_list() {
+            function make_cutter_list() {
                 var c, i;
                 var all_of_this, cuts, fids;
                 var name, s, item;
 
-				if (cutters_to_show.length > 0) {
+                if (cutters_to_show.length > 0) {
 
-					for (i = 0; i < all.length; i++) {
-						all_of_this = all[i].other_cutters();
-						cuts = [];
-						fids = [];
-						for (c = 0; c < all_of_this.length; c++) {
-							cuts.push(gd.all_features[all_of_this[c]].cut());
-							fids.push(gd.all_features[all_of_this[c]].id());
-						}
+                    for (i = 0; i < all.length; i++) {
+                        all_of_this = all[i].other_cutters();
+                        cuts = [];
+                        fids = [];
+                        for (c = 0; c < all_of_this.length; c++) {
+                            cuts.push(gd.all_features[all_of_this[c]].cut());
+                            fids.push(gd.all_features[all_of_this[c]].id());
+                        }
 
-						if (cutters_to_show.indexOf(cuts.length) >= 0) {
-							name = $('<label></label>').append(all[i].name());
-							for (c = 0; c < cuts.length; c++) {
-								cuts[c] = '<a href="#" seq-title="'+all[i].name() +
+                        if (cutters_to_show.indexOf(cuts.length) >= 0) {
+                            name = $('<label></label>').append(all[i].name());
+                            for (c = 0; c < cuts.length; c++) {
+                                cuts[c] = '<a href="#" seq-title="'+all[i].name() +
                                     ' cut site" bp="feature-'+fids[c]+'" class="giraffe-bp">'+cuts[c]+'</a>';
-							}
-							s = $('<p>Cuts after '+cuts.join(', ')+'</p>');
-							item = $('<li></li>').append(name).append(s);
-							$(list).append(item);
-						}
-					}
-				} else {
-					// Non-cutters
-					digest_data_dom.append(
-						'<p>The following cutters do not cut this sequence.</p>');
-					for (i = 0; i < non.length; i++) {
-						name = $('<label></label>').append(non[i]);
-						item = $('<li></li>').append(name);
-						$(list).append(item);
-					}
-				}
-			}
+                            }
+                            s = $('<p>Cuts after '+cuts.join(', ')+'</p>');
+                            item = $('<li></li>').append(name).append(s);
+                            $(list).append(item);
+                        }
+                    }
+                } else {
+                    // Non-cutters
+                    digest_data_dom.append(
+                        '<p>The following cutters do not cut this sequence.</p>');
+                    for (i = 0; i < non.length; i++) {
+                        name = $('<label></label>').append(non[i]);
+                        item = $('<li></li>').append(name);
+                        $(list).append(item);
+                    }
+                }
+            }
 
-			function make_digest_list(circular) {
+            function make_digest_list(circular) {
                 var a0;
 
-				if (cutters_to_show.length < 1) {
-					return;
-				}
-
-                function cutter_sort(a,b) {
-						return gd.all_features[a].start() -
-							gd.all_features[b].start();
+                if (cutters_to_show.length < 1) {
+                    return;
                 }
 
-				for (var i = 0; i < all.length; i++) {
-					var cuts = [];
-					var all_of_this = all[i].other_cutters();
-					all_of_this.sort(cutter_sort);
-					for (var c = 0; c < all_of_this.length; c++) {
-						cuts.push(gd.all_features[all_of_this[c]].cut());
-					}
+                function cutter_sort(a,b) {
+                        return gd.all_features[a].start() -
+                            gd.all_features[b].start();
+                }
 
-					if (cutters_to_show.indexOf(cuts.length) >= 0) {
-						var name = $('<label></label>').append(all[i].name());
-						var digests = [];
-						for (var j=0; j<cuts.length; j++) {
-							if (j === 0 && !circular) {
-								a0 = '<a href="#" class="giraffe-bp" ' +
+                for (var i = 0; i < all.length; i++) {
+                    var cuts = [];
+                    var all_of_this = all[i].other_cutters();
+                    all_of_this.sort(cutter_sort);
+                    for (var c = 0; c < all_of_this.length; c++) {
+                        cuts.push(gd.all_features[all_of_this[c]].cut());
+                    }
+
+                    if (cutters_to_show.indexOf(cuts.length) >= 0) {
+                        var name = $('<label></label>').append(all[i].name());
+                        var digests = [];
+                        for (var j=0; j<cuts.length; j++) {
+                            if (j === 0 && !circular) {
+                                a0 = '<a href="#" class="giraffe-bp" ' +
                                     'seq-title="Fragment cut by ' +
                                     all[i].name() + '" bp="1,'+cuts[j]+'">';
-								digests.push(a0+'1-'+(cuts[j])+'</a> ('+cuts[j]+' bp)');
-							}
-							if (j+1 == cuts.length) {
-								if (circular) {
-									a0 = '<a href="#" class="giraffe-bp" ' +
+                                digests.push(a0+'1-'+(cuts[j])+'</a> ('+cuts[j]+' bp)');
+                            }
+                            if (j+1 == cuts.length) {
+                                if (circular) {
+                                    a0 = '<a href="#" class="giraffe-bp" ' +
                                         'seq-title="Fragment cut by ' + 
                                         all[i].name()+'" bp="' +
                                         (cuts[j]+1)+','+cuts[0]+'">';
-									digests.push(a0+(cuts[j]+1)+'-'+cuts[0]+'</a> ('+
-												 (seqlen-(cuts[j]+1)+1+cuts[0])+' bp)');
-								} else {
-									a0 = '<a href="#" class="giraffe-bp" ' +
+                                    digests.push(a0+(cuts[j]+1)+'-'+cuts[0]+'</a> ('+
+                                                 (seqlen-(cuts[j]+1)+1+cuts[0])+' bp)');
+                                } else {
+                                    a0 = '<a href="#" class="giraffe-bp" ' +
                                         'seq-title="Fragment cut by ' +
                                         all[i].name()+'" bp="' +
                                         (cuts[j]+1)+','+seqlen+'">';
-									digests.push(a0+(cuts[j]+1)+'-'+seqlen+'</a> ('+
-												 (seqlen-(cuts[j]+1)+1)+' bp)');
-								}
-							} else {
-								a0 = '<a href="#" class="giraffe-bp" ' +
+                                    digests.push(a0+(cuts[j]+1)+'-'+seqlen+'</a> ('+
+                                                 (seqlen-(cuts[j]+1)+1)+' bp)');
+                                }
+                            } else {
+                                a0 = '<a href="#" class="giraffe-bp" ' +
                                     'seq-title="Fragment cut by ' +
                                     all[i].name()+'" bp="' +
                                     (cuts[j]+1)+','+cuts[j+1]+'">';
-								digests.push(a0+(cuts[j]+1)+'-'+(cuts[j+1])+'</a> ('+
-											 (cuts[j+1]-(cuts[j]+1)+1)+' bp)');
-							}
-						}
-						var s = $('<p>'+digests.join(', ')+'</p>');
-						var item = $('<li></li>').append(name).append(s);
-						$(list).append(item);
-					}
-				}
-			}
-			
-			// The actual digest drawing function
-			return function () {
-				digest_data_dom.empty();
-				list = $('<ul></ul>').addClass('giraffe-enzyme-list');
+                                digests.push(a0+(cuts[j]+1)+'-'+(cuts[j+1])+'</a> ('+
+                                             (cuts[j+1]-(cuts[j]+1)+1)+' bp)');
+                            }
+                        }
+                        var s = $('<p>'+digests.join(', ')+'</p>');
+                        var item = $('<li></li>').append(name).append(s);
+                        $(list).append(item);
+                    }
+                }
+            }
+            
+            // The actual digest drawing function
+            return function () {
+                digest_data_dom.empty();
+                list = $('<ul></ul>').addClass('giraffe-enzyme-list');
 
 
-				switch (label_panes.current()) {
-					case 0:
-						make_cutter_list();
-						break;
-					case 1:
-						make_digest_list(false);
-						break;
-					case 2:
-						make_digest_list(true);
-						break;
-					default:
-						break;
-				}
+                switch (label_panes.current()) {
+                    case 0:
+                        make_cutter_list();
+                        break;
+                    case 1:
+                        make_digest_list(false);
+                        break;
+                    case 2:
+                        make_digest_list(true);
+                        break;
+                    default:
+                        break;
+                }
 
-				digest_data_dom.append(list);
+                digest_data_dom.append(list);
                 sequence_viewer_bp_event(digest_data_dom);
-			};
-		})();
+            };
+        })();
 
-		$(label_panes.links).click(function (event) {
-			var pane;
+        $(label_panes.links).click(function (event) {
+            var pane;
 
-			// Pick which map to draw, depending on the
-			// tab that's clicked
-			switch (label_panes.current()) {
-				case 0:
-				case 1:
-					pane = 0;
-					break;
-				case 2:
-					pane = 1;
-					break;
+            // Pick which map to draw, depending on the
+            // tab that's clicked
+            switch (label_panes.current()) {
+                case 0:
+                case 1:
+                    pane = 0;
+                    break;
+                case 2:
+                    pane = 1;
+                    break;
                 default:
                     pane = 0;
                     break;
-			}
-			
-			// Show the appropriate pane
-			map_panes.show(pane);
+            }
+            
+            // Show the appropriate pane
+            map_panes.show(pane);
 
-			// Update cutters_to_show to reflect the checkboxes selected in that pane
-			cutters_to_show = [];
-			$(map_panes.pane(pane)).find("input[checked]").each(function () {
-				cutters_to_show.push(parseInt($(this).attr('name').match(/\d+/), 10));
-			});
+            // Update cutters_to_show to reflect the checkboxes selected in that pane
+            cutters_to_show = [];
+            $(map_panes.pane(pane)).find("input[checked]").each(function () {
+                cutters_to_show.push(parseInt($(this).attr('name').match(/\d+/), 10));
+            });
 
-			// Redraw the digest
-			write_digest_data();
-		});
+            // Redraw the digest
+            write_digest_data();
+        });
 
         // Change the name of the "hide all" label to non-cutters
-		$(map_panes.panes).find('input[name="no-cutters"]')
+        $(map_panes.panes).find('input[name="no-cutters"]')
                           .siblings('.cutter-label')
                           .text('non-cutters');
 
 
-		// Force rewriting the digest data when the cutter controls are changed
-		$(map_panes.panes).find('input[name*="cutters"]').click(function (event) {
-			cutters_to_show = [];
+        // Force rewriting the digest data when the cutter controls are changed
+        $(map_panes.panes).find('input[name*="cutters"]').click(function (event) {
+            cutters_to_show = [];
 
-			// Parse out selected options
-			$(this).closest('tbody').find('input[checked][name|="cutters"]').each(function () {
-				cutters_to_show.push(parseInt($(this).attr('name').match(/\d+/), 10));
-			});
+            // Parse out selected options
+            $(this).closest('tbody').find('input[checked][name|="cutters"]').each(function () {
+                cutters_to_show.push(parseInt($(this).attr('name').match(/\d+/), 10));
+            });
 
-			write_digest_data();
-		});
+            write_digest_data();
+        });
 
-		// Select the cutter pane and draw everything the first time
-		$(label_panes.link(0)).click();
+        // Select the cutter pane and draw everything the first time
+        $(label_panes.link(0)).click();
 
     }
 
@@ -1066,6 +1068,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
             if (bpstr.indexOf('feature-') === 0) {
                 fid = parseInt(bpstr.replace(/\D/g, ''), 10);
                 feature = gd.all_features[fid];
+
                 // Fancy highlight that shows cut sites for enzymes
                 map_feature_click_callback(feature);
             } else {
@@ -1203,25 +1206,25 @@ window.GiraffeAnalyze = function ($,gd,options) {
     }
 
     function map_feature_click_callback(feature) {
-		var bp; // Start and end of feature
-		var name = feature.name(); // Tag to display
+        var bp; // Start and end of feature
+        var name = feature.name(); // Tag to display
 
-		// Only if it's an enzyme:
-		var sequence;
-		var cut_marker = '<sup>&#x25BC;</sup>';
-		var cut_position = feature.cut() - feature.start() + 1;
+        // Only if it's an enzyme:
+        var sequence;
+        var cut_marker = '<sup>&#x25BC;</sup>';
+        var cut_position = feature.cut() - feature.start() + 1;
 
         sequence_viewer_clear_highlight();
         bp = [feature.start(),feature.end()];
 
-		// Mark cut site if it's an enzyme
-		if (feature.type() == gd.Feature_Type.enzyme) {
-			sequence = feature.clockwise_sequence().toUpperCase(); 
-			sequence = sequence.substring(0, cut_position) + 
-			           cut_marker +
-			           sequence.substring(cut_position);
-			name += ' (' + sequence + ')';
-		}
+        // Mark cut site if it's an enzyme
+        if (feature.type() == gd.Feature_Type.enzyme) {
+            sequence = feature.clockwise_sequence().toUpperCase(); 
+            sequence = sequence.substring(0, cut_position) + 
+                       cut_marker +
+                       sequence.substring(cut_position);
+            name += ' (' + sequence + ')';
+        }
 
         sequence_viewer_bp_event_highlight(bp,name);
     }
@@ -1265,196 +1268,196 @@ window.GiraffeAnalyze = function ($,gd,options) {
 
 // Private utility function with no external or closure use
 function title_case(str) {
-	str = str.replace(/\W/, ' ');
-	return str.charAt(0).toUpperCase() + str.slice(1);
+    str = str.replace(/\W/, ' ');
+    return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 // Private utility function with no external or closure use
 function type_code_to_name(code, gd) {
     // Iterate over the MEMBERS of gd.Feature_Type: NOT AN ARRAY
-	for (var type in gd.Feature_Type) {
-		if (code == gd.Feature_Type[type]) {
-			return title_case(type);
-		}
-	}
+    for (var type in gd.Feature_Type) {
+        if (code == gd.Feature_Type[type]) {
+            return title_case(type);
+        }
+    }
 
-	return "";
+    return "";
 }
 
-window.GiraffeTable = function ($,gd,dom) {	
- 	var enzyme_table,
-	    feature_table,
-		orf_table,
+window.GiraffeTable = function ($,gd,dom) { 
+    var enzyme_table,
+        feature_table,
+        orf_table,
         fx, f,
         row;
 
-	// Read the features in for each table, only displaying the table
-	// if there are features for it
+    // Read the features in for each table, only displaying the table
+    // if there are features for it
 
-	// Standard features
-	if (gd.std_features.length > 0) {
-		
-		// Initialize table
-		feature_table = $('<table></table>')
-			.append('<colgroup>' +
+    // Standard features
+    if (gd.std_features.length > 0) {
+        
+        // Initialize table
+        feature_table = $('<table></table>')
+            .append('<colgroup>' +
                         '<col class="giraffe-table-feature-name" />' +
                         '<col class="giraffe-table-feature-type" />' +
                         '<col class="giraffe-table-feature-data" span="2"/>' +
                     '</colgroup>')
-			.append('<thead><tr>' +
+            .append('<thead><tr>' +
                         '<th>Feature Name</th>' +
                         '<th>Type</th>' +
                         '<th>Start</th>' +
                         '<th>End<th>' +
                     '</tr></thead>')
-			.append('<tbody></tbody>')
-			.addClass('giraffe-table-feature');
+            .append('<tbody></tbody>')
+            .addClass('giraffe-table-feature');
 
-		for (fx = 0; fx < gd.std_features.length; fx++) {
-			f = gd.std_features[fx];
+        for (fx = 0; fx < gd.std_features.length; fx++) {
+            f = gd.std_features[fx];
             row = $('<tr></tr>').appendTo(feature_table.children('tbody'))
                                     .attr('id', 'feature-' + f.id());
 
             row.append('<td class="giraffe-table-feature-name">' + f.name() + '</td>');
-			row.append('<td>' + type_code_to_name(f.type(), gd) + '</td>');
+            row.append('<td>' + type_code_to_name(f.type(), gd) + '</td>');
 
-			if (f.clockwise()) {
-				row.append('<td>' + f.start() + '</td>');
-				row.append('<td>' + f.end() + '</td>');
-			} else {
-				row.append('<td>' + f.end() + '</td>');
-				row.append('<td>' + f.start() + '</td>');
-			}
-		}
+            if (f.clockwise()) {
+                row.append('<td>' + f.start() + '</td>');
+                row.append('<td>' + f.end() + '</td>');
+            } else {
+                row.append('<td>' + f.end() + '</td>');
+                row.append('<td>' + f.start() + '</td>');
+            }
+        }
 
-		$(dom).append(feature_table);
-	}
+        $(dom).append(feature_table);
+    }
 
-	// ORFs
-	if (gd.orf_features.length > 0) {
+    // ORFs
+    if (gd.orf_features.length > 0) {
 
-		// Initialize table
-		orf_table = $('<table></table>')
-			.append('<colgroup>' +
+        // Initialize table
+        orf_table = $('<table></table>')
+            .append('<colgroup>' +
                         '<col class="giraffe-table-feature-name" />' +
                         '<col class="giraffe-table-feature-data" span="2"/>' +
                     '</colgroup>')
-			.append('<thead><tr>' +
+            .append('<thead><tr>' +
                         '<th>ORF Frame</th>' +
                         '<th>Start</th>'     +
                         '<th>End<th>'        +
                     '</tr></thead>')
-			.append('<tbody></tbody>')
-			.addClass('giraffe-table-orf');
+            .append('<tbody></tbody>')
+            .addClass('giraffe-table-orf');
 
-		for (fx = 0; fx < gd.orf_features.length; fx++) {
-			f = gd.orf_features[fx];
+        for (fx = 0; fx < gd.orf_features.length; fx++) {
+            f = gd.orf_features[fx];
             row = $('<tr></tr>').appendTo(orf_table.children('tbody'))
                                 .attr('id', 'feature-' + f.id());
 
             row.append('<td class="giraffe-table-feature-name">' + f.name().replace(/ORF\s+[fF]rame\s+/, '') + '</td>');
 
-			if (f.clockwise()) {
-				row.append('<td>' + f.start() + '</td>');
-				row.append('<td>' + f.end() + '</td>');
-			} else {
-				row.append('<td>' + f.end() + '</td>');
-				row.append('<td>' + f.start() + '</td>');
-			}
-		}
+            if (f.clockwise()) {
+                row.append('<td>' + f.start() + '</td>');
+                row.append('<td>' + f.end() + '</td>');
+            } else {
+                row.append('<td>' + f.end() + '</td>');
+                row.append('<td>' + f.start() + '</td>');
+            }
+        }
 
-		$(dom).append(orf_table);
-	}
+        $(dom).append(orf_table);
+    }
 
-	// Enzymes
-	if (gd.enzyme_features.length > 0) {
+    // Enzymes
+    if (gd.enzyme_features.length > 0) {
 
-		enzyme_table = $('<table></table>')
-			.append('<colgroup>' +
+        enzyme_table = $('<table></table>')
+            .append('<colgroup>' +
                         '<col class="giraffe-table-feature-name" />' +
                         '<col class="giraffe-table-feature-data" />' +
                     '</colgroup>')
-			.append('<thead><tr>' +
+            .append('<thead><tr>' +
                         '<th>Enzyme Name</th>' +
                         '<th>Cut</th>' +
                     '</tr></thead>')
-			.append('<tbody></tbody>')
-			.addClass('giraffe-table-enzyme');
+            .append('<tbody></tbody>')
+            .addClass('giraffe-table-enzyme');
 
-		for (fx = 0; fx < gd.enzyme_features.length; fx++) {
-			f = gd.enzyme_features[fx];
+        for (fx = 0; fx < gd.enzyme_features.length; fx++) {
+            f = gd.enzyme_features[fx];
 
-			if (f.default_show_feature() && f.cut_count() == 1) {
-				row = $('<tr></tr>').appendTo(enzyme_table.children('tbody'))
+            if (f.default_show_feature() && f.cut_count() == 1) {
+                row = $('<tr></tr>').appendTo(enzyme_table.children('tbody'))
                                     .attr('id', 'feature-' + f.id());
 
                 row.append('<td class="giraffe-table-feature-name">' + f.name() + '</td>');
-				row.append('<td>' + f.cut() + '</td>');
-			}
-		}
+                row.append('<td>' + f.cut() + '</td>');
+            }
+        }
 
-		$(dom).append(enzyme_table);
-	}
+        $(dom).append(enzyme_table);
+    }
 
-	// Set general appearance properties
-	$(dom).children().addClass('giraffe-table');
-	
-	return $(dom);
+    // Set general appearance properties
+    $(dom).children().addClass('giraffe-table');
+    
+    return $(dom);
 };
 
-window.GiraffeControl = function ($,gd_map,dom) {	
- 	var controls,
-		table,
-		_debug = false,
-		draw_table,
-		draw_feature_controls,
-		control_feat_types,
-		feat_control_table,
-		ftx, ft;
+window.GiraffeControl = function ($,gd_map,dom) {   
+    var controls,
+        table,
+        _debug = false,
+        draw_table,
+        draw_feature_controls,
+        control_feat_types,
+        feat_control_table,
+        ftx, ft;
 
-	draw_table = true;
-	draw_enzyme_controls = true;
-	draw_feature_controls = true;
-	//XXX For now, we keep this hidden. Maybe we'll do something with it later.
-	draw_extra_features_checkbox = false;
-	
-	if (gd_map.is_digest()) {
-		draw_table = false;
-		draw_feature_controls = false;
-	}
+    draw_table = true;
+    draw_enzyme_controls = true;
+    draw_feature_controls = true;
+    //XXX For now, we keep this hidden. Maybe we'll do something with it later.
+    draw_extra_features_checkbox = false;
 
-	controls = $('<form action="" class="giraffe-controls">\
-		<fieldset><legend>Feature Options</legend><table><tbody class="giraffe-controls-layout"></tbody></table>\
-		</fieldset></form>');
+    if (gd_map.is_digest()) {
+        draw_table = false;
+        draw_feature_controls = false;
+    }
 
-	if (draw_enzyme_controls) {
-		controls.find('tbody').append(
-			'<tr><td class="enzymes"><table>' +
-			'<tbody>' +
-				'<tr><th>Restriction Enzymes</th>' +
-				'<td><label><input type="checkbox" checked="checked"' +
-					         'name="cutters-1" value="show" />' +
-				'<span class="cutter-label">1-cutters</span></label></td>' +
-				'<td><label><input type="checkbox"' +
-					          'name="cutters-2" value="show" />' +
-				'<span class="cutter-label">2-cutters</span></label></td>' +
-				'<td><label><input type="checkbox"' +
-					          'name="cutters-3" value="show" />' +
-				'<span class="cutter-label">3-cutters</span></label></td>' +
-				'<td><label><input type="checkbox"' +
-					          'name="no-cutters" value="show" />' +
-				'<span class="cutter-label">hide all</span></label></td></tr>' +
-			'</tbody>' +
-			'</table></td></tr>');
+    controls = $('<form action="" class="giraffe-controls">' +
+        '<fieldset><legend>Feature Options</legend><table><tbody class="giraffe-controls-layout"></tbody></table>' +
+        '</fieldset></form>');
 
-		// Changes to the Restriction Enzyme selection
-		controls.find('input[name|="cutters"]').click(function (event) {
-			var opts = [];
+    if (draw_enzyme_controls) {
+        controls.find('tbody').append(
+            '<tr><td class="enzymes"><table>' +
+            '<tbody>' +
+                '<tr><th>Restriction Enzymes</th>' +
+                '<td><label><input type="checkbox" checked="checked"' +
+                             'name="cutters-1" value="show" />' +
+                '<span class="cutter-label">1-cutters</span></label></td>' +
+                '<td><label><input type="checkbox"' +
+                              'name="cutters-2" value="show" />' +
+                '<span class="cutter-label">2-cutters</span></label></td>' +
+                '<td><label><input type="checkbox"' +
+                              'name="cutters-3" value="show" />' +
+                '<span class="cutter-label">3-cutters</span></label></td>' +
+                '<td><label><input type="checkbox"' +
+                              'name="no-cutters" value="show" />' +
+                '<span class="cutter-label">hide all</span></label></td></tr>' +
+            '</tbody>' +
+            '</table></td></tr>');
 
-			// Parse out selected options
-			$(this).closest('tbody').find("input[checked]").each(function () {
-				opts.push(parseInt($(this).attr('name').match(/\d+/), 10));
-			});
+        // Changes to the Restriction Enzyme selection
+        controls.find('input[name|="cutters"]').click(function (event) {
+            var opts = [];
+
+            // Parse out selected options
+            $(this).closest('tbody').find("input[checked]").each(function () {
+                opts.push(parseInt($(this).attr('name').match(/\d+/), 10));
+            });
 
             // Automatically check and uncheck the no-cutters checkbox,
             // depending on whether or not there are actually cutters shown
@@ -1481,12 +1484,12 @@ window.GiraffeControl = function ($,gd_map,dom) {
                 });
             }
 
-			gd_map.redraw_cutters(opts);
-		});
+            gd_map.redraw_cutters(opts);
+        });
 
 
-		// No-cutter textbox
-		controls.find('input[name="no-cutters"]').click(function (event) {
+        // No-cutter textbox
+        controls.find('input[name="no-cutters"]').click(function (event) {
             if ($(this).attr("checked")) {
                 controls.find('input[name|="cutters"]').removeAttr("checked");
                 gd_map.redraw_cutters([]);
@@ -1506,51 +1509,51 @@ window.GiraffeControl = function ($,gd_map,dom) {
                     } 
                 });
             }
-		});
-	}
-	
-	if (draw_feature_controls) {
-		//                     Control name        feature type
-		control_feat_types = [["Generic features", "feature"],
-							  ["Genes",            "gene"],
-							  ["Regulatory",       "regulatory"],
-							  ["Promoters",        "promoter"],
-							  ["Primers",          "primer"],
-							  ["Terminators",      "terminator"],
-							  ["Origins",          "origin"],
-							  ["ORFs",             "orf"]];
+        });
+    }
+    
+    if (draw_feature_controls) {
+        //                     Control name        feature type
+        control_feat_types = [["Generic features", "feature"],
+                              ["Genes",            "gene"],
+                              ["Regulatory",       "regulatory"],
+                              ["Promoters",        "promoter"],
+                              ["Primers",          "primer"],
+                              ["Terminators",      "terminator"],
+                              ["Origins",          "origin"],
+                              ["ORFs",             "orf"]];
 
-		feat_control_table = 
-			$('<tr><td class="features">' +
-			  '<table><thead><tr><th>Show</th><th>Label</th><th>Feature Type</th></tr>' + 
-			  '</thead><tbody></tbody></table></td></tr>')
-			.appendTo(controls.find('.giraffe-controls-layout'))
-			.find('tbody');
+        feat_control_table = 
+            $('<tr><td class="features">' +
+              '<table><thead><tr><th>Show</th><th>Label</th><th>Feature Type</th></tr>' + 
+              '</thead><tbody></tbody></table></td></tr>')
+            .appendTo(controls.find('.giraffe-controls-layout'))
+            .find('tbody');
 
-		for (ftx = 0; ftx < control_feat_types.length; ftx++) {
-			feat_control_table.append(
-			'<tr class="' + control_feat_types[ftx][1] + '">\
-				<td><input type="checkbox" checked="checked"\
-					   name="all-' + control_feat_types[ftx][1] + '" value="show" />\
-				</td>\
-				<td><input type="checkbox" checked="checked"\
-					   name="all-' + control_feat_types[ftx][1] + '" value="label" />\
-				</td>\
-				<td>' +  control_feat_types[ftx][0] + '</td></tr>');
-		}
+        for (ftx = 0; ftx < control_feat_types.length; ftx++) {
+            feat_control_table.append(
+            '<tr class="' + control_feat_types[ftx][1] + '">' +
+                '<td><input type="checkbox" checked="checked"' +
+                     'name="all-' + control_feat_types[ftx][1] + '" value="show" />' +
+                '</td>' +
+                '<td><input type="checkbox" checked="checked"' +
+                     'name="all-' + control_feat_types[ftx][1] + '" value="label" />' +
+                '</td>' +
+                '<td>' +  control_feat_types[ftx][0] + '</td></tr>');
+        }
 
-		// Changes to the feature types
-		controls.find('td.features input[value="show"]').click(function (event) {
-			var feat_type_name,
-				label_checkbox;
+        // Changes to the feature types
+        controls.find('td.features input[value="show"]').click(function (event) {
+            var feat_type_name,
+                label_checkbox;
 
-			feat_type_name = $(this).attr("name").replace(/all-/, '');
-			label_checkbox = $(this).parent().siblings().children().first();
+            feat_type_name = $(this).attr("name").replace(/all-/, '');
+            label_checkbox = $(this).parent().siblings().children().first();
 
-			if ($(this).attr("checked")) {
-				gd_map.show_feature_type(feat_type_name);
-				label_checkbox.removeAttr("disabled");
-				label_checkbox.attr("checked", "checked");
+            if ($(this).attr("checked")) {
+                gd_map.show_feature_type(feat_type_name);
+                label_checkbox.removeAttr("disabled");
+                label_checkbox.attr("checked", "checked");
 
                 if (draw_table) {
                     $('.giraffe-control-table').find('tr').each(function () {
@@ -1564,9 +1567,9 @@ window.GiraffeControl = function ($,gd_map,dom) {
                     });
                 }
 
-			} else {
-				gd_map.hide_feature_type(feat_type_name);
-				label_checkbox.attr("disabled", "disabled");
+            } else {
+                gd_map.hide_feature_type(feat_type_name);
+                label_checkbox.attr("disabled", "disabled");
 
                 if (draw_table) {
                     $('.giraffe-control-table').find('tr').each(function () {
@@ -1579,14 +1582,14 @@ window.GiraffeControl = function ($,gd_map,dom) {
                     });
                 }
 
-			}
-		});
+            }
+        });
 
-		controls.find('td.features input[value="label"]').click(function (event) {
-			var feat_type_name = $(this).attr("name").replace(/all-/, '');
+        controls.find('td.features input[value="label"]').click(function (event) {
+            var feat_type_name = $(this).attr("name").replace(/all-/, '');
 
-			if ($(this).attr("checked")) {
-				gd_map.show_feature_label_type(feat_type_name);
+            if ($(this).attr("checked")) {
+                gd_map.show_feature_label_type(feat_type_name);
 
                 if (draw_table) {
                     $('.giraffe-control-table').find('tr').each(function () {
@@ -1598,8 +1601,8 @@ window.GiraffeControl = function ($,gd_map,dom) {
                     });
                 }
 
-			} else {
-				gd_map.hide_feature_label_type(feat_type_name);
+            } else {
+                gd_map.hide_feature_label_type(feat_type_name);
 
                 if (draw_table) {
                     $('.giraffe-control-table').find('tr').each(function () {
@@ -1611,85 +1614,85 @@ window.GiraffeControl = function ($,gd_map,dom) {
                     });
                 }
 
-			}
-		});
+            }
+        });
 
-	}
+    }
 
-	if (draw_extra_features_checkbox) {
-		controls.children('fieldset')
-			.append('<label><input type="checkbox" name="extra-features" value="show" />\
-					Show extra features</label>');
+    if (draw_extra_features_checkbox) {
+        controls.children('fieldset')
+            .append('<label><input type="checkbox" name="extra-features" value="show" />' +
+                    'Show extra features</label>');
 
-		// The "extra features" checkbox
-		controls.find('input[name="extra-features"]').click(function (event) {
-			if ($(this).attr("checked")) {
-				gd_map.show_extra_features();
-			} else {
-				gd_map.hide_extra_features();
-			}
-		});
-	}
+        // The "extra features" checkbox
+        controls.find('input[name="extra-features"]').click(function (event) {
+            if ($(this).attr("checked")) {
+                gd_map.show_extra_features();
+            } else {
+                gd_map.hide_extra_features();
+            }
+        });
+    }
 
     function GiraffeControlTable() {
         var the_table;
 
-		// INDIVIDUAL FEATURE TABLE
-		the_table = GiraffeTable($, gd_map.gd, 
-			$('<div></div>')
-				.attr('id', random_dom_id())
-				.addClass('giraffe-control-table'));
+        // INDIVIDUAL FEATURE TABLE
+        the_table = GiraffeTable($, gd_map.gd, 
+            $('<div></div>')
+                .attr('id', random_dom_id())
+                .addClass('giraffe-control-table'));
 
-		the_table.find('colgroup')
-			.prepend('<col class="giraffe-table-feature-show"  />' +
+        the_table.find('colgroup')
+            .prepend('<col class="giraffe-table-feature-show"  />' +
                      '<col class="giraffe-table-feature-label" />');
 
-		// Insert header cells in all of the headers to make
-		// the tables the right shape
-		the_table.find('thead>tr')
-			.prepend('<th>Show Feature</th>' +
+        // Insert header cells in all of the headers to make
+        // the tables the right shape
+        the_table.find('thead>tr')
+            .prepend('<th>Show Feature</th>' +
                      '<th>Label Feature</th>');
 
-		// Insert show/label checkboxes in all of the body rows
-		the_table.find('tbody>tr')
-			.each(function (index, html) {
+        // Insert show/label checkboxes in all of the body rows
+        the_table.find('tbody>tr')
+            .each(function (index, html) {
                 // Added in reverse, because of prepend
-				var types = [ 'label', 'show' ], tx;
+                var types = [ 'label', 'show' ], tx;
 
-				for (tx = 0; tx < types.length; tx++) {
+                for (tx = 0; tx < types.length; tx++) {
                     var foo = $('<td></td>')
                         .append($('<input type="checkbox" checked="checked" />')
                             .attr('value', types[tx])
                             .attr('name', $(this).attr('id')))
                         .prependTo(this);
-				}
+                }
 
-			});
-					
-		// The table checkboxes
-		the_table.find('input[value="label"]').click(function (event) {
-			var feat_id = parseInt($(this).attr("name").replace(/\D/g, ''), 10);
+            });
+                    
+        // The table checkboxes
+        the_table.find('input[value="label"]').click(function (event) {
+            var feat_id = parseInt($(this).attr("name").replace(/\D/g, ''), 10);
 
-			if ($(this).attr("checked")) {
-				gd_map.show_feature_label(feat_id);
-			} else {
-				gd_map.hide_feature_label(feat_id);
-			}
-		});
+            if ($(this).attr("checked")) {
+                gd_map.show_feature_label(feat_id);
+            } else {
+                gd_map.hide_feature_label(feat_id);
+            }
+        });
 
-		the_table.find('input[value="show"]').click(function (event) {
-			var feat_id = parseInt($(this).attr("name").replace(/\D/g, ''), 10),
-				label_checkbox = $(this).parent().siblings().children('input').first();
+        the_table.find('input[value="show"]').click(function (event) {
+            var feat_id = parseInt($(this).attr("name").replace(/\D/g, ''), 10),
+                label_checkbox = $(this).parent().siblings().children('input').first();
 
-			if ($(this).attr("checked")) {
-				gd_map.show_feature(feat_id);
-				label_checkbox.removeAttr("disabled");
-				label_checkbox.attr("checked", "checked");
-			} else {
-				label_checkbox.attr("disabled", "disabled");
-				gd_map.hide_feature(feat_id);
-			}
-		});
+            if ($(this).attr("checked")) {
+                gd_map.show_feature(feat_id);
+                label_checkbox.removeAttr("disabled");
+                label_checkbox.attr("checked", "checked");
+            } else {
+                label_checkbox.attr("disabled", "disabled");
+                gd_map.hide_feature(feat_id);
+            }
+        });
 
         // Make the names in the table function as links instead
         the_table.find('td.giraffe-table-feature-name').each(function() {
@@ -1711,15 +1714,16 @@ window.GiraffeControl = function ($,gd_map,dom) {
         return the_table;
     }
 
-	if (draw_table) {
+    if (draw_table) {
         table = GiraffeControlTable();
-		controls.append(table);
-	}
+        controls.append(table);
+    }
 
-	$(dom).append(controls);
+    $(dom).append(controls);
 
-	return controls;
+    return controls;
 };
 
 })();
 
+// vi: set expandtab:ts=4:sw=4:sts=4
