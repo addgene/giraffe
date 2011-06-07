@@ -96,7 +96,6 @@ class ItDetectsFeaturesInDNASequences(unittest.TestCase):
                     self.assertEqual(same_length[0]['end'],
                             len(feature_sequence));
 
-#41 F:U3PPT AAAAAAGAAAAAAGGGTGGACTGGGA
 
 if __name__ == '__main__':
     unittest.main()
