@@ -40,9 +40,12 @@ class Giraffe_Mappable_Model(models.Model):
         import orfs
         db = Feature_Database.objects.get(name=db_name)
 
-        # remove leading > for FASTA sequence
-        if sequence.startswith('>'):
-            sequence = re.sub(r'^\>[^\n]*\n','',sequence);
+        # remove FASTA > and ; comments
+        # Match any lines that start with > or ;, and then
+        # the rest of that line _up to but not including_ the line break
+        # (this is important so that multiple comments in a row can be detected)
+        sequence = re.sub(r'(^|\n)\s*[>;][^\n]+(?=\n)','',sequence);
+
         # clean the sequence
         sequence = re.sub(r'[^A-Za-z*]', '', sequence)
 
@@ -158,7 +161,7 @@ class Sequence_Feature(Sequence_Feature_Base):
 class Sequence(models.Model):
     @staticmethod
     def verify_clean(sequence):
-        if re.match(r'^[atgcATGCnNbdhkmnrsvwyBDHKMNRSVWYuU\*\s]*$',sequence):
+        if re.match(r'^([atgcATGCnNbdhkmnrsvwyBDHKMNRSVWYuU]|\*|\s)*$',sequence):
             return True
         return False
 
