@@ -43,7 +43,7 @@ class ItDetectsFeaturesInDNASequences(unittest.TestCase):
 
     def test_ItDetectsALoneShortFeature(self):
         """Tests that a very short feature-only sequence detects only itself."""
-        # Detect the features
+        # Detect the feature
         features = self.find_features('GATGACGACGACAAG')
         self.assertEqual(len(features), 1)
         self.assertEqual(features[0]['feature'], 'EK');
