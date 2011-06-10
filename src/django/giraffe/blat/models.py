@@ -218,7 +218,7 @@ class Sequence(models.Model):
         (self.sequence,self.hash) = Sequence.clean_and_hash(self.sequence)
         try:
             super(Sequence,self).save()
-        except utils.IntegrityError as e:
+        except utils.IntegrityError:
             s = Sequence.objects.get(hash=self.hash,db=self.db)
             self.id = s.id
     save.alters_data = True
