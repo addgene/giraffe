@@ -1437,7 +1437,7 @@ window.GiraffeControl = function ($,gd_map,dom) {
                 '<tr><th>Restriction Enzymes</th>' +
                 '<td><label><input type="checkbox" checked="checked"' +
                              'name="cutters-1" value="show" />' +
-                '<span class="cutter-label">1-cutters</span></label></td>' +
+                '<span class="cutter-label">unique cutters</span></label></td>' +
                 '<td><label><input type="checkbox"' +
                               'name="cutters-2" value="show" />' +
                 '<span class="cutter-label">2-cutters</span></label></td>' +
