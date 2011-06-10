@@ -133,6 +133,8 @@ class ItDetectsFeaturesInDNASequences(unittest.TestCase):
         asserts(features)
 
     def test_ItDetectsNothingInAFeatureLessSequence(self):
+        """Tests that sequences which clearly have no features in them do not
+        somehow generate features"""
 
         features = self.find_features('A')
         self.assertEqual(len(features), 0)
