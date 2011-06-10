@@ -145,6 +145,62 @@ class ItDetectsFeaturesInDNASequences(unittest.TestCase):
         features = self.find_features('T'*4096)
         self.assertEqual(len(features), 0)
 
+    def test_ItDetectsFeatureGroupSequences(self):
+        """Tests that sequences which consist of only a triplet of features
+        return all of those features. """
+
+        # Pick some random features from the default db
+        feature_ids_to_test = frozenset([
+            39, 184, 153,  54,  96, 183, 31, 22, 80,  71,
+           108,  73, 114, 147,  10, 138, 21, 85, 41, 180,
+           150, 160, 167, 133, 168, 131, 47, 24, 96,  60
+        ])
+
+        features_to_test = {}
+
+
+        # Load the feature sequences to test
+        with open('fixtures/features/generic.features') as features_file:
+            for (line_num, line) in enumerate(features_file):
+
+                # XXX not reliable, but works or for now
+                feature_id = line_num + 1
+
+                if feature_id in feature_ids_to_test:
+                    line_items = line.split()
+                    features_to_test[feature_id] = {
+                        'feature_sequence': line_items[1],
+                        'feature_name': line_items[0].split(':')[1]
+                    }
+
+        # Make the combined feature sequences
+        for group in zip(feature_ids_to_test[0:10],
+                         feature_ids_to_test[10:20], 
+                         feature_ids_to_test[20:30]):
+
+            # Create the long sequence and groups of features to detect
+            sequence = ''
+            names = []
+            for id in group:
+                sequence += features_to_test[id]['feature_sequence']
+                names.append(features_to_test[id]['feature_name'])
+
+            # Detect the features
+            features = self.find_features(sequence)
+            
+            # Do we detect at least as many features as we put in?
+            self.assertTrue(len(features) >= len(group))
+
+            # Are all of the names there?
+            for (nx, name) in enumerate(names):
+                featureFound = False
+                for feature in features:
+                    if feature['feature']    == name and \
+                       feature['feature_id'] == group[nx]:
+                        featureFound = True
+                        break
+
+                self.assertTrue(featureFound)
 
 
 if __name__ == '__main__':
