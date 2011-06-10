@@ -38,6 +38,11 @@ class ItDetectsFeaturesInDNASequences(unittest.TestCase):
 
             features.append(f.to_dict())
 
+        for f in sequence_obj          \
+                 .sequence_feature_annotated_set \
+                 .select_related('feature_type'):
+            features.append(f.to_dict())
+
         return features
 
 
