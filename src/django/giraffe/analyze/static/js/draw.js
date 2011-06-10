@@ -733,8 +733,10 @@ window.GiraffeDraw = function () {
                     // Only draw enzymes if they are in the list of
                     // cutters to show - i.e. 1 cutter, 2 cutters,
                     // etc.
+                    // If the list is undefined, draw all cutters
                     if (f.type() == ft.enzyme) {
-                        if (_cutters_to_show.indexOf(f.cut_count()) < 0) {
+                        if (typeof(_cutters_to_show) !== 'undefined' &&
+                            _cutters_to_show.indexOf(f.cut_count()) < 0) {
                             f.hide();
                             f.clear_label();
                         } else {
@@ -753,7 +755,16 @@ window.GiraffeDraw = function () {
         };
 
         thi$.redraw_cutters = function (new_cutters_to_show) {
-            _cutters_to_show = new_cutters_to_show;
+            if (arguments.length > 0 &&
+                typeof(new_cutters_to_show) != 'undefined') {
+                _cutters_to_show = new_cutters_to_show;
+                this.show_all_features = false;
+            } else {
+                // Show _all_ cutters
+                _cutters_to_show = undefined;
+                // even the non-default ones
+                this.show_all_features = true;
+            }
             this.redraw(false);
         };
 

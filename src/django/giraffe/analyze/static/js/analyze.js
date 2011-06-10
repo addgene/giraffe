@@ -1411,6 +1411,8 @@ window.GiraffeControl = function ($,gd_map,dom) {
         _debug = false,
         draw_table,
         draw_feature_controls,
+        draw_enzyme_controls,
+        num_explicit_cutters,
         control_feat_types,
         feat_control_table,
         ftx, ft;
@@ -1442,22 +1444,27 @@ window.GiraffeControl = function ($,gd_map,dom) {
                               'name="cutters-2" value="show" />' +
                 '<span class="cutter-label">2-cutters</span></label></td>' +
                 '<td><label><input type="checkbox"' +
-                              'name="cutters-3" value="show" />' +
-                '<span class="cutter-label">3-cutters</span></label></td>' +
+                              'name="all-cutters" value="show" />' +
+                '<span class="cutter-label">all cutters</span></label></td>' +
                 '<td><label><input type="checkbox"' +
                               'name="no-cutters" value="show" />' +
                 '<span class="cutter-label">hide all</span></label></td></tr>' +
             '</tbody>' +
             '</table></td></tr>');
 
+        num_explicit_cutters = 2;
+
         // Changes to the Restriction Enzyme selection
+        // 1- and 2- cutter checkboxes
         controls.find('input[name|="cutters"]').click(function (event) {
             var opts = [];
 
-            // Parse out selected options
-            $(this).closest('tbody').find("input[checked]").each(function () {
-                opts.push(parseInt($(this).attr('name').match(/\d+/), 10));
-            });
+            // Parse out selected 1- or 2-cutter options
+            $(this).closest('tbody')
+                .find('input[checked][name|="cutters"]')
+                .each(function () {
+                    opts.push(parseInt($(this).attr('name').match(/\d+/), 10));
+                });
 
             // Automatically check and uncheck the no-cutters checkbox,
             // depending on whether or not there are actually cutters shown
@@ -1466,6 +1473,12 @@ window.GiraffeControl = function ($,gd_map,dom) {
             } else {
                 controls.find('input[name="no-cutters"]').attr("checked", "checked");
             }
+
+            // Automatically uncheck the all-cutters checkbox,
+            // if any of the options are deselected
+            if (opts.length < num_explicit_cutters) {
+                controls.find('input[name="all-cutters"]').removeAttr("checked");
+            } 
 
             if (draw_table) {
                 $('.giraffe-control-table').find('tr').each(function () {
@@ -1487,11 +1500,37 @@ window.GiraffeControl = function ($,gd_map,dom) {
             gd_map.redraw_cutters(opts);
         });
 
+        // All-cutter checkbox
+        controls.find('input[name="all-cutters"]').click(function (event) {
+            if ($(this).attr("checked")) {
+                controls.find('input[name|="cutters"]').attr("checked", "checked");
+                controls.find('input[name="no-cutters"]').removeAttr("checked");
+                gd_map.redraw_cutters();
+            } else {
+                // When deselected, go back to just 1- and 2-cutters
+                controls.find('input[name|="cutters"]').attr("checked", "checked");
+                controls.find('input[name="no-cutters"]').removeAttr("checked");
+                gd_map.redraw_cutters([1, 2]);
+            }
+
+            if (draw_table) {
+                $('.giraffe-control-table').find('tr').each(function () {
+                    var fid = parseInt($(this).attr('id').replace(/\D/g, ''), 10);
+                    var feat = gd_map.gd.all_features[fid];
+                    if (typeof(feat) !== 'undefined' && feat.type() === gd_map.gd.Feature_Type.enzyme) {
+                        $(this).find('input[value="show"]').attr("checked", "checked");
+                        $(this).find('input[value="label"]').removeAttr("disabled");
+                        $(this).find('input[value="label"]').attr("checked", "checked");
+                    } 
+                });
+            }
+        });
 
         // No-cutter textbox
         controls.find('input[name="no-cutters"]').click(function (event) {
             if ($(this).attr("checked")) {
                 controls.find('input[name|="cutters"]').removeAttr("checked");
+                controls.find('input[name|="all-cutters"]').removeAttr("checked");
                 gd_map.redraw_cutters([]);
             } else {
                 // When 'no cutters' is the only selected checkbox, make it impossible 
