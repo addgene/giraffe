@@ -11,7 +11,7 @@ class ItDetectsFeaturesInDNASequences(unittest.TestCase):
     # Setup code
     def setUp(self):
         """Turns off debugging to prevent spurious output in tests"""
-        django.conf.settings.DEBUG = False;
+        django.conf.settings.DEBUG = False
 
     # Utility methods
     def find_features(self, sequence, db_name = 'default'):
@@ -46,16 +46,16 @@ class ItDetectsFeaturesInDNASequences(unittest.TestCase):
         # Detect the feature
         features = self.find_features('GATGACGACGACAAG')
         self.assertEqual(len(features), 1)
-        self.assertEqual(features[0]['feature'], 'EK');
-        self.assertEqual(features[0]['feature_id'], 15);
+        self.assertEqual(features[0]['feature'], 'EK')
+        self.assertEqual(features[0]['feature_id'], 15)
 
     def test_ItDetectsFeaturesInLowerCase(self):
         """Tests that lowercase sequences still detect features"""
         # Detect the feature
         features = self.find_features('gatgacgacgacaag')
         self.assertEqual(len(features), 1)
-        self.assertEqual(features[0]['feature'], 'EK');
-        self.assertEqual(features[0]['feature_id'], 15);
+        self.assertEqual(features[0]['feature'], 'EK')
+        self.assertEqual(features[0]['feature_id'], 15)
 
     def test_ItDetectsFeatureOnlySequences(self):
         """Tests that sequences which consist of only one feature
@@ -66,7 +66,7 @@ class ItDetectsFeaturesInDNASequences(unittest.TestCase):
         feature_ids_to_test = frozenset([
             39,  184, 153, 54, 96,  183, 31,  22,  80,  71,  108, 73, 114, 147, 10,
             138, 21,  85,  41, 180, 150, 160, 167, 133, 168, 131, 47, 24,  96,  60
-        ]);
+        ])
         # 23 and 82: HIV conflict. avoid for now
         # 37 and 38: T7 leader conflict. avoid for now
 
@@ -88,28 +88,29 @@ class ItDetectsFeaturesInDNASequences(unittest.TestCase):
                     # How many of them have the same length?
                     same_length = [f for f in features
                          if abs(f['end'] - f['start']) + 1 ==
-                         len(feature_sequence)];
+                         len(feature_sequence)]
 
                     # Only one feature has the same length
                     try:
-                        self.assertEqual(len(same_length), 1);
+                        self.assertEqual(len(same_length), 1)
                     except:
                         print same_length
                         raise
 
                     # That feature should have same ID and name
-                    self.assertEqual(same_length[0]['feature'], feature_name);
-                    self.assertEqual(same_length[0]['feature_id'], feature_id);
-                    self.assertEqual(same_length[0]['start'], 1);
+                    self.assertEqual(same_length[0]['feature'], feature_name)
+                    self.assertEqual(same_length[0]['feature_id'], feature_id)
+                    self.assertEqual(same_length[0]['start'], 1)
                     self.assertEqual(same_length[0]['end'],
-                            len(feature_sequence));
+                            len(feature_sequence))
 
     def test_ItIgnoresInvalidTextInSequences(self):
+        """Tests that FASTA comments and invalid characters are cut"""
 
         def asserts(features):
             self.assertEqual(len(features), 1)
-            self.assertEqual(features[0]['feature'], 'EK');
-            self.assertEqual(features[0]['feature_id'], 15);
+            self.assertEqual(features[0]['feature'], 'EK')
+            self.assertEqual(features[0]['feature_id'], 15)
 
         features = self.find_features('GA5TGA1CGAC2392GA2CAA1G')
         asserts(features)
