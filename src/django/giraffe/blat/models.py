@@ -165,7 +165,7 @@ class Sequence_Feature(Sequence_Feature_Base):
 class Sequence(models.Model):
     @staticmethod
     def verify_clean(sequence):
-        if re.match(r'^([atgcATGCnNbdhkmnrsvwyBDHKMNRSVWYuU*-\s])*$',sequence):
+        if re.match(r'^([atgcATGCnNbdhkmnrsvwyBDHKMNRSVWYuU\s*-])*$',sequence):
             return True
         return False
 
