@@ -1,5 +1,6 @@
 import sys
 sys.path.append('../../')
+import re
 import unittest
 import giraffe.simple_test as st
 st.setup()
@@ -214,7 +215,19 @@ GATGACGACGACAAG""")
                 self.assertTrue(featureFound)
 
 
+    def test_ItDetectsLoneORFs(self):
+        orf_seq = "atggcagcgcgccgaccgcgatgggctgtggccaatagcggctgctcagcagggcgcgccgagagcagcggccgggaaggggcggtgcgggaggcggggtgtggggcggtagtgtgggccctgttcctgcccgcgcggtgttccgcattctgcaagcctccggagcgcacgtcggcagtcggctccctcgttgaccgaatcaccgacctctctccccagggggatccaccggagcttaccatgaccgagtacaagcccacggtgcgcctcgccacccgcgacgacgtccccagggccgtacgcaccctcgccgccgcgttcgccgactaccccgccacgcgccacaccgtcgatccggaccgccacatcgagcgggtcaccgagctgcaagaactcttcctcacgcgcgtcgggctcgacatcggcaaggtgtgggtcgcggacgacggcgccgcggtggcggtctggaccacgccggagagcgtcgaagcgggggcggtgttcgccgagatcggcccgcgcatggccgagttgagcggttcccggctggccgcgcagcaacagatggaaggcctcctggcgccgcaccggcccaaggagcccgcgtggttcctggccaccgtcggcgtctcgcccgaccaccagggcaagggtctgggcagcgccgtcgtgctccccggagtggaggcggccgagcgcgccggggtgcccgccttcctggagacctccgcgccccgcaacctccccttctacgagcggctcggcttcaccgtcaccgccgacgtcgaggtgcccgaaggaccgcgcacctggtgcatgacccgcaagcccggtgcctga"
+        features = self.find_features(orf_seq)
+
+        orfs = [f for f in features if re.match('ORF', f['feature'])]
+
+        self.assertTrue(len(orfs) == 1)
+        self.assertEqual(orfs[0]['feature'], 'ORF frame 1')
+        self.assertEqual(orfs[0]['start'], 1)
+        self.assertEqual(orfs[0]['end'], len(orf_seq))
+        self.assertTrue(orfs[0]['clockwise'])
+        
+
 if __name__ == '__main__':
     unittest.main()
-
 
