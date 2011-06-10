@@ -40,14 +40,18 @@ class Giraffe_Mappable_Model(models.Model):
         import orfs
         db = Feature_Database.objects.get(name=db_name)
 
-        # remove FASTA > and ; comments
-        # Match any lines that start with > or ;, and then
-        # the rest of that line _up to but not including_ the line break
-        # (this is important so that multiple comments in a row can be detected)
-        sequence = re.sub(r'(^|\n)\s*[>;][^\n]+(?=\n)','',sequence);
+        ## Remove FASTA > and ; comments
+        # Remove only the first > comment, and any subsequent ; comments because
+        # those comments do not necessarily mean the start of a new sequence.
+        # Match the first line if it starts with > or ;, and subsequent lines
+        # only if they start with ;. Then match the rest of that line _up to but
+        # not including_ the line break (this is important so that multiple
+        # comments in a row can be detected)
+        # Note that multiple FASTA sequence-start comments will throw an error
+        sequence = re.sub(r'(^\s*[>;]|\n\s*[;])[^\n]+(?=\n)','',sequence);
 
         # clean the sequence
-        sequence = re.sub(r'[^A-Za-z*]', '', sequence)
+        sequence = re.sub(r'[^A-Za-z*-]', '', sequence)
 
         # create sequence record
         s = Sequence()
@@ -161,7 +165,7 @@ class Sequence_Feature(Sequence_Feature_Base):
 class Sequence(models.Model):
     @staticmethod
     def verify_clean(sequence):
-        if re.match(r'^([atgcATGCnNbdhkmnrsvwyBDHKMNRSVWYuU]|\*|\s)*$',sequence):
+        if re.match(r'^([atgcATGCnNbdhkmnrsvwyBDHKMNRSVWYuU*-\s])*$',sequence):
             return True
         return False
 
@@ -171,8 +175,8 @@ class Sequence(models.Model):
         Take a sequence we accept, e.g. with degenerates, and convert
         it to a valid DNA sequence with just atgc.
         """
-        sequence = re.sub(r'[\*DHMNRVW]','A',sequence)
-        sequence = re.sub(r'[\*dhmnrvw]','a',sequence)
+        sequence = re.sub(r'[DHMNRVW*-]','A',sequence)
+        sequence = re.sub(r'[dhmnrvw]','a',sequence)
         sequence = re.sub(r'[BYS]','C',sequence)
         sequence = re.sub(r'[bys]','c',sequence)
         sequence = re.sub(r'[K]','G',sequence)
