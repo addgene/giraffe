@@ -49,6 +49,14 @@ class ItDetectsFeaturesInDNASequences(unittest.TestCase):
         self.assertEqual(features[0]['feature'], 'EK');
         self.assertEqual(features[0]['feature_id'], 15);
 
+    def test_ItDetectsFeaturesInLowerCase(self):
+        """Tests that lowercase sequences still detect features"""
+        # Detect the feature
+        features = self.find_features('gatgacgacgacaag')
+        self.assertEqual(len(features), 1)
+        self.assertEqual(features[0]['feature'], 'EK');
+        self.assertEqual(features[0]['feature_id'], 15);
+
     def test_ItDetectsFeatureOnlySequences(self):
         """Tests that sequences which consist of only one feature
         return at least that one feature and nothing else with the
