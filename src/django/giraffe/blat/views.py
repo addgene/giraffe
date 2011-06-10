@@ -1,5 +1,4 @@
 from django.http import HttpResponse
-from django.core import serializers
 import json
 import httplib
 
@@ -7,8 +6,6 @@ import models
 
 from django.shortcuts import redirect
 from django.core.urlresolvers import reverse
-from django.shortcuts import render_to_response
-from django.template import RequestContext
 
 
 """
