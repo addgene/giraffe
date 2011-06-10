@@ -92,11 +92,15 @@ class ItDetectsFeaturesInDNASequences(unittest.TestCase):
 05 ACGA 08
 ;; this is too
 ; is this?
->what about this?
->and this?
 09 CGAC 10
 11 AAG  13""")
         asserts(features)
+    
+        self.assertRaises(self.find_features, models.BadSequencError, """
+>EK|15
+GATGACGACGACAAG
+>EK|15
+GATGACGACGACAAG""")
 
 
     def test_ItDetectsFeatureOnlySequences(self):
