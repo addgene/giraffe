@@ -57,6 +57,48 @@ class ItDetectsFeaturesInDNASequences(unittest.TestCase):
         self.assertEqual(features[0]['feature'], 'EK')
         self.assertEqual(features[0]['feature_id'], 15)
 
+    def test_ItDetectsNothingInAFeatureLessSequence(self):
+        """Tests that sequences which clearly have no features in them do not
+        somehow generate features"""
+
+        features = self.find_features('A')
+        self.assertEqual(len(features), 0)
+
+        features = self.find_features('ATGC')
+        self.assertEqual(len(features), 0)
+
+        features = self.find_features('T'*4096)
+        self.assertEqual(len(features), 0)
+
+    def test_ItIgnoresInvalidTextInSequences(self):
+        """Tests that FASTA comments and invalid characters are cut"""
+
+        def asserts(features):
+            self.assertEqual(len(features), 1)
+            self.assertEqual(features[0]['feature'], 'EK')
+            self.assertEqual(features[0]['feature_id'], 15)
+
+        features = self.find_features('GA5TGA1CGAC2392GA2CAA1G')
+        asserts(features)
+
+        features = self.find_features(' {+G( A%T[G]A1;CG  > >AC"2<3@&92,G~`A2C.A?A/G}')
+        asserts(features)
+
+        features = self.find_features("""
+>EK | feature id 15    
+01 GATG 04
+; This is a comment!
+;; So is this!
+05 ACGA 08
+;; this is too
+; is this?
+>what about this?
+>and this?
+09 CGAC 10
+11 AAG  13""")
+        asserts(features)
+
+
     def test_ItDetectsFeatureOnlySequences(self):
         """Tests that sequences which consist of only one feature
         return at least that one feature and nothing else with the
@@ -103,47 +145,6 @@ class ItDetectsFeaturesInDNASequences(unittest.TestCase):
                     self.assertEqual(same_length[0]['start'], 1)
                     self.assertEqual(same_length[0]['end'],
                             len(feature_sequence))
-
-    def test_ItIgnoresInvalidTextInSequences(self):
-        """Tests that FASTA comments and invalid characters are cut"""
-
-        def asserts(features):
-            self.assertEqual(len(features), 1)
-            self.assertEqual(features[0]['feature'], 'EK')
-            self.assertEqual(features[0]['feature_id'], 15)
-
-        features = self.find_features('GA5TGA1CGAC2392GA2CAA1G')
-        asserts(features)
-
-        features = self.find_features(' {+G( A%T[G]A1;CG  > >AC"2<3@&92,G~`A2C.A?A/G}')
-        asserts(features)
-
-        features = self.find_features("""
->EK | feature id 15    
-01 GATG 04
-; This is a comment!
-;; So is this!
-05 ACGA 08
-;; this is too
-; is this?
->what about this?
->and this?
-09 CGAC 10
-11 AAG  13""")
-        asserts(features)
-
-    def test_ItDetectsNothingInAFeatureLessSequence(self):
-        """Tests that sequences which clearly have no features in them do not
-        somehow generate features"""
-
-        features = self.find_features('A')
-        self.assertEqual(len(features), 0)
-
-        features = self.find_features('ATGC')
-        self.assertEqual(len(features), 0)
-
-        features = self.find_features('T'*4096)
-        self.assertEqual(len(features), 0)
 
     def test_ItDetectsFeatureGroupSequences(self):
         """Tests that sequences which consist of only a triplet of features
@@ -206,4 +207,5 @@ class ItDetectsFeaturesInDNASequences(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
 
