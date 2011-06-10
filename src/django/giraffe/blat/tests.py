@@ -150,11 +150,12 @@ class ItDetectsFeaturesInDNASequences(unittest.TestCase):
         return all of those features. """
 
         # Pick some random features from the default db
-        feature_ids_to_test = frozenset([
+        feature_ids_to_test = [
             39, 184, 153,  54,  96, 183, 31, 22, 80,  71,
            108,  73, 114, 147,  10, 138, 21, 85, 41, 180,
            150, 160, 167, 133, 168, 131, 47, 24, 96,  60
-        ])
+        ]
+        feature_ids_to_test_set = frozenset(feature_ids_to_test)
 
         features_to_test = {}
 
@@ -166,7 +167,7 @@ class ItDetectsFeaturesInDNASequences(unittest.TestCase):
                 # XXX not reliable, but works or for now
                 feature_id = line_num + 1
 
-                if feature_id in feature_ids_to_test:
+                if feature_id in feature_ids_to_test_set:
                     line_items = line.split()
                     features_to_test[feature_id] = {
                         'feature_sequence': line_items[1],
