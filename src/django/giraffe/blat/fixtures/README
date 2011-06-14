@@ -14,7 +14,9 @@ If you make changes to files in ./features/ or to mk_db.sh, you should
 re-create the fixtures for this app to make the changes visible. To do
 so, on a test machine, 
 
-1. Blow away data in all the models in the "blat" application
+1. Blow away data in all the models in the "blat" application - if restart the
+database and then run syncdb, make sure you have blown away the
+initial_data.json as well.
 
 2. Load feature_types.json
 
