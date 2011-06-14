@@ -8,6 +8,8 @@ setup_environ(giraffe.settings)
 ####
 
 import re
+import hashlib
+import datetime
 from giraffe.blat.models import Feature
 from giraffe.blat.models import Feature_Database
 from giraffe.blat.models import Feature_In_Database
@@ -17,6 +19,7 @@ db = sys.argv[1]
 if db != 'none':
     fdb = Feature_Database()
     fdb.name = db
+    fdb.db_version = hashlib.sha1(str(datetime.datetime.now())).hexdigest()
     try:
         fdb.save()
     except:

@@ -44,6 +44,7 @@ def post(request):
         return redirect(reverse(get,args=[hash,db_name]))
     except Exception as e:
         if 'next' in request.POST:
+            print str(e)
             u = request.POST['next']
             if u.endswith('/'):
                 u = u+'error/'
@@ -63,6 +64,11 @@ def get(request,hash,db_name):
     """
     db = models.Feature_Database.objects.get(name=db_name)
     sequence = models.Sequence.objects.get(db=db,hash=hash)
+
+    if db.db_version != sequence.db_version:
+        print 'feature list and database out of sync!'
+        # feature out of date with database, re gather features
+        hash = models.Giraffe_Mappable_Model.detect_features(sequence.sequence,db_name)
 
     res = []
 

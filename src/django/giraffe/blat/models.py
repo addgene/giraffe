@@ -58,12 +58,13 @@ class Giraffe_Mappable_Model(models.Model):
         s.sequence = sequence
         s.db = db
         s.save()
-        s.clear_features()
 
         # run blat algorithm to automatically detect features
+        s.clear_features()
         frags.features.blat(db,s)
 
         # detect ORFs
+        s.clear_orf_features()
         orfs.detect_orfs(s)
 
         return s.hash
@@ -207,11 +208,13 @@ class Sequence(models.Model):
     hash = models.CharField(max_length=64,db_index=True)
     modified = models.DateTimeField(auto_now=True)
     db = models.ForeignKey('Feature_Database')
+    db_version = models.CharField(max_length=64)
 
     class Meta:
         unique_together = (("db","hash"),)
 
     def save(self):
+        self.db_version = self.db.db_version
         if not Sequence.verify_clean(self.sequence):
             raise BadSequenceError("Found non-DNA base pair character")
 
@@ -219,6 +222,7 @@ class Sequence(models.Model):
         try:
             super(Sequence,self).save()
         except utils.IntegrityError:
+            Sequence.objects.filter(hash=self.hash,db=self.db).update(db_version=self.db_version)
             s = Sequence.objects.get(hash=self.hash,db=self.db)
             self.id = s.id
     save.alters_data = True
@@ -287,6 +291,7 @@ class Feature(models.Model):
 class Feature_Database(models.Model):
     name = models.CharField(max_length=64,unique=True)
     features = models.ManyToManyField(Feature, through='Feature_In_Database')
+    db_version = models.CharField(max_length=64)
     last_built = models.DateTimeField(null=True,blank=True)
 
 
