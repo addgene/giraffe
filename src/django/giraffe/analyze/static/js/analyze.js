@@ -688,6 +688,9 @@ window.GiraffeAnalyze = function ($,gd,options) {
             else { t += f.end()+' - '+f.start()+' antisense'; }
             t += '</a> ('+s.length()/3+' aa)';
             if (gene_desc !== '') { t += ', '+gene_desc; }
+            if (f.end() < f.start()) {
+                t += ' <span class="giraffe-red">ORF based on circular DNA</span>'
+            }
             
             title = $('<p></p>').append(t);
             $(title).append(overlay_switch.links);

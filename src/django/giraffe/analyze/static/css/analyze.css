@@ -89,6 +89,7 @@ svg path { cursor:pointer; }
     display:block; margin:10px 0px; width:600px; height:200px;
 }
 .giraffe-tag { color:red !important; }
+.giraffe-red { color:red !important; }
 
 .giraffe-orf-group { border-top:1px solid #d0d0d0; }
 
