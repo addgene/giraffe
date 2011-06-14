@@ -14,27 +14,43 @@ detection.
 
     expects: db and sequence
     response:
+
         1. if 'next' is specified as a CGI argument, redirect to that
         URL with '/hash/db_name/' appended, where 'hash' is the hash
         ID of the sequence and 'db_name' is the name of the features
         database.
-        2. otherwise, redirects to the 'get' view that returns JSON
+
+        2. if 'next' is specified and there is an error with the
+        sequence or the blat algorithm, redirect to the 'next' URL
+        with '/error/' appended. if 'next' is not specified and
+        there is an error, just throw the error.
+
+        3. otherwise, redirects to the 'get' view that returns JSON
         array of features.
 """
 def post(request):
     assert (request.method == 'POST')
     db_name = request.POST['db']
     sequence = request.POST['sequence']
-    hash = models.Giraffe_Mappable_Model.detect_features(sequence,db_name)
-    if 'next' in request.POST:
-        u = request.POST['next']
-        if u.endswith('/'):
-            u = u+hash+'/'+db_name
-        else:
-            u = u+'/'+hash+'/'+db_name
-        return redirect(u)
-    return redirect(reverse(get,args=[hash,db_name]))
-
+    try:
+        hash = models.Giraffe_Mappable_Model.detect_features(sequence,db_name)
+        if 'next' in request.POST:
+            u = request.POST['next']
+            if u.endswith('/'):
+                u = u+hash+'/'+db_name
+            else:
+                u = u+'/'+hash+'/'+db_name
+            return redirect(u)
+        return redirect(reverse(get,args=[hash,db_name]))
+    except Exception as e:
+        if 'next' in request.POST:
+            u = request.POST['next']
+            if u.endswith('/'):
+                u = u+'error/'
+            else:
+                u = u+'/error/'
+            return redirect(u)
+        raise e
 
 def get(request,hash,db_name):
     """
