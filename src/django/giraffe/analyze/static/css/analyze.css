@@ -12,10 +12,13 @@ svg path { cursor:pointer; }
 .giraffe-main form input[type=submit] { font-size:12px; }
 
 .giraffe-main td { vertical-align:top; }
-/* We want -viewer and -tabs to line up, and -seq-viewer should be
- * contained within -viewer */
-.giraffe-viewer { height:3000px; overflow:auto; }
-.giraffe-seq-viewer { height:2900px; overflow:auto; }
+
+/* height: we want giraffe-tabs to be really tall, so we avoid double or triple
+ * scroll bars. we want the seq-viewer to be on one page, so when we search and
+ * highlight sequences, we can pop user to the right place immediately. */
+.giraffe-viewer { height:700px; overflow:auto; }
+/* -seq-viewer should be contained within -viewer */
+.giraffe-seq-viewer { height:600px; overflow:auto; }
 .giraffe-tabs { height:3000px; overflow:auto; }
 
 /* Generic */
@@ -44,10 +47,11 @@ svg path { cursor:pointer; }
 
 /* Specific to panes/tabs */
 
+/* for the FASTA/GenBank/RC sequences */
 .giraffe-seq-textarea {
     border:1px solid #e0e0e0;
     width:100%;
-    height:2500px;
+    height:2800px;
     font-family:courier !important;
     font-size:12px;
 }

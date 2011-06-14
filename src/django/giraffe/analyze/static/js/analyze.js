@@ -912,8 +912,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
             .attr('id', 'giraffe-viewer-search-container')
             .append($('<textarea></textarea>')
                         .attr('id', 'giraffe-viewer-search-textarea'))
-            .append($('<input type="submit" value="Search" '+
-                      ' title="Search sequence and reverse complement of sequence">')
+            .append($('<input type="submit" value="Search">')
                         .attr('id', 'giraffe-viewer-search-button'));
 
         sequence_viewer_topbar_highlight = $('<div></div>')
@@ -1004,6 +1003,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
             q = q.replace(/\s/g,'');
             $('#giraffe-viewer-search-textarea').val(q);
             var n;
+            var search_last = search_next;
             if (!search_rc) {
                 n = sequence.find(q,search_next);
                 if (n == -1) {
@@ -1014,9 +1014,20 @@ window.GiraffeAnalyze = function ($,gd,options) {
             }
             else { n = rc.find(q,search_next); }
 
+            /* handles wrapping around from end of search */
+            if (n == -1 && search_last != -1) {
+                search_rc = false;
+                n = sequence.find(q,-1);
+                if (n == -1) {
+                    search_rc = true;
+                    n = rc.find(q,-1);
+                }
+            }
+
             if (n == -1) {
                 $(search_not_found).dialog({
                     modal: true,
+                    position: 'top',
                     buttons: { 'Close' : function() { $(this).dialog( "close" ); } }
                 });
                 search_next = -1;
