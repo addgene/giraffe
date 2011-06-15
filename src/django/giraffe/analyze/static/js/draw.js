@@ -485,6 +485,7 @@ window.GiraffeDraw = function () {
             if (this.map.feature_click_callback) {
                 this.map.feature_click_callback(basic_feature);
             } else {
+                /* benjie: don't do this for now...
                 if (this.opaque) {
                     this.lighter();
                     this.opaque = false;
@@ -492,6 +493,7 @@ window.GiraffeDraw = function () {
                     this.bolder();
                     this.opaque = true;
                 }
+                */
             }
         };
 
@@ -959,6 +961,7 @@ window.GiraffeDraw = function () {
         // Inherit the common Map functions
         var thi$ = Object.create(new Map(options));
         thi$.FeatureType = CircularFeature;
+        thi$.x_shift_on_labels = 60;
 
         // Paper setup - not the final width, but how we will draw the
         // map, we will scale later on
@@ -1328,8 +1331,9 @@ window.GiraffeDraw = function () {
                 }
 
                 // Draw the line to the label position
-                var label_line = this.map.paper.path(svg.move(xy0.x, xy0.y) +
-                                            svg.line(xy1.x, xy1.y));
+                var label_line = this.map.paper.path(
+                    svg.move(xy0.x, xy0.y) + svg.line(xy1.x, xy1.y)
+                );
                 label_line.attr({"stroke": colors.bg_text,
                                  "stroke-width": this.map.label_line_weight(),
                                  "opacity": 0.5 });
@@ -1633,18 +1637,18 @@ window.GiraffeDraw = function () {
                 // we also compute the lower y coordinate of each
                 // label list below.
                 if (i === 0 || i == 1) {
-                    xy1.x += 60;
+                    xy1.x += thi$.x_shift_on_labels;
                 }
                 else if (i == 2 || i == 3) {
                     xy1.y += label_f_c[i].length*label_letter_height;
-                    xy1.x += 60;
+                    xy1.x += thi$.x_shift_on_labels;
                 }
                 else if (i == 4 || i == 5) {
                     xy1.y += label_f_c[i].length*label_letter_height;
-                    xy1.x -= 60;
+                    xy1.x -= thi$.x_shift_on_labels;
                 }
                 else if (i == 6 || i == 7) {
-                    xy1.x -= 60;
+                    xy1.x -= thi$.x_shift_on_labels;
                 }
                 label_list_pos[i][0] = xy1.x;
                 label_list_pos[i][1] = xy1.y;
@@ -1682,6 +1686,11 @@ window.GiraffeDraw = function () {
                 var list_width = list_max_letters*label_letter_width;
                 var section_angle = thi$.label_list_section_angle(section);
                 var xy = convert.polar_to_rect(thi$.label_pos,section_angle);
+
+                if (section === 0 || section == 1) { xy.x += thi$.x_shift_on_labels; }
+                else if (section == 2 || section == 3) { xy.x += thi$.x_shift_on_labels; }
+                else if (section == 4 || section == 5) { xy.x -= thi$.x_shift_on_labels; }
+                else if (section == 6 || section == 7) { xy.x -= thi$.x_shift_on_labels; }
 
                 if (section === 0 || section == 1) {
                     // upper right
