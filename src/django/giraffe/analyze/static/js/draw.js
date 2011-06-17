@@ -1083,13 +1083,8 @@ window.GiraffeDraw = function () {
             thi$.real_center = function() {
                 var cd;
 
+                // Remember: minus means going along the circle
                 cd = thi$.real_start() - thi$.real_size()/2.0;
-
-                if (cd < plasmid_start - 360) {
-                    cd += 360;
-                } else if (cd > plasmid_start) {
-                    cd -= 360;
-                }
 
                 return normalize(cd);
             };
@@ -1213,9 +1208,9 @@ window.GiraffeDraw = function () {
                 } else if (this.type() == ft.enzyme) {
                     // Restriction enzymes get drawn on their own
                     xy0 = convert.polar_to_rect(thi$.radius - this.map.enzyme_width()/2.0,
-                            (a0+a1)/2.0);
+                            this.real_center());
                     xy1 = convert.polar_to_rect(thi$.radius + this.map.enzyme_width()/2.0,
-                            (a0+a1)/2.0);
+                            this.real_center());
                     // Not really an arc, just a line, but left this way
                     // for consistency
                     arc = this.map.paper.path(svg.move(xy0.x, xy0.y) +
