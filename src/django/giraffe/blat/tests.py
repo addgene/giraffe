@@ -227,6 +227,18 @@ GATGACGACGACAAG""")
         self.assertEqual(orfs[0]['end'], len(orf_seq))
         self.assertTrue(orfs[0]['clockwise'])
         
+    def test_ItDetectsFeaturesThatCrossTheBoundary(self):
+        boundary_cross_seq = "aaatgaccctttgggatgaaagggcccttt"
+
+        features = self.find_features(boundary_cross_seq)
+        
+        self.assertEqual(features[-1]['feature'], 'DraI')
+        self.assertTrue (features[-1]['clockwise'])
+        self.assertEqual(features[-1]['start'], 28)
+        self.assertEqual(features[-1]['end'], 3)
+
+        
+
 
 if __name__ == '__main__':
     unittest.main()
