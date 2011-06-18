@@ -1865,20 +1865,26 @@ window.GiraffeDraw = function () {
 
 
             thi$.draw = function () {
+                var x0, x1, y,
+                    // Arrowhead drawing
+                    hx_tip, hx_back, head,
+                    // Body drawing
+                    body, x_m;
+
+
                 // Don't draw features that cross the boundary, as this is not
                 // a circular plasmid
-                if (! this.visible || thi$.crosses_boundary()) { return; }
+                if (! this.visible || this.crosses_boundary()) { return; }
 
                 // Convert from sequence positions to x-coords
-                var x0 = convert.pos_to_x(thi$.start());
-                var x1 = convert.pos_to_x(thi$.end());
+                x0 = convert.pos_to_x(this.start());
+                x1 = convert.pos_to_x(this.end());
 
-                var y = plasmid_y + thi$.y;
+                y = plasmid_y + this.y;
 
                 // Arrowhead drawing, if needed
                 if (this.draw_head) {
-                    var hx_tip, hx_back;
-                    if (thi$.clockwise()) {
+                    if (this.clockwise()) {
                         hx_tip = x1;
                         x1 -= head_length;
                         hx_back = x1;
@@ -1890,7 +1896,7 @@ window.GiraffeDraw = function () {
 
                     // Unlike the body, the head is traced with a line, and
                     // then created entirely with the fill color
-                    var head = this.map.paper.path(svg.move(hx_tip, y) +
+                    head = this.map.paper.path(svg.move(hx_tip, y) +
                                      svg.line(hx_back, y - head_width/2.0) +
                                      svg.line(hx_back, y + head_width/2.0) +
                                      svg.close());
@@ -1900,7 +1906,6 @@ window.GiraffeDraw = function () {
                 }
 
                 // Body drawing
-                var body;
                 if (x0 < x1 && this.type() != ft.enzyme) {
                     // Compensating for the head may have "taken up" all
                     // the room on the plasmid, in which case no arc needs
@@ -1914,7 +1919,7 @@ window.GiraffeDraw = function () {
                     this.arrow_set.push(body);
                 } else if (this.type() == ft.enzyme) {
                     // Restriction enzymes get drawn on their own
-                    var x_m = convert.pos_to_x(this.cut());
+                    x_m = convert.pos_to_x(this.cut());
 
                     body = this.map.paper.path(svg.move(x_m, y - this.width/2.0) +
                                           svg.line(x_m, y + this.width/2.0));
