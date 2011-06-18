@@ -1454,13 +1454,10 @@ window.GiraffeControl = function ($,gd_map,dom) {
                 '<td><label><input type="checkbox" checked="checked"' +
                              'name="cutters-1" value="show" />' +
                 '<span class="cutter-label">unique cutters</span></label></td>' +
-                '<td><label><input type="checkbox"' +
+                '<td><label><input type="checkbox" ' +
                               'name="cutters-2" value="show" />' +
                 '<span class="cutter-label">2-cutters</span></label></td>' +
-                '<td><label><input type="checkbox"' +
-                              'name="all-cutters" value="show" />' +
-                '<span class="cutter-label">all cutters</span></label></td>' +
-                '<td><label><input type="checkbox"' +
+                '<td><label><input type="checkbox" ' +
                               'name="no-cutters" value="show" />' +
                 '<span class="cutter-label">hide all</span></label></td></tr>' +
             '</tbody>' +
