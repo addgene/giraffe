@@ -237,8 +237,6 @@ GATGACGACGACAAG""")
         self.assertEqual(features[-1]['start'], 28)
         self.assertEqual(features[-1]['end'], 3)
 
-        
-
 
 if __name__ == '__main__':
     unittest.main()
