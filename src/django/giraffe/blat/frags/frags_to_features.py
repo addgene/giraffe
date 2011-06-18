@@ -305,7 +305,7 @@ class FragTrain(object):
         if seq_feat.start > seq_length:
             seq_feat.start %= seq_length
 
-        if seq_feat.start > seq_length:
+        if seq_feat.end > seq_length:
             seq_feat.end %= seq_length
 
         # Feature object itself is private, to prevent unnecessary db access
