@@ -1607,16 +1607,21 @@ window.GiraffeDraw = function () {
         // label list, and where the label line should point to, so we can
         // use this information to figure out where to put the label and
         // minimize the number of lines that intersect.
-        var label_f_c = new Array(8);
-        var label_list_pos = new Array(8);
+        var n_sections = 8;
+        var label_f_c = new Array(n_sections);
+        var label_list_pos = new Array(n_sections);
 
         thi$.set_label_lists = function () {
+            var lx, fx;
             // Global: keeps track of feature centers for each label
             // list, we need this to compute exactly where a label
             // should be within a label list, so to minimize
             // intersecting lines.
-            label_f_c = [[], [], [], [], [], [], [], []];
-            for (var fx = thi$.features.length - 1; fx >= 0; fx--) {
+            for (lx = 0; lx < n_sections; lx++) {
+                label_f_c[lx] = [];
+            }
+
+            for (fx = thi$.features.length - 1; fx >= 0; fx--) {
                 thi$.features[fx].set_label_list();
             }
         };
