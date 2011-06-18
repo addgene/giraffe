@@ -299,8 +299,14 @@ class FragTrain(object):
         # positions
         if seq_feat.start < 0:
             seq_feat.start += seq_length
+        if seq_feat.end < 0:
+            seq_feat.end += seq_length
 
-        seq_feat.end %= seq_length
+        if seq_feat.start > seq_length:
+            seq_feat.start %= seq_length
+
+        if seq_feat.start > seq_length:
+            seq_feat.end %= seq_length
 
         # Feature object itself is private, to prevent unnecessary db access
         seq_feat.feature_db_index = self.feature._FeatureData__fdb
