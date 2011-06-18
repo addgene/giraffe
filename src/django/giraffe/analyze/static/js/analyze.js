@@ -1488,12 +1488,6 @@ window.GiraffeControl = function ($,gd_map,dom) {
                 controls.find('input[name="no-cutters"]').attr("checked", "checked");
             }
 
-            // Automatically uncheck the all-cutters checkbox,
-            // if any of the options are deselected
-            if (opts.length < num_explicit_cutters) {
-                controls.find('input[name="all-cutters"]').removeAttr("checked");
-            } 
-
             if (draw_table) {
                 $('.giraffe-control-table').find('tr').each(function () {
                     var fid = parseInt($(this).attr('id').replace(/\D/g, ''), 10);
@@ -1514,37 +1508,10 @@ window.GiraffeControl = function ($,gd_map,dom) {
             gd_map.redraw_cutters(opts);
         });
 
-        // All-cutter checkbox
-        controls.find('input[name="all-cutters"]').click(function (event) {
-            if ($(this).attr("checked")) {
-                controls.find('input[name|="cutters"]').attr("checked", "checked");
-                controls.find('input[name="no-cutters"]').removeAttr("checked");
-                gd_map.redraw_cutters();
-            } else {
-                // When deselected, go back to just 1- and 2-cutters
-                controls.find('input[name|="cutters"]').attr("checked", "checked");
-                controls.find('input[name="no-cutters"]').removeAttr("checked");
-                gd_map.redraw_cutters([1, 2]);
-            }
-
-            if (draw_table) {
-                $('.giraffe-control-table').find('tr').each(function () {
-                    var fid = parseInt($(this).attr('id').replace(/\D/g, ''), 10);
-                    var feat = gd_map.gd.all_features[fid];
-                    if (typeof(feat) !== 'undefined' && feat.type() === gd_map.gd.Feature_Type.enzyme) {
-                        $(this).find('input[value="show"]').attr("checked", "checked");
-                        $(this).find('input[value="label"]').removeAttr("disabled");
-                        $(this).find('input[value="label"]').attr("checked", "checked");
-                    } 
-                });
-            }
-        });
-
-        // No-cutter textbox
+        // No-cutter checkbox
         controls.find('input[name="no-cutters"]').click(function (event) {
             if ($(this).attr("checked")) {
                 controls.find('input[name|="cutters"]').removeAttr("checked");
-                controls.find('input[name|="all-cutters"]').removeAttr("checked");
                 gd_map.redraw_cutters([]);
             } else {
                 // When 'no cutters' is the only selected checkbox, make it impossible 
