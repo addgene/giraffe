@@ -1278,7 +1278,13 @@ window.GiraffeDraw = function () {
                 }
 
                 // Figure out the center of the feature
-                var a_c = thi$.real_center();
+                var a_c;
+                if (this.type() == ft.enzyme) {
+                    a_c = convert.pos_to_angle(this.cut());
+                } else {
+                    a_c = this.real_center();
+                }
+
                 var adjust_a_c = a_c;
                 if (adjust_a_c < 0) { adjust_a_c += 360; }
 
@@ -1287,6 +1293,8 @@ window.GiraffeDraw = function () {
                 // Figure out which section this label is in: divide
                 // the grid up into eight sections.
                 var section = Math.floor((plasmid_start - a_c)/label_section_degree);
+                section = section % label_f_c.length;
+
                 // Figure out position in the label list.
                 var pos_ls = 0;
 
