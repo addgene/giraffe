@@ -145,8 +145,8 @@ class Sequence_Feature(Sequence_Feature_Base):
                 cp = d["start"] + (self.feature.cut_after - 1)
             else:
                 cp = d["end"] - (self.feature.cut_after - 1)
-            slen = len(self.sequence.sequence)
 
+            slen = len(self.sequence.sequence)
             if cp < 0:
                 cp += slen
             if cp > slen:
