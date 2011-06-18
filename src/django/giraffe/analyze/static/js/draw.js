@@ -1980,7 +1980,12 @@ window.GiraffeDraw = function () {
                 }
 
                 // Figure out the center of the feature
-                var x_c = this.real_center();
+                var x_c;
+                if (this.type() == ft.enzyme) {
+                    x_c = convert.pos_to_x(this.cut());
+                } else {
+                    x_c = this.real_center();
+                }
 
                 // Enzymes show their cut sites in the label
                 var label_name = thi$.label_name();
@@ -2208,7 +2213,7 @@ window.GiraffeDraw = function () {
         thi$.set_label_lists = function () {
             var label_overlap_cutoff = -1, // pixel
                 nlists = 6,
-                ix, fx, f,
+                ix, fx, f, feature_center,
                 section, bottom,
                 list_offset;
 
@@ -2227,8 +2232,15 @@ window.GiraffeDraw = function () {
             for (fx = 0; fx < thi$.features.length; fx++) {
                 f = thi$.features[fx];
 
+                if (f.type() == ft.enzyme) {
+                    // Restriction enzymes get drawn on their own
+                    feature_center = convert.pos_to_x(f.cut());
+                } else {
+                    feature_center = f.real_center();
+                }
+
                 // Which nth of the plasmid is the feature in?
-                section = Math.floor(nlists*(f.real_center() - plasmid_left)/
+                section = Math.floor(nlists*(feature_center - plasmid_left)/
                                                  plasmid_width);
                 // Is it in the top or bottom?
                 bottom = section % 2;
