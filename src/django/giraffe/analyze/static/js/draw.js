@@ -1914,7 +1914,7 @@ window.GiraffeDraw = function () {
                     this.arrow_set.push(body);
                 } else if (this.type() == ft.enzyme) {
                     // Restriction enzymes get drawn on their own
-                    var x_m = (x0 + x1)/2;
+                    var x_m = convert.pos_to_x(this.cut());
 
                     body = this.map.paper.path(svg.move(x_m, y - this.width/2.0) +
                                           svg.line(x_m, y + this.width/2.0));
