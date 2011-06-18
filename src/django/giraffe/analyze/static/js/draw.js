@@ -1960,11 +1960,7 @@ window.GiraffeDraw = function () {
 
             // Should we draw the label?
             thi$.should_draw_label = function () {
-                // Don't bother unless we need to
-                if (!this.visible || !this.labeled || this.crosses_boundary()) {
-                    return false;
-                }
-                return true;
+                return this.visible && this.labeled && !this.crosses_boundary();
             }; // END LinearFeature::should_draw_label()
 
             thi$.label_size = function() {
