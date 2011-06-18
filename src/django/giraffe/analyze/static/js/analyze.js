@@ -1357,7 +1357,7 @@ window.GiraffeTable = function ($,gd,dom) {
                         '<col class="giraffe-table-feature-data" span="2"/>' +
                     '</colgroup>')
             .append('<thead><tr>' +
-                        '<th>ORF Frame</th>' +
+                        '<th>ORF</th>' +
                         '<th>Start</th>'     +
                         '<th>End<th>'        +
                     '</tr></thead>')
@@ -1369,7 +1369,7 @@ window.GiraffeTable = function ($,gd,dom) {
             row = $('<tr></tr>').appendTo(orf_table.children('tbody'))
                                 .attr('id', 'feature-' + f.id());
 
-            row.append('<td class="giraffe-table-feature-name">' + f.name().replace(/ORF\s+[fF]rame\s+/, '') + '</td>');
+            row.append('<td class="giraffe-table-feature-name">' + f.name() + '</td>');
 
             if (f.clockwise()) {
                 row.append('<td>' + f.start() + '</td>');
@@ -1757,7 +1757,7 @@ window.GiraffeControl = function ($,gd_map,dom) {
 
             $(this)
                 .empty()
-                .append($('<a></a>').text(f.name().replace(/ORF\s+[fF]rame\s+/, ''))
+                .append($('<a></a>').text(f.name())
                 .attr('href', '#')
                 .attr('seq-title', f.name())
                 .attr('bp', 'feature-' + id)
