@@ -484,8 +484,10 @@ window.GiraffeDraw = function () {
         thi$.click = function(event) {
             if (this.map.feature_click_callback) {
                 this.map.feature_click_callback(basic_feature);
-            } else {
-                /* benjie: don't do this for now...
+            } 
+            /* benjie: don't do this for now...
+            else {
+               
                 if (this.opaque) {
                     this.lighter();
                     this.opaque = false;
@@ -493,8 +495,8 @@ window.GiraffeDraw = function () {
                     this.bolder();
                     this.opaque = true;
                 }
-                */
-            }
+                
+            }*/
         };
 
         // Hovering: solid/light upon mouseover
@@ -1135,9 +1137,13 @@ window.GiraffeDraw = function () {
             thi$.draw = function () {
                 if (!this.visible) { return; }
 
-                // Convert from sequence positions to angles
-                var a0 = convert.pos_to_angle(thi$.start());
-                var a1 = convert.pos_to_angle(thi$.end());
+                    // Convert from sequence positions to angles
+                var a0 = convert.pos_to_angle(this.start()),
+                    a1 = convert.pos_to_angle(this.end()),
+                    // Head dimensions
+                    r_p, a_b, a_p, xy_p, xy_b, xy_t, head,
+                    // Arc dimensions
+                    xy0, xy1, arc, large_angle, a_cut;
 
                 // Create the draw feature, a set which will have the head
                 // and arc pushed onto it as necessary.
@@ -1150,13 +1156,12 @@ window.GiraffeDraw = function () {
                     // We need to figure out how many radians the arrow takes up
                     // in order to adjust a0 or a1 by that amount, and to set the
                     // base of the triangle even with that angle
-                    var r_p = Math.sqrt(thi$.radius*thi$.radius +
+                    r_p = Math.sqrt(this.radius*this.radius +
                             head_length*head_length);
                     // "height" of the arrowhead, in degrees
-                    var a_b;
-                    var a_p = Raphael.deg(Math.asin(head_length/r_p));
+                    a_p = Raphael.deg(Math.asin(head_length/r_p));
                     // Adjust the appropriate edge to compensate for the arrowhead
-                    if (thi$.clockwise()) {
+                    if (this.clockwise()) {
                         a_b = (a1 + a_p) % 360 ; // base angle
                         a_p = a1;       // point angle
                         a1  = a_b;      // adjust arc edge
@@ -1165,15 +1170,15 @@ window.GiraffeDraw = function () {
                         a_p = a0;       // point angle
                         a0  = a_b;      // adjust arc edge
                     }
-                    var xy_p = convert.polar_to_rect(thi$.radius, a_p);
+                    xy_p = convert.polar_to_rect(this.radius, a_p);
 
                     // bottom and top points, rectangular
-                    var xy_b = convert.polar_to_rect(thi$.radius - head_width/2.0, a_b);
-                    var xy_t = convert.polar_to_rect(thi$.radius + head_width/2.0, a_b);
+                    xy_b = convert.polar_to_rect(this.radius - head_width/2.0, a_b);
+                    xy_t = convert.polar_to_rect(this.radius + head_width/2.0, a_b);
 
                     // Unlike the arc, the head is traced with a line, and
                     // then created entirely with the fill color
-                    var head = this.map.paper.path(svg.move(xy_p.x, xy_p.y) +
+                    head = this.map.paper.path(svg.move(xy_p.x, xy_p.y) +
                                           svg.line(xy_b.x, xy_b.y) +
                                           svg.line(xy_t.x, xy_t.y) +
                                           svg.close());
@@ -1183,7 +1188,6 @@ window.GiraffeDraw = function () {
                 }
 
                 // Arc drawing
-                var xy0, xy1, arc;
                 if ((this.crosses_boundary() || a1 < a0) && this.type() != ft.enzyme) {
                     // Compensating for the head may have "taken up" all
                     // the room on the plasmid, in which case no arc needs
@@ -1193,14 +1197,14 @@ window.GiraffeDraw = function () {
                     // arcs are drawn counterclockwise, even though the plasmid
                     // sequence increases clockwise, so we flip the
                     // indices
-                    xy0 = convert.polar_to_rect(thi$.radius, a1);
-                    xy1 = convert.polar_to_rect(thi$.radius, a0);
+                    xy0 = convert.polar_to_rect(this.radius, a1);
+                    xy1 = convert.polar_to_rect(this.radius, a0);
 
                     // The arc has no fill-color: it's just a thick line
-                    var large_angle = thi$.real_size() > 180 ? 1 : 0;
+                    large_angle = this.real_size() > 180 ? 1 : 0;
 
                     arc = this.map.paper.path(svg.move(xy0.x, xy0.y) +
-                                         svg.arc(thi$.radius, xy1.x, xy1.y,
+                                         svg.arc(this.radius, xy1.x, xy1.y,
                                                  large_angle));
                     arc.attr({"stroke-width": this.width});
 
