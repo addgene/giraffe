@@ -1206,11 +1206,12 @@ window.GiraffeDraw = function () {
 
                     this.arrow_set.push(arc);
                 } else if (this.type() == ft.enzyme) {
+                    a_cut = convert.pos_to_angle(this.cut());
+
                     // Restriction enzymes get drawn on their own
-                    xy0 = convert.polar_to_rect(thi$.radius - this.map.enzyme_width()/2.0,
-                            this.real_center());
-                    xy1 = convert.polar_to_rect(thi$.radius + this.map.enzyme_width()/2.0,
-                            this.real_center());
+                    xy0 = convert.polar_to_rect(this.radius - this.map.enzyme_width()/2.0, a_cut);
+                    xy1 = convert.polar_to_rect(this.radius + this.map.enzyme_width()/2.0, a_cut);
+
                     // Not really an arc, just a line, but left this way
                     // for consistency
                     arc = this.map.paper.path(svg.move(xy0.x, xy0.y) +
