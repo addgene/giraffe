@@ -7,6 +7,59 @@ st.setup()
 import giraffe.blat.models as models
 import django
 
+class TestFeature(object):
+    property_map = { 
+      "__name":       "feature",
+      "__id":         "feature_id",
+      "__start":      "start",
+      "__end":        "end",
+      "__clockwise":  "clockwise"
+    }
+
+    def __init__(self, test, name = None, id = None, 
+            start = None, end = None, clockwise = None, sequence = ''):
+            self.__test      = test
+            self.__name      = name
+            self.__id        = id
+            self.__start     = start
+            self.__end       = end
+            self.__clockwise = clockwise
+            self.__sequence  = sequence
+
+    @property
+    def sequence(self):
+        return self.__sequence
+
+    def assertEqual(self, db_seq_feature):
+        for property_name in TestFeature.property_map:
+            property = getattr(self, "_TestFeature" + property_name)
+
+            if property != None:
+                self.__test.assertEqual(
+                    property,
+                    db_seq_feature[TestFeature.property_map[property_name]]
+                )
+
+    def assertFound(self, db_seq_feature_list):
+        featureFound= False
+
+        for feature in db_seq_feature_list:
+            matches = True
+
+            for property_name in TestFeature.property_map:
+                property = getattr(self, "_TestFeature" + property_name)
+                if property != None:
+                    if property != feature[TestFeature.property_map[property_name]]:
+                        matches = False
+                        break
+            
+            if matches:
+                featureFound = True
+                break
+
+        self.__test.assertTrue(featureFound)
+
+
 class ItDetectsFeaturesInDNASequences(unittest.TestCase):
 
     # Setup code
@@ -50,48 +103,41 @@ class ItDetectsFeaturesInDNASequences(unittest.TestCase):
     def test_ItDetectsALoneShortFeature(self):
         """Tests that a very short feature-only sequence detects only itself."""
         # Detect the feature
-        features = self.find_features('GATGACGACGACAAG')
+        lone_feat = TestFeature(self,
+            name = 'EK', id = 15, start = 1, end = 15, clockwise = True,
+            sequence = 'GATGACGACGACAAG'
+        ) 
+        features = self.find_features(lone_feat.sequence)
         self.assertEqual(len(features), 1)
-        self.assertEqual(features[0]['feature'], 'EK')
-        self.assertEqual(features[0]['feature_id'], 15)
+        lone_feat.assertEqual(features[0])
+
 
     def test_ItDetectsFeaturesInLowerCase(self):
         """Tests that lowercase sequences still detect features"""
-        # Detect the feature
-        features = self.find_features('gatgacgacgacaag')
+        # Detect a lowercase feature
+        lone_feat = TestFeature(self,
+            name = 'EK', id = 15, start = 1, end = 15, clockwise = True,
+            sequence = 'gatgacgacgacaag'
+        ) 
+        features = self.find_features(lone_feat.sequence)
         self.assertEqual(len(features), 1)
-        self.assertEqual(features[0]['feature'], 'EK')
-        self.assertEqual(features[0]['feature_id'], 15)
+        lone_feat.assertEqual(features[0])
 
     def test_ItDetectsNothingInAFeatureLessSequence(self):
         """Tests that sequences which clearly have no features in them do not
         somehow generate features"""
 
-        features = self.find_features('A')
-        self.assertEqual(len(features), 0)
-
-        features = self.find_features('ATGC')
-        self.assertEqual(len(features), 0)
-
-        features = self.find_features('T'*4096)
-        self.assertEqual(len(features), 0)
+        for seq in ['A', 'ATGC', 'T' * 4096 ]:
+            features = self.find_features(seq)
+            self.assertEqual(len(features), 0)
 
     def test_ItIgnoresInvalidTextInSequences(self):
         """Tests that FASTA comments and invalid characters are cut"""
 
-        def asserts(features):
-            self.assertEqual(len(features), 1)
-            self.assertEqual(features[0]['feature'], 'EK')
-            self.assertEqual(features[0]['feature_id'], 15)
-
-        features = self.find_features('GA5TGA1CGAC2392GA2CAA1G')
-        asserts(features)
-
-        features = self.find_features(' {+G( A%T[G]A1;CG  > >AC"2<3@&92,G~`A2C.A?A/G}')
-        asserts(features)
-
-        features = self.find_features("""
->EK | feature id 15    
+        seqs = [
+            'GA5TGA1CGAC2392GA2CAA1G',
+            ' {+G( A%T[G]A1;CG  > >AC"2<3@&92,G~`A2C.A?A/G}', 
+            """>EK | feature id 15    
 01 GATG 04
 ; This is a comment!
 ;; So is this!
@@ -99,10 +145,20 @@ class ItDetectsFeaturesInDNASequences(unittest.TestCase):
 ;; this is too
 ; is this?
 09 CGAC 10
-11 AAG  13""")
-        asserts(features)
+11 AAG  13"""
+        ]
+
+        feat = TestFeature(self,
+            name = 'EK', id = 15, start = 1, end = 15, clockwise = True,
+        ) 
+
+        for seq in seqs:
+            features = self.find_features(seq)
+            self.assertEqual(len(features), 1)
+            feat.assertEqual(features[0])
     
-        self.assertRaises(self.find_features, models.BadSequencError, """
+    def test_ItRefusesMultipleSequences(self):
+        self.assertRaises(models.BadSequenceError, self.find_features, """
 >EK|15
 GATGACGACGACAAG
 >EK|15
@@ -131,16 +187,22 @@ GATGACGACGACAAG""")
 
                 if feature_id in feature_ids_to_test:
                     line_items = line.split()
-                    feature_sequence = line_items[1]
-                    feature_name = line_items[0].split(':')[1]
+
+                    feat = TestFeature(self,
+                            name = line_items[0].split(':')[1],
+                            sequence = line_items[1],
+                            id = feature_id,
+                            start = 1,
+                            end = len(line_items[1]))
 
                     # Detect the features
-                    features = self.find_features(feature_sequence)
+                    features = self.find_features(feat.sequence)
 
                     # How many of them have the same length?
                     same_length = [f for f in features
-                         if abs(f['end'] - f['start']) + 1 ==
-                         len(feature_sequence)]
+                         if abs(f['end'] - f['start']) + 1 == len(feat.sequence) and
+                            not re.match('ORF', f['feature'])]
+                            
 
                     # Only one feature has the same length
                     try:
@@ -150,11 +212,7 @@ GATGACGACGACAAG""")
                         raise
 
                     # That feature should have same ID and name
-                    self.assertEqual(same_length[0]['feature'], feature_name)
-                    self.assertEqual(same_length[0]['feature_id'], feature_id)
-                    self.assertEqual(same_length[0]['start'], 1)
-                    self.assertEqual(same_length[0]['end'],
-                            len(feature_sequence))
+                    feat.assertEqual(same_length[0])
 
     def test_ItDetectsFeatureGroupSequences(self):
         """Tests that sequences which consist of only a triplet of features
@@ -180,10 +238,12 @@ GATGACGACGACAAG""")
 
                 if feature_id in feature_ids_to_test_set:
                     line_items = line.split()
-                    features_to_test[feature_id] = {
-                        'feature_sequence': line_items[1],
-                        'feature_name': line_items[0].split(':')[1]
-                    }
+                    features_to_test[feature_id] = \
+                        TestFeature(self,
+                            id = feature_id,
+                            sequence = line_items[1],
+                            name = line_items[0].split(':')[1]
+                        )
 
         # Make the combined feature sequences
         for group in zip(feature_ids_to_test[0:10],
@@ -192,10 +252,8 @@ GATGACGACGACAAG""")
 
             # Create the long sequence and groups of features to detect
             sequence = ''
-            names = []
             for id in group:
-                sequence += features_to_test[id]['feature_sequence']
-                names.append(features_to_test[id]['feature_name'])
+                sequence += features_to_test[id].sequence
 
             # Detect the features
             features = self.find_features(sequence)
@@ -203,39 +261,33 @@ GATGACGACGACAAG""")
             # Do we detect at least as many features as we put in?
             self.assertTrue(len(features) >= len(group))
 
-            # Are all of the names there?
-            for (nx, name) in enumerate(names):
-                featureFound = False
-                for feature in features:
-                    if feature['feature']    == name and \
-                       feature['feature_id'] == group[nx]:
-                        featureFound = True
-                        break
-
-                self.assertTrue(featureFound)
-
+            # Are all of the features there?
+            for id in group:
+                features_to_test[id].assertFound(features)
+               
 
     def test_ItDetectsLoneORFs(self):
-        orf_seq = "atggcagcgcgccgaccgcgatgggctgtggccaatagcggctgctcagcagggcgcgccgagagcagcggccgggaaggggcggtgcgggaggcggggtgtggggcggtagtgtgggccctgttcctgcccgcgcggtgttccgcattctgcaagcctccggagcgcacgtcggcagtcggctccctcgttgaccgaatcaccgacctctctccccagggggatccaccggagcttaccatgaccgagtacaagcccacggtgcgcctcgccacccgcgacgacgtccccagggccgtacgcaccctcgccgccgcgttcgccgactaccccgccacgcgccacaccgtcgatccggaccgccacatcgagcgggtcaccgagctgcaagaactcttcctcacgcgcgtcgggctcgacatcggcaaggtgtgggtcgcggacgacggcgccgcggtggcggtctggaccacgccggagagcgtcgaagcgggggcggtgttcgccgagatcggcccgcgcatggccgagttgagcggttcccggctggccgcgcagcaacagatggaaggcctcctggcgccgcaccggcccaaggagcccgcgtggttcctggccaccgtcggcgtctcgcccgaccaccagggcaagggtctgggcagcgccgtcgtgctccccggagtggaggcggccgagcgcgccggggtgcccgccttcctggagacctccgcgccccgcaacctccccttctacgagcggctcggcttcaccgtcaccgccgacgtcgaggtgcccgaaggaccgcgcacctggtgcatgacccgcaagcccggtgcctga"
-        features = self.find_features(orf_seq)
+        lone_orf = TestFeature(self,
+            name = 'ORF frame 1', start = 1, end = 840, clockwise = True,
+            sequence = "atggcagcgcgccgaccgcgatgggctgtggccaatagcggctgctcagcagggcgcgccgagagcagcggccgggaaggggcggtgcgggaggcggggtgtggggcggtagtgtgggccctgttcctgcccgcgcggtgttccgcattctgcaagcctccggagcgcacgtcggcagtcggctccctcgttgaccgaatcaccgacctctctccccagggggatccaccggagcttaccatgaccgagtacaagcccacggtgcgcctcgccacccgcgacgacgtccccagggccgtacgcaccctcgccgccgcgttcgccgactaccccgccacgcgccacaccgtcgatccggaccgccacatcgagcgggtcaccgagctgcaagaactcttcctcacgcgcgtcgggctcgacatcggcaaggtgtgggtcgcggacgacggcgccgcggtggcggtctggaccacgccggagagcgtcgaagcgggggcggtgttcgccgagatcggcccgcgcatggccgagttgagcggttcccggctggccgcgcagcaacagatggaaggcctcctggcgccgcaccggcccaaggagcccgcgtggttcctggccaccgtcggcgtctcgcccgaccaccagggcaagggtctgggcagcgccgtcgtgctccccggagtggaggcggccgagcgcgccggggtgcccgccttcctggagacctccgcgccccgcaacctccccttctacgagcggctcggcttcaccgtcaccgccgacgtcgaggtgcccgaaggaccgcgcacctggtgcatgacccgcaagcccggtgcctga"
+        ) 
+        features = self.find_features(lone_orf.sequence)
 
         orfs = [f for f in features if re.match('ORF', f['feature'])]
 
         self.assertTrue(len(orfs) == 1)
-        self.assertEqual(orfs[0]['feature'], 'ORF frame 1')
-        self.assertEqual(orfs[0]['start'], 1)
-        self.assertEqual(orfs[0]['end'], len(orf_seq))
-        self.assertTrue(orfs[0]['clockwise'])
+
+        lone_orf.assertEqual(orfs[0])
+
         
     def test_ItDetectsFeaturesThatCrossTheBoundary(self):
-        boundary_cross_seq = "aaatgaccctttgggatgaaagggcccttt"
+        cross_enzyme = TestFeature(self,
+            name = 'DraI', start = 28, end = 3, clockwise = True,
+            sequence = "aaatgaccctttgggatgaaagggcccttt"
+        ) 
 
-        features = self.find_features(boundary_cross_seq)
-        
-        self.assertEqual(features[-1]['feature'], 'DraI')
-        self.assertTrue (features[-1]['clockwise'])
-        self.assertEqual(features[-1]['start'], 28)
-        self.assertEqual(features[-1]['end'], 3)
+        features = self.find_features(cross_enzyme.sequence)
+        cross_enzyme.assertEqual(features[-1])
 
 
 if __name__ == '__main__':
