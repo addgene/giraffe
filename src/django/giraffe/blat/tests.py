@@ -13,16 +13,18 @@ class TestFeature(object):
       "__id":         "feature_id",
       "__start":      "start",
       "__end":        "end",
+      "__cut":        "cut",
       "__clockwise":  "clockwise"
     }
 
     def __init__(self, test, name = None, id = None, 
-            start = None, end = None, clockwise = None, sequence = ''):
+            start = None, end = None, cut = None, clockwise = None, sequence = ''):
             self.__test      = test
             self.__name      = name
             self.__id        = id
             self.__start     = start
             self.__end       = end
+            self.__cut       = cut
             self.__clockwise = clockwise
             self.__sequence  = sequence
 
@@ -30,15 +32,21 @@ class TestFeature(object):
     def sequence(self):
         return self.__sequence
 
+
     def assertEqual(self, db_seq_feature):
         for property_name in TestFeature.property_map:
             property = getattr(self, "_TestFeature" + property_name)
 
             if property != None:
-                self.__test.assertEqual(
-                    property,
-                    db_seq_feature[TestFeature.property_map[property_name]]
-                )
+                try:
+                    self.__test.assertEqual(
+                        property,
+                        db_seq_feature[TestFeature.property_map[property_name]]
+                    )
+                except Exception as e:
+                    e.args = (e.args[0] + " (%s)" %
+                              TestFeature.property_map[property_name], )
+                    raise e
 
     def assertFound(self, db_seq_feature_list):
         featureFound= False
@@ -281,13 +289,21 @@ GATGACGACGACAAG""")
 
         
     def test_ItDetectsFeaturesThatCrossTheBoundary(self):
-        cross_enzyme = TestFeature(self,
-            name = 'DraI', start = 28, end = 3, clockwise = True,
-            sequence = "aaatgaccctttgggatgaaagggcccttt"
-        ) 
+        cross_features = [
+            TestFeature(self,
+                name = 'DraI', start = 28, end = 3, cut = 30, clockwise = True,
+                sequence = "aaatgaccctttgggatgaaagggcccttt"
+            ),
+            TestFeature(self,
+                name = 'DraI', start = 29, end = 4, cut = 1, clockwise = True,
+                sequence = "taaatgaccctttgggatgaaagggccctt"
+            )
+        ]
 
-        features = self.find_features(cross_enzyme.sequence)
-        cross_enzyme.assertEqual(features[-1])
+        for cf in cross_features:
+            features = self.find_features(cf.sequence)
+            cf.assertEqual(features[-1])
+
 
 
 if __name__ == '__main__':
