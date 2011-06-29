@@ -324,6 +324,9 @@ window.GiraffeDraw = function () {
         this.default_show_feature = function() { return _default_show_feature; };
         // returns - 1 if not enzyme
         this.cut = function() { return _type == ft.enzyme ? (_cut ? _cut : _start) : -1; };
+        this.actually_have_cut = function() {
+            return _type == ft.enzyme ? (_cut ? true : false) : false;
+        }
 
         this.is_enzyme = function() { return _type == ft.enzyme; };
         this.is_orf = function() { return _type == ft.orf; };
@@ -566,7 +569,7 @@ window.GiraffeDraw = function () {
         /** Automatically provide the cut site in cutter labels */
         thi$.label_name = function () {
             var label_name = this.name();
-            if (this.type() == ft.enzyme && this.cut()) {
+            if (this.type() == ft.enzyme && this.actually_have_cut()) {
                 label_name += " (" + this.cut() + ")";
             }
             return label_name;
