@@ -432,7 +432,9 @@ window.GiraffeAnalyze = function ($,gd,options) {
                 var all_of_this, cuts, fids;
                 var name, s, item;
 
-                if (cutters_to_show.length > 0) {
+
+                if (typeof(cutters_to_show) == 'undefined' ||
+                    cutters_to_show.length > 0) {
 
                     for (i = 0; i < all.length; i++) {
                         all_of_this = all[i].other_cutters();
@@ -443,7 +445,8 @@ window.GiraffeAnalyze = function ($,gd,options) {
                             fids.push(gd.all_features[all_of_this[c]].id());
                         }
 
-                        if (cutters_to_show.indexOf(cuts.length) >= 0) {
+                        if (typeof(cutters_to_show) == 'undefined' ||
+                            cutters_to_show.indexOf(cuts.length) >= 0) {
                             name = $('<label></label>').append(all[i].name());
                             for (c = 0; c < cuts.length; c++) {
                                 cuts[c] = '<a href="#" seq-title="'+all[i].name() +
@@ -469,65 +472,65 @@ window.GiraffeAnalyze = function ($,gd,options) {
             function make_digest_list(circular) {
                 var a0;
 
-                if (cutters_to_show.length < 1) {
-                    return;
-                }
-
                 function cutter_sort(a,b) {
                         return gd.all_features[a].start() -
                             gd.all_features[b].start();
                 }
 
-                for (var i = 0; i < all.length; i++) {
-                    var cuts = [];
-                    var all_of_this = all[i].other_cutters();
-                    all_of_this.sort(cutter_sort);
-                    for (var c = 0; c < all_of_this.length; c++) {
-                        cuts.push(gd.all_features[all_of_this[c]].cut());
-                    }
+                if (typeof(cutters_to_show) == 'undefined' ||
+                    cutters_to_show.length > 0) {
+                    for (var i = 0; i < all.length; i++) {
+                        var cuts = [];
+                        var all_of_this = all[i].other_cutters();
+                        all_of_this.sort(cutter_sort);
+                        for (var c = 0; c < all_of_this.length; c++) {
+                            cuts.push(gd.all_features[all_of_this[c]].cut());
+                        }
 
-                    if (cutters_to_show.indexOf(cuts.length) >= 0) {
-                        var name = $('<label></label>').append(all[i].name());
-                        var digests = [];
-                        for (var j=0; j<cuts.length; j++) {
-                            if (j === 0 && !circular) {
-                                a0 = '<a href="#" class="giraffe-bp" ' +
-                                    'seq-title="Fragment cut by ' +
-                                    all[i].name() + '" bp="1,'+cuts[j]+'">';
-                                digests.push(a0+'1-'+(cuts[j])+'</a> ('+cuts[j]+' bp)');
-                            }
-                            if (j+1 == cuts.length) {
-                                if (circular) {
+                        if (typeof(cutters_to_show) == 'undefined' ||
+                            cutters_to_show.indexOf(cuts.length) >= 0) {
+                            var name = $('<label></label>').append(all[i].name());
+                            var digests = [];
+                            for (var j=0; j<cuts.length; j++) {
+                                if (j === 0 && !circular) {
                                     a0 = '<a href="#" class="giraffe-bp" ' +
-                                        'seq-title="Fragment cut by ' + 
-                                        all[i].name()+'" bp="' +
-                                        (cuts[j]+1)+','+cuts[0]+'">';
-                                    digests.push(a0+(cuts[j]+1)+'-'+cuts[0]+'</a> ('+
-                                                 (seqlen-(cuts[j]+1)+1+cuts[0])+' bp)');
+                                        'seq-title="Fragment cut by ' +
+                                        all[i].name() + '" bp="1,'+cuts[j]+'">';
+                                    digests.push(a0+'1-'+(cuts[j])+'</a> ('+cuts[j]+' bp)');
+                                }
+                                if (j+1 == cuts.length) {
+                                    if (circular) {
+                                        a0 = '<a href="#" class="giraffe-bp" ' +
+                                            'seq-title="Fragment cut by ' + 
+                                            all[i].name()+'" bp="' +
+                                            (cuts[j]+1)+','+cuts[0]+'">';
+                                        digests.push(a0+(cuts[j]+1)+'-'+cuts[0]+'</a> ('+
+                                                     (seqlen-(cuts[j]+1)+1+cuts[0])+' bp)');
+                                    } else {
+                                        a0 = '<a href="#" class="giraffe-bp" ' +
+                                            'seq-title="Fragment cut by ' +
+                                            all[i].name()+'" bp="' +
+                                            (cuts[j]+1)+','+seqlen+'">';
+                                        digests.push(a0+(cuts[j]+1)+'-'+seqlen+'</a> ('+
+                                                     (seqlen-(cuts[j]+1)+1)+' bp)');
+                                    }
                                 } else {
                                     a0 = '<a href="#" class="giraffe-bp" ' +
                                         'seq-title="Fragment cut by ' +
                                         all[i].name()+'" bp="' +
-                                        (cuts[j]+1)+','+seqlen+'">';
-                                    digests.push(a0+(cuts[j]+1)+'-'+seqlen+'</a> ('+
-                                                 (seqlen-(cuts[j]+1)+1)+' bp)');
+                                        (cuts[j]+1)+','+cuts[j+1]+'">';
+                                    digests.push(a0+(cuts[j]+1)+'-'+(cuts[j+1])+'</a> ('+
+                                                 (cuts[j+1]-(cuts[j]+1)+1)+' bp)');
                                 }
-                            } else {
-                                a0 = '<a href="#" class="giraffe-bp" ' +
-                                    'seq-title="Fragment cut by ' +
-                                    all[i].name()+'" bp="' +
-                                    (cuts[j]+1)+','+cuts[j+1]+'">';
-                                digests.push(a0+(cuts[j]+1)+'-'+(cuts[j+1])+'</a> ('+
-                                             (cuts[j+1]-(cuts[j]+1)+1)+' bp)');
                             }
+                            var s = $('<p>'+digests.join(', ')+'</p>');
+                            var item = $('<li></li>').append(name).append(s);
+                            $(list).append(item);
                         }
-                        var s = $('<p>'+digests.join(', ')+'</p>');
-                        var item = $('<li></li>').append(name).append(s);
-                        $(list).append(item);
                     }
                 }
             }
-            
+
             // The actual digest drawing function
             return function () {
                 digest_data_dom.empty();
@@ -589,17 +592,100 @@ window.GiraffeAnalyze = function ($,gd,options) {
                           .siblings('.cutter-label')
                           .text('non-cutters');
 
+        // Add an "all cutters" checkbox
+        $(map_panes.panes)
+            .find('input[name="no-cutters"]')
+            .closest('td')
+            .before('<td><label><input type="checkbox" ' + 
+                                      'name="all-cutters" value="show" />' +
+                    '<span class="cutter-label">all cutters</span></label></td>');
+                          
 
         // Force rewriting the digest data when the cutter controls are changed
-        $(map_panes.panes).find('input[name*="cutters"]').click(function (event) {
-            cutters_to_show = [];
+        $(map_panes.panes)
+            .find('input[name*="cutters"]')
+            .not('[name="all-cutters"]')
+            .click(function (event) {
+                var map = $(this)
+                              .closest('div.giraffe-digest-control')
+                              .siblings('div.giraffe-digest-map'),
+                    n_cutter_boxes;
 
-            // Parse out selected options
-            $(this).closest('tbody').find('input[checked][name|="cutters"]').each(function () {
-                cutters_to_show.push(parseInt($(this).attr('name').match(/\d+/), 10));
+                cutters_to_show = [];
+
+                // Parse out selected options
+                n_cutter_boxes = 0;
+                $(this)
+                    .closest('tbody')
+                    .find('input[name|="cutters"]')
+                    .each(function () {
+                        n_cutter_boxes++;
+                        if ($(this).attr('checked')) {
+                            cutters_to_show.push(
+                                parseInt($(this).attr('name').match(/\d+/), 10)
+                            );
+                        }
+                    });
+
+                // Make sure all-cutters checkbox is unchecked if the list is
+                // not at maximum capacity
+                if (cutters_to_show.length < n_cutter_boxes) {
+                    $(this)
+                        .closest('tbody')
+                        .find('input[name="all-cutters"]')
+                        .removeAttr('checked');
+                    map.show();
+                }
+
+                write_digest_data();
             });
 
-            write_digest_data();
+        $(map_panes.panes).find('input[name="all-cutters"]').click(function (event) {
+            
+            var map = $(this)
+                          .closest('div.giraffe-digest-control')
+                          .siblings('div.giraffe-digest-map'),
+                n_cutter_boxes;
+
+            if ($(this).attr('checked')) {
+
+                // Make sure 1- and 2- cutter checkboxes are set
+                $(this)
+                    .closest('tbody')
+                    .find('input[name|="cutters"]')
+                    .attr('checked', 'checked');
+
+                // Make sure no-cutter checkbox is unset
+                $(this)
+                    .closest('tbody')
+                    .find('input[name="no-cutters"]')
+                    .removeAttr('checked');
+
+                // Show all cutters below
+                cutters_to_show = undefined;
+                write_digest_data();
+
+
+                // Hide the map
+                map.hide();
+            } else {
+
+                // All cutter boxes are checked; we just need
+                // to know how many there are
+                n_cutter_boxes = $(this)
+                    .closest('tbody')
+                    .find('input[name|="cutters"]')
+                    .length;
+
+                cutters_to_show = new Array(n_cutter_boxes);
+                for(ix = 0; ix < n_cutter_boxes; ix++) {
+                    cutters_to_show[ix] = ix + 1;
+                }
+                        
+                // Show the map
+                map.show();
+            }
+
         });
 
         // Select the cutter pane and draw everything the first time
@@ -689,7 +775,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
             t += '</a> ('+s.length()/3+' aa)';
             if (gene_desc !== '') { t += ', '+gene_desc; }
             if (f.end() < f.start()) {
-                t += ' <span class="giraffe-red">ORF based on circular DNA</span>'
+                t += ' <span class="giraffe-red">ORF based on circular DNA</span>';
             }
             
             title = $('<p></p>').append(t);
@@ -1357,7 +1443,7 @@ window.GiraffeTable = function ($,gd,dom) {
                         '<col class="giraffe-table-feature-data" span="2"/>' +
                     '</colgroup>')
             .append('<thead><tr>' +
-                        '<th>ORF Frame</th>' +
+                        '<th>ORF</th>' +
                         '<th>Start</th>'     +
                         '<th>End<th>'        +
                     '</tr></thead>')
@@ -1369,7 +1455,7 @@ window.GiraffeTable = function ($,gd,dom) {
             row = $('<tr></tr>').appendTo(orf_table.children('tbody'))
                                 .attr('id', 'feature-' + f.id());
 
-            row.append('<td class="giraffe-table-feature-name">' + f.name().replace(/ORF\s+[fF]rame\s+/, '') + '</td>');
+            row.append('<td class="giraffe-table-feature-name">' + f.name() + '</td>');
 
             if (f.clockwise()) {
                 row.append('<td>' + f.start() + '</td>');
@@ -1454,13 +1540,10 @@ window.GiraffeControl = function ($,gd_map,dom) {
                 '<td><label><input type="checkbox" checked="checked"' +
                              'name="cutters-1" value="show" />' +
                 '<span class="cutter-label">unique cutters</span></label></td>' +
-                '<td><label><input type="checkbox"' +
+                '<td><label><input type="checkbox" ' +
                               'name="cutters-2" value="show" />' +
                 '<span class="cutter-label">2-cutters</span></label></td>' +
-                '<td><label><input type="checkbox"' +
-                              'name="all-cutters" value="show" />' +
-                '<span class="cutter-label">all cutters</span></label></td>' +
-                '<td><label><input type="checkbox"' +
+                '<td><label><input type="checkbox" ' +
                               'name="no-cutters" value="show" />' +
                 '<span class="cutter-label">hide all</span></label></td></tr>' +
             '</tbody>' +
@@ -1488,12 +1571,6 @@ window.GiraffeControl = function ($,gd_map,dom) {
                 controls.find('input[name="no-cutters"]').attr("checked", "checked");
             }
 
-            // Automatically uncheck the all-cutters checkbox,
-            // if any of the options are deselected
-            if (opts.length < num_explicit_cutters) {
-                controls.find('input[name="all-cutters"]').removeAttr("checked");
-            } 
-
             if (draw_table) {
                 $('.giraffe-control-table').find('tr').each(function () {
                     var fid = parseInt($(this).attr('id').replace(/\D/g, ''), 10);
@@ -1514,37 +1591,10 @@ window.GiraffeControl = function ($,gd_map,dom) {
             gd_map.redraw_cutters(opts);
         });
 
-        // All-cutter checkbox
-        controls.find('input[name="all-cutters"]').click(function (event) {
-            if ($(this).attr("checked")) {
-                controls.find('input[name|="cutters"]').attr("checked", "checked");
-                controls.find('input[name="no-cutters"]').removeAttr("checked");
-                gd_map.redraw_cutters();
-            } else {
-                // When deselected, go back to just 1- and 2-cutters
-                controls.find('input[name|="cutters"]').attr("checked", "checked");
-                controls.find('input[name="no-cutters"]').removeAttr("checked");
-                gd_map.redraw_cutters([1, 2]);
-            }
-
-            if (draw_table) {
-                $('.giraffe-control-table').find('tr').each(function () {
-                    var fid = parseInt($(this).attr('id').replace(/\D/g, ''), 10);
-                    var feat = gd_map.gd.all_features[fid];
-                    if (typeof(feat) !== 'undefined' && feat.type() === gd_map.gd.Feature_Type.enzyme) {
-                        $(this).find('input[value="show"]').attr("checked", "checked");
-                        $(this).find('input[value="label"]').removeAttr("disabled");
-                        $(this).find('input[value="label"]').attr("checked", "checked");
-                    } 
-                });
-            }
-        });
-
-        // No-cutter textbox
+        // No-cutter checkbox
         controls.find('input[name="no-cutters"]').click(function (event) {
             if ($(this).attr("checked")) {
                 controls.find('input[name|="cutters"]').removeAttr("checked");
-                controls.find('input[name|="all-cutters"]').removeAttr("checked");
                 gd_map.redraw_cutters([]);
             } else {
                 // When 'no cutters' is the only selected checkbox, make it impossible 
@@ -1757,7 +1807,7 @@ window.GiraffeControl = function ($,gd_map,dom) {
 
             $(this)
                 .empty()
-                .append($('<a></a>').text(f.name().replace(/ORF\s+[fF]rame\s+/, ''))
+                .append($('<a></a>').text(f.name())
                 .attr('href', '#')
                 .attr('seq-title', f.name())
                 .attr('bp', 'feature-' + id)

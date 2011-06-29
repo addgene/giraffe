@@ -135,7 +135,15 @@ class Sequence_Feature(Sequence_Feature_Base):
                 cp = d["start"] + (self.feature.cut_after - 1)
             else:
                 cp = d["end"] - (self.feature.cut_after - 1)
+
+            slen = len(self.sequence.sequence)
+            if cp < 0:
+                cp += slen
+            if cp > slen:
+                cp %= slen
+
             d["cut"] = cp
+
         # Include gene variant name modifications
         elif d["type_id"] == Feature_Type.GENE: 
             if self.is_variant:

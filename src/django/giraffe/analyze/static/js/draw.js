@@ -484,8 +484,10 @@ window.GiraffeDraw = function () {
         thi$.click = function(event) {
             if (this.map.feature_click_callback) {
                 this.map.feature_click_callback(basic_feature);
-            } else {
-                /* benjie: don't do this for now...
+            } 
+            /* benjie: don't do this for now...
+            else {
+               
                 if (this.opaque) {
                     this.lighter();
                     this.opaque = false;
@@ -493,8 +495,8 @@ window.GiraffeDraw = function () {
                     this.bolder();
                     this.opaque = true;
                 }
-                */
-            }
+                
+            }*/
         };
 
         // Hovering: solid/light upon mouseover
@@ -1083,13 +1085,8 @@ window.GiraffeDraw = function () {
             thi$.real_center = function() {
                 var cd;
 
+                // Remember: minus means going along the circle
                 cd = thi$.real_start() - thi$.real_size()/2.0;
-
-                if (cd < plasmid_start - 360) {
-                    cd += 360;
-                } else if (cd > plasmid_start) {
-                    cd -= 360;
-                }
 
                 return normalize(cd);
             };
@@ -1140,9 +1137,13 @@ window.GiraffeDraw = function () {
             thi$.draw = function () {
                 if (!this.visible) { return; }
 
-                // Convert from sequence positions to angles
-                var a0 = convert.pos_to_angle(thi$.start());
-                var a1 = convert.pos_to_angle(thi$.end());
+                    // Convert from sequence positions to angles
+                var a0 = convert.pos_to_angle(this.start()),
+                    a1 = convert.pos_to_angle(this.end()),
+                    // Head dimensions
+                    r_p, a_b, a_p, xy_p, xy_b, xy_t, head,
+                    // Arc dimensions
+                    xy0, xy1, arc, large_angle, a_cut;
 
                 // Create the draw feature, a set which will have the head
                 // and arc pushed onto it as necessary.
@@ -1155,13 +1156,12 @@ window.GiraffeDraw = function () {
                     // We need to figure out how many radians the arrow takes up
                     // in order to adjust a0 or a1 by that amount, and to set the
                     // base of the triangle even with that angle
-                    var r_p = Math.sqrt(thi$.radius*thi$.radius +
+                    r_p = Math.sqrt(this.radius*this.radius +
                             head_length*head_length);
                     // "height" of the arrowhead, in degrees
-                    var a_b;
-                    var a_p = Raphael.deg(Math.asin(head_length/r_p));
+                    a_p = Raphael.deg(Math.asin(head_length/r_p));
                     // Adjust the appropriate edge to compensate for the arrowhead
-                    if (thi$.clockwise()) {
+                    if (this.clockwise()) {
                         a_b = (a1 + a_p) % 360 ; // base angle
                         a_p = a1;       // point angle
                         a1  = a_b;      // adjust arc edge
@@ -1170,15 +1170,15 @@ window.GiraffeDraw = function () {
                         a_p = a0;       // point angle
                         a0  = a_b;      // adjust arc edge
                     }
-                    var xy_p = convert.polar_to_rect(thi$.radius, a_p);
+                    xy_p = convert.polar_to_rect(this.radius, a_p);
 
                     // bottom and top points, rectangular
-                    var xy_b = convert.polar_to_rect(thi$.radius - head_width/2.0, a_b);
-                    var xy_t = convert.polar_to_rect(thi$.radius + head_width/2.0, a_b);
+                    xy_b = convert.polar_to_rect(this.radius - head_width/2.0, a_b);
+                    xy_t = convert.polar_to_rect(this.radius + head_width/2.0, a_b);
 
                     // Unlike the arc, the head is traced with a line, and
                     // then created entirely with the fill color
-                    var head = this.map.paper.path(svg.move(xy_p.x, xy_p.y) +
+                    head = this.map.paper.path(svg.move(xy_p.x, xy_p.y) +
                                           svg.line(xy_b.x, xy_b.y) +
                                           svg.line(xy_t.x, xy_t.y) +
                                           svg.close());
@@ -1188,7 +1188,6 @@ window.GiraffeDraw = function () {
                 }
 
                 // Arc drawing
-                var xy0, xy1, arc;
                 if ((this.crosses_boundary() || a1 < a0) && this.type() != ft.enzyme) {
                     // Compensating for the head may have "taken up" all
                     // the room on the plasmid, in which case no arc needs
@@ -1198,24 +1197,25 @@ window.GiraffeDraw = function () {
                     // arcs are drawn counterclockwise, even though the plasmid
                     // sequence increases clockwise, so we flip the
                     // indices
-                    xy0 = convert.polar_to_rect(thi$.radius, a1);
-                    xy1 = convert.polar_to_rect(thi$.radius, a0);
+                    xy0 = convert.polar_to_rect(this.radius, a1);
+                    xy1 = convert.polar_to_rect(this.radius, a0);
 
                     // The arc has no fill-color: it's just a thick line
-                    var large_angle = thi$.real_size() > 180 ? 1 : 0;
+                    large_angle = this.real_size() > 180 ? 1 : 0;
 
                     arc = this.map.paper.path(svg.move(xy0.x, xy0.y) +
-                                         svg.arc(thi$.radius, xy1.x, xy1.y,
+                                         svg.arc(this.radius, xy1.x, xy1.y,
                                                  large_angle));
                     arc.attr({"stroke-width": this.width});
 
                     this.arrow_set.push(arc);
                 } else if (this.type() == ft.enzyme) {
+                    a_cut = convert.pos_to_angle(this.cut());
+
                     // Restriction enzymes get drawn on their own
-                    xy0 = convert.polar_to_rect(thi$.radius - this.map.enzyme_width()/2.0,
-                            (a0+a1)/2.0);
-                    xy1 = convert.polar_to_rect(thi$.radius + this.map.enzyme_width()/2.0,
-                            (a0+a1)/2.0);
+                    xy0 = convert.polar_to_rect(this.radius - this.map.enzyme_width()/2.0, a_cut);
+                    xy1 = convert.polar_to_rect(this.radius + this.map.enzyme_width()/2.0, a_cut);
+
                     // Not really an arc, just a line, but left this way
                     // for consistency
                     arc = this.map.paper.path(svg.move(xy0.x, xy0.y) +
@@ -1256,13 +1256,20 @@ window.GiraffeDraw = function () {
                 if (!thi$.should_draw_label()) { return; }
 
                 // Figure out the center of the feature
-                var a_c = thi$.real_center();
+                var a_c;
+                if (this.type() == ft.enzyme) {
+                    a_c = convert.pos_to_angle(this.cut());
+                } else {
+                    a_c = this.real_center();
+                }
+
                 var adjust_a_c = a_c;
                 if (adjust_a_c < 0) { adjust_a_c += 360; }
 
                 // Figure out which section this label is in: divide
                 // the grid up into eight sections.
                 var section = Math.floor((plasmid_start-a_c)/label_section_degree);
+                section = section % label_f_c.length;
 
                 var l = label_f_c[section].length;
                 label_f_c[section][l] = [adjust_a_c,thi$.label_name()];
@@ -1278,7 +1285,13 @@ window.GiraffeDraw = function () {
                 }
 
                 // Figure out the center of the feature
-                var a_c = thi$.real_center();
+                var a_c;
+                if (this.type() == ft.enzyme) {
+                    a_c = convert.pos_to_angle(this.cut());
+                } else {
+                    a_c = this.real_center();
+                }
+
                 var adjust_a_c = a_c;
                 if (adjust_a_c < 0) { adjust_a_c += 360; }
 
@@ -1287,6 +1300,8 @@ window.GiraffeDraw = function () {
                 // Figure out which section this label is in: divide
                 // the grid up into eight sections.
                 var section = Math.floor((plasmid_start - a_c)/label_section_degree);
+                section = section % label_f_c.length;
+
                 // Figure out position in the label list.
                 var pos_ls = 0;
 
@@ -1599,16 +1614,21 @@ window.GiraffeDraw = function () {
         // label list, and where the label line should point to, so we can
         // use this information to figure out where to put the label and
         // minimize the number of lines that intersect.
-        var label_f_c = new Array(8);
-        var label_list_pos = new Array(8);
+        var n_sections = 8;
+        var label_f_c = new Array(n_sections);
+        var label_list_pos = new Array(n_sections);
 
         thi$.set_label_lists = function () {
+            var lx, fx;
             // Global: keeps track of feature centers for each label
             // list, we need this to compute exactly where a label
             // should be within a label list, so to minimize
             // intersecting lines.
-            label_f_c = [[], [], [], [], [], [], [], []];
-            for (var fx = thi$.features.length - 1; fx >= 0; fx--) {
+            for (lx = 0; lx < n_sections; lx++) {
+                label_f_c[lx] = [];
+            }
+
+            for (fx = thi$.features.length - 1; fx >= 0; fx--) {
                 thi$.features[fx].set_label_list();
             }
         };
@@ -1865,20 +1885,26 @@ window.GiraffeDraw = function () {
 
 
             thi$.draw = function () {
+                var x0, x1, y,
+                    // Arrowhead drawing
+                    hx_tip, hx_back, head,
+                    // Body drawing
+                    body, x_m;
+
+
                 // Don't draw features that cross the boundary, as this is not
                 // a circular plasmid
-                if (! this.visible || thi$.crosses_boundary()) { return; }
+                if (! this.visible || this.crosses_boundary()) { return; }
 
                 // Convert from sequence positions to x-coords
-                var x0 = convert.pos_to_x(thi$.start());
-                var x1 = convert.pos_to_x(thi$.end());
+                x0 = convert.pos_to_x(this.start());
+                x1 = convert.pos_to_x(this.end());
 
-                var y = plasmid_y + thi$.y;
+                y = plasmid_y + this.y;
 
                 // Arrowhead drawing, if needed
                 if (this.draw_head) {
-                    var hx_tip, hx_back;
-                    if (thi$.clockwise()) {
+                    if (this.clockwise()) {
                         hx_tip = x1;
                         x1 -= head_length;
                         hx_back = x1;
@@ -1890,7 +1916,7 @@ window.GiraffeDraw = function () {
 
                     // Unlike the body, the head is traced with a line, and
                     // then created entirely with the fill color
-                    var head = this.map.paper.path(svg.move(hx_tip, y) +
+                    head = this.map.paper.path(svg.move(hx_tip, y) +
                                      svg.line(hx_back, y - head_width/2.0) +
                                      svg.line(hx_back, y + head_width/2.0) +
                                      svg.close());
@@ -1900,7 +1926,6 @@ window.GiraffeDraw = function () {
                 }
 
                 // Body drawing
-                var body;
                 if (x0 < x1 && this.type() != ft.enzyme) {
                     // Compensating for the head may have "taken up" all
                     // the room on the plasmid, in which case no arc needs
@@ -1914,7 +1939,7 @@ window.GiraffeDraw = function () {
                     this.arrow_set.push(body);
                 } else if (this.type() == ft.enzyme) {
                     // Restriction enzymes get drawn on their own
-                    var x_m = (x0 + x1)/2;
+                    x_m = convert.pos_to_x(this.cut());
 
                     body = this.map.paper.path(svg.move(x_m, y - this.width/2.0) +
                                           svg.line(x_m, y + this.width/2.0));
@@ -1942,11 +1967,7 @@ window.GiraffeDraw = function () {
 
             // Should we draw the label?
             thi$.should_draw_label = function () {
-                // Don't bother unless we need to
-                if (!this.visible || !this.labeled || this.crosses_boundary()) {
-                    return false;
-                }
-                return true;
+                return this.visible && this.labeled && !this.crosses_boundary();
             }; // END LinearFeature::should_draw_label()
 
             thi$.label_size = function() {
@@ -1966,7 +1987,12 @@ window.GiraffeDraw = function () {
                 }
 
                 // Figure out the center of the feature
-                var x_c = this.real_center();
+                var x_c;
+                if (this.type() == ft.enzyme) {
+                    x_c = convert.pos_to_x(this.cut());
+                } else {
+                    x_c = this.real_center();
+                }
 
                 // Enzymes show their cut sites in the label
                 var label_name = thi$.label_name();
@@ -2194,7 +2220,7 @@ window.GiraffeDraw = function () {
         thi$.set_label_lists = function () {
             var label_overlap_cutoff = -1, // pixel
                 nlists = 6,
-                ix, fx, f,
+                ix, fx, f, feature_center,
                 section, bottom,
                 list_offset;
 
@@ -2213,17 +2239,22 @@ window.GiraffeDraw = function () {
             for (fx = 0; fx < thi$.features.length; fx++) {
                 f = thi$.features[fx];
 
+                if (f.type() == ft.enzyme) {
+                    // Restriction enzymes get drawn on their own
+                    feature_center = convert.pos_to_x(f.cut());
+                } else {
+                    feature_center = f.real_center();
+                }
+
                 // Which nth of the plasmid is the feature in?
-                section = Math.floor(nlists*(f.real_center() - plasmid_left)/
+                section = Math.floor(nlists*(feature_center - plasmid_left)/
                                                  plasmid_width);
                 // Is it in the top or bottom?
                 bottom = section % 2;
 
                 if (f.should_draw_label()) {
                     // push it on the appropriate list
-                    if (label_lists[bottom][section]) {
-                        label_lists[bottom][section].push(f);
-                    }
+                    label_lists[bottom][section].push(f);
                 }
             }
 

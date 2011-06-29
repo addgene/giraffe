@@ -284,7 +284,7 @@ class FragTrain(object):
                  self.feature.name.find(other_train.feature.name) >= 0)
 
     ## Conversion methods
-    def to_sequence_feature(self):
+    def to_sequence_feature(self, seq_length):
         """
         Convert the train to a sequence feature (without a sequence).
         
@@ -294,6 +294,19 @@ class FragTrain(object):
         seq_feat.start = self.start_position
         seq_feat.end = self.stop_position
         seq_feat.clockwise = self.feature.clockwise
+
+        # Features that cross the boundary should wrap their starting and ending
+        # positions
+        if seq_feat.start < 0:
+            seq_feat.start += seq_length
+        if seq_feat.end < 0:
+            seq_feat.end += seq_length
+
+        if seq_feat.start > seq_length:
+            seq_feat.start %= seq_length
+
+        if seq_feat.end > seq_length:
+            seq_feat.end %= seq_length
 
         # Feature object itself is private, to prevent unnecessary db access
         seq_feat.feature_db_index = self.feature._FeatureData__fdb
@@ -591,7 +604,6 @@ def _frags_to_trains(frags, feature_data, seq_length):
         create_new_train = True
         new_train_is_short = False
 
-        dx = 0;
         for train in trains:
             link = FragTrainLink(frag, train)
 
@@ -734,7 +746,7 @@ def _pick_good_trains(trains):
 
     return good_trains
 
-def _trains_to_features(trains):
+def _trains_to_features(trains, seq_length):
     """
     Prune interleaving trains and make features from the rest.
     """
@@ -775,7 +787,7 @@ def _trains_to_features(trains):
         # feature. When the outer loop gets to the better feature on its own, 
         # it will add it
         if add_feature:
-            features.append(outer_train.to_sequence_feature())
+            features.append(outer_train.to_sequence_feature(seq_length))
 
     return features
 
@@ -814,4 +826,4 @@ def frags_to_features(frags_strings, db, seq_length):
         all_trains.extend(single_index_good_trains)
 
     # Turn the global list into a set of non-overlapping SequenceFeature objects
-    return _trains_to_features(all_trains)
+    return _trains_to_features(all_trains, seq_length)
