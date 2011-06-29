@@ -323,7 +323,7 @@ window.GiraffeDraw = function () {
         this.clockwise = function() { return _clockwise; };
         this.default_show_feature = function() { return _default_show_feature; };
         // returns - 1 if not enzyme
-        this.cut = function() { return _type == ft.enzyme ? _cut : -1; };
+        this.cut = function() { return _type == ft.enzyme ? (_cut ? _cut : _start) : -1; };
 
         this.is_enzyme = function() { return _type == ft.enzyme; };
         this.is_orf = function() { return _type == ft.orf; };
