@@ -588,7 +588,7 @@ window.GiraffeDraw = function () {
             _feature_width, _enzyme_width,
             _enzyme_weight, enzyme_bold_weight,
             _label_line_weight, _label_line_bold_weight, _label_font_size,
-            _plasmid_font_size, _plasmid_name, _draw_tic_mark,
+            _plasmid_font_size, _plasmid_name, _draw_tic_mark, _draw_plasmid_size,
             thi$ = {};
 
         init();
@@ -622,6 +622,16 @@ window.GiraffeDraw = function () {
             _plasmid_name = '';
             if ('plasmid_name' in options) {
                 _plasmid_name = options.plasmid_name;
+            }
+
+            // Draw plasmid size
+            _draw_plasmid_size = true;
+            if ('draw_plasmid_size' in options &&
+                (options.draw_plasmid_size === 0 ||
+                 options.draw_plasmid_size === '0' ||
+                 options.draw_plasmid_size === false ||
+                 options.draw_plasmid_size === 'false')) {
+                _draw_plasmid_size = false;
             }
 
             // Draw tic mark
@@ -707,6 +717,7 @@ window.GiraffeDraw = function () {
         thi$.plasmid_font_size = function() { return  _plasmid_font_size; };
         thi$.plasmid_name = function() { return  _plasmid_name; };
         thi$.draw_tic_mark = function() { return  _draw_tic_mark; };
+        thi$.draw_plasmid_size = function() { return  _draw_plasmid_size; };
 
         thi$.extend_features = function () {
             var bfx,
@@ -1420,7 +1431,8 @@ window.GiraffeDraw = function () {
 
             var plasmid = this.paper.circle(cx, cy, plasmid_radius);
             plasmid.attr("stroke", colors.plasmid);
-            var title = seq_length + ' bp';
+            var title = '';
+            if (this.draw_plasmid_size()) { title = seq_length + ' bp'; }
             if (this.plasmid_name() !== "") {
                 title = this.plasmid_name() + "\n\n" + title;
             }
