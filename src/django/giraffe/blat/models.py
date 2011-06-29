@@ -40,18 +40,8 @@ class Giraffe_Mappable_Model(models.Model):
         import orfs
         db = Feature_Database.objects.get(name=db_name)
 
-        ## Remove FASTA > and ; comments
-        # Remove only the first > comment, and any subsequent ; comments because
-        # those comments do not necessarily mean the start of a new sequence.
-        # Match the first line if it starts with > or ;, and subsequent lines
-        # only if they start with ;. Then match the rest of that line _up to but
-        # not including_ the line break (this is important so that multiple
-        # comments in a row can be detected)
-        # Note that multiple FASTA sequence-start comments will throw an error
-        sequence = re.sub(r'(^\s*[>;]|\n\s*[;])[^\n]+(?=\n)','',sequence);
-
-        # clean the sequence
-        sequence = re.sub(r'[^A-Za-z*-]', '', sequence)
+        # clean sequence, remove FASTA stuff, junks
+        sequence = Sequence.clean_sequence(sequence)
 
         # create sequence record
         s = Sequence()
@@ -165,7 +155,23 @@ class Sequence_Feature(Sequence_Feature_Base):
 
 class Sequence(models.Model):
     @staticmethod
-    def verify_clean(sequence):
+    def clean_sequence(sequence):
+        # Remove FASTA > and ; comments
+        #
+        # Remove only the first > comment, and any subsequent ; comments because
+        # those comments do not necessarily mean the start of a new sequence.
+        # Match the first line if it starts with > or ;, and subsequent lines
+        # only if they start with ;. Then match the rest of that line _up to but
+        # not including_ the line break (this is important so that multiple
+        # comments in a row can be detected)
+        # Note that multiple FASTA sequence-start comments will throw an error
+        sequence = re.sub(r'(^\s*[>;]|\n\s*[;])[^\n]+(?=\n)','',sequence);
+        # clean the sequence
+        sequence = re.sub(r'[^A-Za-z*-]', '', sequence)
+        return sequence
+
+    @staticmethod
+    def verify_bp(sequence):
         if re.match(r'^([atgcATGCnNbdhkmnrsvwyBDHKMNRSVWYuU\s*-])*$',sequence):
             return True
         return False
@@ -215,7 +221,7 @@ class Sequence(models.Model):
 
     def save(self):
         self.db_version = self.db.db_version
-        if not Sequence.verify_clean(self.sequence):
+        if not Sequence.verify_bp(self.sequence):
             raise BadSequenceError("Found non-DNA base pair character")
 
         (self.sequence,self.hash) = Sequence.clean_and_hash(self.sequence)
