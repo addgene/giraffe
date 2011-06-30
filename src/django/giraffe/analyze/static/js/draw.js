@@ -1413,18 +1413,27 @@ window.GiraffeDraw = function () {
             var tic_label_radius = tic_mark_radius - 1.5*tic_mark_length;
 
             function draw_tic_mark(a) {
+                var r0, r1, xy0, xy1, tic,
+                    xyl, label_pos, label;
+ 
                 // use thi$ for paper because `this` is killed by local scope
-                var r0 = tic_mark_radius - tic_mark_length/2;
-                var r1 = tic_mark_radius + tic_mark_length/2;
-                var xy0 = convert.polar_to_rect(r0,a);
-                var xy1 = convert.polar_to_rect(r1,a);
-                var tic = thi$.paper.path(svg.move(xy0.x, xy0.y) +
+                r0 = tic_mark_radius - tic_mark_length/2;
+                r1 = tic_mark_radius + tic_mark_length/2;
+                xy0 = convert.polar_to_rect(r0,a);
+                xy1 = convert.polar_to_rect(r1,a);
+                tic = thi$.paper.path(svg.move(xy0.x, xy0.y) +
                                      svg.line(xy1.x, xy1.y));
                 tic.attr({"stroke": colors.bg_text});
 
-                var xyl = convert.polar_to_rect(tic_label_radius, a);
-                var label = thi$.paper.text(xyl.x, xyl.y, String(convert.angle_to_pos(a)));
+                xyl = convert.polar_to_rect(tic_label_radius, a);
+
+                label_pos = convert.angle_to_pos(a);
+                if (label_pos == 1) {
+                    label_pos = seq_length;
+                }
+                label = thi$.paper.text(xyl.x, xyl.y, String(label_pos));
                 label.attr({"fill": colors.bg_text});
+
                 if (a < plasmid_start || a > 360 - plasmid_start) { // Right half of wheel: align right
                     label.attr({"text-anchor": "end"});
                 } else if (a > plasmid_start && a < 360 - plasmid_start) { // Left half of wheel: align left
