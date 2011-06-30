@@ -326,7 +326,7 @@ window.GiraffeDraw = function () {
         this.cut = function() { return _type == ft.enzyme ? (_cut ? _cut : _start) : -1; };
         this.actually_have_cut = function() {
             return _type == ft.enzyme ? (_cut ? true : false) : false;
-        }
+        };
 
         this.is_enzyme = function() { return _type == ft.enzyme; };
         this.is_orf = function() { return _type == ft.orf; };
@@ -778,10 +778,10 @@ window.GiraffeDraw = function () {
                 _cutters_to_show = new_cutters_to_show;
                 this.show_all_features = false;
             } else {
-                // Show _all_ cutters
-                _cutters_to_show = undefined;
+                // Undefined cutter list: hide all cutters
+                _cutters_to_show = [];
                 // even the non-default ones
-                this.show_all_features = true;
+                this.show_all_features = false;
             }
             this.redraw(false);
         };

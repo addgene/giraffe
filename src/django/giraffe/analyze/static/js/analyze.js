@@ -332,67 +332,72 @@ window.GiraffeAnalyze = function ($,gd,options) {
     }
 
 
-    function digest_map_panes(dom) {
-
-        var cpanes,
-            dom_map_c,
-            dom_map_id_c = random_dom_id(),
-            dom_control_c,
-            dom_map_l,
-            dom_map_id_l = random_dom_id(),
-            dom_control_l,
-            circular_digest_map_shrink_factor = 0.7;
-
-        // Cutter map above
-        cpanes = Switch_Panes(['Linear Digest', 'Circular Digest']);
-
-        $(dom)
-            .append(cpanes.panes);
-
-        // Linear digest pane
-        dom_map_l = $('<div id="'+ dom_map_id_l+'" class="giraffe-analyze-map giraffe-analyze-linear-map giraffe-digest-map"></div>');
-        dom_control_l = $('<div id="' + random_dom_id()  + '" class="giraffe-analyze-map-control giraffe-digest-control"></div>');
-        $(cpanes.pane(0))
-            .append(dom_map_l)
-            .append(dom_control_l);
-
-        gd_l = gd.LinearMap({
-            'map_dom_id' : dom_map_id_l,
-            'plasmid_name' : name,
-            'digest' : true,
-            'cutters': [1],
-            'map_width' : map_width,
-            'map_height' : map_height,
-            'feature_click_callback' : map_feature_click_callback
-        });
-        gc_l = GiraffeControl($, gd_l, dom_control_l);
-
-        // Circular digest pane
-        dom_map_c = $('<div id="'+ dom_map_id_c+'" class="giraffe-analyze-map giraffe-analyze-circular-map giraffe-digest-map"></div>');
-        dom_control_c = $('<div id="' + random_dom_id()  + '" class="giraffe-analyze-map-control giraffe-digest-control"></div>');
-        $(cpanes.pane(1))
-            .append(dom_map_c)
-            .append(dom_control_c);
-
-        gd_c = gd.CircularMap({
-            'map_dom_id' : dom_map_id_c,
-            'plasmid_name' : name,
-            'digest' : true,
-            'cutters': [1],
-            'map_width' : map_width * circular_digest_map_shrink_factor,
-            'map_height' : map_height * circular_digest_map_shrink_factor,
-            'feature_click_callback' : map_feature_click_callback
-        });
-        gc_c = GiraffeControl($, gd_c, dom_control_c);
-
-        // Show the linear map by default
-        cpanes.hide_all();
-        cpanes.show(0);
-
-        return cpanes;
-    }
 
     function digest_tab(dom) {
+
+        var map_objects = new Array(2);
+
+        function digest_map_panes(dom) {
+
+            var cpanes,
+                dom_map_c,
+                dom_map_id_c = random_dom_id(),
+                dom_control_c,
+                dom_map_l,
+                dom_map_id_l = random_dom_id(),
+                dom_control_l,
+                circular_digest_map_shrink_factor = 0.7;
+
+            // Cutter map above
+            cpanes = Switch_Panes(['Linear Digest', 'Circular Digest']);
+
+            $(dom)
+                .append(cpanes.panes);
+
+            // Linear digest pane
+            dom_map_l = $('<div id="'+ dom_map_id_l+'" class="giraffe-analyze-map giraffe-analyze-linear-map giraffe-digest-map"></div>');
+            dom_control_l = $('<div id="' + random_dom_id()  + '" class="giraffe-analyze-map-control giraffe-digest-control"></div>');
+            $(cpanes.pane(0))
+                .append(dom_map_l)
+                .append(dom_control_l);
+
+            gd_l = gd.LinearMap({
+                'map_dom_id' : dom_map_id_l,
+                'plasmid_name' : name,
+                'digest' : true,
+                'cutters': [1],
+                'map_width' : map_width,
+                'map_height' : map_height,
+                'feature_click_callback' : map_feature_click_callback
+            });
+            gc_l = GiraffeControl($, gd_l, dom_control_l);
+            map_objects[0] = gd_l;
+
+            // Circular digest pane
+            dom_map_c = $('<div id="'+ dom_map_id_c+'" class="giraffe-analyze-map giraffe-analyze-circular-map giraffe-digest-map"></div>');
+            dom_control_c = $('<div id="' + random_dom_id()  + '" class="giraffe-analyze-map-control giraffe-digest-control"></div>');
+            $(cpanes.pane(1))
+                .append(dom_map_c)
+                .append(dom_control_c);
+
+            gd_c = gd.CircularMap({
+                'map_dom_id' : dom_map_id_c,
+                'plasmid_name' : name,
+                'digest' : true,
+                'cutters': [1],
+                'map_width' : map_width * circular_digest_map_shrink_factor,
+                'map_height' : map_height * circular_digest_map_shrink_factor,
+                'feature_click_callback' : map_feature_click_callback
+            });
+            gc_c = GiraffeControl($, gd_c, dom_control_c);
+            map_objects[1] = gd_c;
+
+            // Show the linear map by default
+            cpanes.hide_all();
+            cpanes.show(0);
+
+            return cpanes;
+        }
 
         // Labels at the top
         var label_panes = Switch_Panes(
@@ -583,6 +588,12 @@ window.GiraffeAnalyze = function ($,gd,options) {
                 cutters_to_show.push(parseInt($(this).attr('name').match(/\d+/), 10));
             });
 
+            if ($(map_panes.pane(pane))
+                    .find('input[name="all-cutters"]')
+                    .attr("checked")) {
+                cutters_to_show = undefined;
+            }
+
             // Redraw the digest
             write_digest_data();
         });
@@ -634,7 +645,6 @@ window.GiraffeAnalyze = function ($,gd,options) {
                         .closest('tbody')
                         .find('input[name="all-cutters"]')
                         .removeAttr('checked');
-                    map.show();
                 }
 
                 write_digest_data();
@@ -663,14 +673,12 @@ window.GiraffeAnalyze = function ($,gd,options) {
 
                 // Show all cutters below
                 cutters_to_show = undefined;
+                map_objects[map_panes.current()].redraw_cutters();
                 write_digest_data();
 
-
-                // Hide the map
-                map.hide();
             } else {
 
-                // All cutter boxes are checked; we just need
+                // All n-cutter boxes are checked; we just need
                 // to know how many there are
                 n_cutter_boxes = $(this)
                     .closest('tbody')
@@ -682,8 +690,8 @@ window.GiraffeAnalyze = function ($,gd,options) {
                     cutters_to_show[ix] = ix + 1;
                 }
                         
-                // Show the map
-                map.show();
+                map_objects[map_panes.current()].redraw_cutters();
+                write_digest_data();
             }
 
         });
