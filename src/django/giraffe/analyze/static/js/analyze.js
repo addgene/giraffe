@@ -452,13 +452,15 @@ window.GiraffeAnalyze = function ($,gd,options) {
 
                         if (typeof(cutters_to_show) == 'undefined' ||
                             cutters_to_show.indexOf(cuts.length) >= 0) {
-                            name = $('<label></label>').append(all[i].name());
+                            name = $('<td></td>')
+                                    .addClass('enzyme-label')
+                                    .append(all[i].name());
                             for (c = 0; c < cuts.length; c++) {
                                 cuts[c] = '<a href="#" seq-title="'+all[i].name() +
                                     ' cut site" bp="feature-'+fids[c]+'" class="giraffe-bp">'+cuts[c]+'</a>';
                             }
-                            s = $('<p>Cuts after '+cuts.join(', ')+'</p>');
-                            item = $('<li></li>').append(name).append(s);
+                            s = $('<td>Cuts after '+cuts.join(', ')+'</td>');
+                            item = $('<tr></tr>').append(name).append(s);
                             $(list).append(item);
                         }
                     }
@@ -467,8 +469,10 @@ window.GiraffeAnalyze = function ($,gd,options) {
                     digest_data_dom.append(
                         '<p>The following cutters do not cut this sequence.</p>');
                     for (i = 0; i < non.length; i++) {
-                        name = $('<label></label>').append(non[i]);
-                        item = $('<li></li>').append(name);
+                        name = $('<td></td>')
+                                .addClass('enzyme-label')
+                                .append(non[i]);
+                        item = $('<tr></tr>').append(name).append('<td></td>');
                         $(list).append(item);
                     }
                 }
@@ -494,14 +498,16 @@ window.GiraffeAnalyze = function ($,gd,options) {
 
                         if (typeof(cutters_to_show) == 'undefined' ||
                             cutters_to_show.indexOf(cuts.length) >= 0) {
-                            var name = $('<label></label>').append(all[i].name());
+                            var name = $('<td></td>')
+                                        .addClass('enzyme-label')
+                                        .append(all[i].name());
                             var digests = [];
                             for (var j=0; j<cuts.length; j++) {
                                 if (j === 0 && !circular) {
                                     a0 = '<a href="#" class="giraffe-bp" ' +
                                         'seq-title="Fragment cut by ' +
                                         all[i].name() + '" bp="1,'+cuts[j]+'">';
-                                    digests.push(a0+'1-'+(cuts[j])+'</a> ('+cuts[j]+' bp)');
+                                    digests.push(a0+'1-'+(cuts[j])+'</a>&nbsp;('+cuts[j]+'&nbsp;bp)');
                                 }
                                 if (j+1 == cuts.length) {
                                     if (circular) {
@@ -509,27 +515,27 @@ window.GiraffeAnalyze = function ($,gd,options) {
                                             'seq-title="Fragment cut by ' + 
                                             all[i].name()+'" bp="' +
                                             (cuts[j]+1)+','+cuts[0]+'">';
-                                        digests.push(a0+(cuts[j]+1)+'-'+cuts[0]+'</a> ('+
-                                                     (seqlen-(cuts[j]+1)+1+cuts[0])+' bp)');
+                                        digests.push(a0+(cuts[j]+1)+'-'+cuts[0]+'</a>&nbsp;('+
+                                                     (seqlen-(cuts[j]+1)+1+cuts[0])+'&nbsp;bp)');
                                     } else {
                                         a0 = '<a href="#" class="giraffe-bp" ' +
                                             'seq-title="Fragment cut by ' +
                                             all[i].name()+'" bp="' +
                                             (cuts[j]+1)+','+seqlen+'">';
-                                        digests.push(a0+(cuts[j]+1)+'-'+seqlen+'</a> ('+
-                                                     (seqlen-(cuts[j]+1)+1)+' bp)');
+                                        digests.push(a0+(cuts[j]+1)+'-'+seqlen+'</a>&nbsp;('+
+                                                     (seqlen-(cuts[j]+1)+1)+'&nbsp;bp)');
                                     }
                                 } else {
                                     a0 = '<a href="#" class="giraffe-bp" ' +
                                         'seq-title="Fragment cut by ' +
                                         all[i].name()+'" bp="' +
                                         (cuts[j]+1)+','+cuts[j+1]+'">';
-                                    digests.push(a0+(cuts[j]+1)+'-'+(cuts[j+1])+'</a> ('+
-                                                 (cuts[j+1]-(cuts[j]+1)+1)+' bp)');
+                                    digests.push(a0+(cuts[j]+1)+'-'+(cuts[j+1])+'</a>&nbsp;('+
+                                                 (cuts[j+1]-(cuts[j]+1)+1)+'&nbsp;bp)');
                                 }
                             }
-                            var s = $('<p>'+digests.join(', ')+'</p>');
-                            var item = $('<li></li>').append(name).append(s);
+                            var s = $('<td>'+digests.join(', ')+'</td>');
+                            var item = $('<tr></tr>').append(name).append(s);
                             $(list).append(item);
                         }
                     }
@@ -538,9 +544,17 @@ window.GiraffeAnalyze = function ($,gd,options) {
 
             // The actual digest drawing function
             return function () {
+                var whole_table;
                 digest_data_dom.empty();
-                list = $('<ul></ul>').addClass('giraffe-enzyme-list');
+                whole_table = $('<table></table>')
+                    .append('<colgroup>' +
+                                '<col class="enzyme-label" />' +
+                                '<col class="enzyme-content" />' +
+                            '</colgroup>')
+                    .append('<tbody></tbody>')
+                    .addClass('giraffe-enzyme-list');
 
+                list = whole_table.find('tbody');
 
                 switch (label_panes.current()) {
                     case 0:
@@ -556,7 +570,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
                         break;
                 }
 
-                digest_data_dom.append(list);
+                digest_data_dom.append(whole_table);
                 sequence_viewer_bp_event(digest_data_dom);
             };
         })();
