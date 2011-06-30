@@ -9,12 +9,12 @@ import django
 
 class TestFeature(object):
     property_map = { 
-      "__name":       "feature",
-      "__id":         "feature_id",
-      "__start":      "start",
-      "__end":        "end",
-      "__cut":        "cut",
-      "__clockwise":  "clockwise"
+      "name":       "feature",
+      "id":         "feature_id",
+      "start":      "start",
+      "end":        "end",
+      "cut":        "cut",
+      "clockwise":  "clockwise"
     }
 
     def __init__(self, test, name = None, id = None, 
@@ -35,7 +35,7 @@ class TestFeature(object):
 
     def assertEqual(self, db_seq_feature):
         for property_name in TestFeature.property_map:
-            property = getattr(self, "_TestFeature" + property_name)
+            property = getattr(self, "_TestFeature__" + property_name)
 
             if property != None:
                 try:
@@ -44,8 +44,11 @@ class TestFeature(object):
                         db_seq_feature[TestFeature.property_map[property_name]]
                     )
                 except Exception as e:
-                    e.args = (e.args[0] + " (%s)" %
-                              TestFeature.property_map[property_name], )
+                    modargs = list(e.args)
+                    modargs[0] = (e.args[0] + " (%s, %s) " %
+                          (db_seq_feature[TestFeature.property_map['name']],
+                           TestFeature.property_map[property_name]))
+                    e.args = tuple(modargs)
                     raise e
 
     def assertFound(self, db_seq_feature_list):
@@ -55,7 +58,7 @@ class TestFeature(object):
             matches = True
 
             for property_name in TestFeature.property_map:
-                property = getattr(self, "_TestFeature" + property_name)
+                property = getattr(self, "_TestFeature__" + property_name)
                 if property != None:
                     if property != feature[TestFeature.property_map[property_name]]:
                         matches = False
