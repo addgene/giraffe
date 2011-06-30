@@ -293,14 +293,28 @@ GATGACGACGACAAG""")
         
     def test_ItDetectsFeaturesThatCrossTheBoundary(self):
         cross_features = [
+            # Enzyme
             TestFeature(self,
                 name = 'DraI', start = 28, end = 3, cut = 30, clockwise = True,
                 sequence = "aaatgaccctttgggatgaaagggcccttt"
             ),
+            # Enzyme with wrapped cut site
             TestFeature(self,
                 name = 'DraI', start = 29, end = 4, cut = 1, clockwise = True,
                 sequence = "taaatgaccctttgggatgaaagggccctt"
-            )
+            ),
+            # Normal feature
+            TestFeature(self,
+                name = 'EK', id = 15, start = 4103, end = 6, clockwise = True,
+                sequence = 'gacaag' + 't' * 4096  + 'gatgacgac'
+            ),
+            # ORF
+            TestFeature(self,
+                name = 'ORF frame 1', start = 430, end = 420,
+                sequence = "atcggcaaggtgtgggtcgcggacgacggcgccgcggtggcggtctggaccacgccggagagcgtcgaagcgggggcggtgttcgccgagatcggcccgcgcatggccgagttgagcggttcccggctggccgcgcagcaacagatggaaggcctcctggcgccgcaccggcccaaggagcccgcgtggttcctggccaccgtcggcgtctcgcccgaccaccagggcaagggtctgggcagcgccgtcgtgctccccggagtggaggcggccgagcgcgccggggtgcccgccttcctggagacctccgcgccccgcaacctccccttctacgagcggctcggcttcaccgtcaccgccgacgtcgaggtgcccgaaggaccgcgcacctggtgcatgacccgcaagcccggtgcctga" + \
+                't' * 9 + \
+"atggcagcgcgccgaccgcgatgggctgtggccaatagcggctgctcagcagggcgcgccgagagcagcggccgggaaggggcggtgcgggaggcggggtgtggggcggtagtgtgggccctgttcctgcccgcgcggtgttccgcattctgcaagcctccggagcgcacgtcggcagtcggctccctcgttgaccgaatcaccgacctctctccccagggggatccaccggagcttaccatgaccgagtacaagcccacggtgcgcctcgccacccgcgacgacgtccccagggccgtacgcaccctcgccgccgcgttcgccgactaccccgccacgcgccacaccgtcgatccggaccgccacatcgagcgggtcaccgagctgcaagaactcttcctcacgcgcgtcgggctcgac"
+            ) 
         ]
 
         for cf in cross_features:
