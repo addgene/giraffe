@@ -28,24 +28,33 @@ def detect_orfs(sequence_object):
             aa_start = 0
             aa_end = 0
 
+            #print trans
+            #print 'trans_len is '+str(trans_len)
+
             # go through the translation and find end codons that
             # follow a start codon.
             while aa_start < trans_len and aa_start < aa_len:
-                # Since we doubled up the sequence to find ORFs across
-                # boundaries, we want to make sure we limit possible
-                # ORF to be less than aa_len -- hence the +aa_len
-                # here.
-                aa_end = trans.find("*", aa_start, aa_start+aa_len)
+                aa_end = trans.find("*", aa_start)
+                #print 'search for * from '+str(aa_start)+' found '+str(aa_end)
                 has_stop = 1
                 if aa_end == -1:
+                    #print 'no more, abort'
                     # no more stop codon, just abort...
                     break
 
+                # we start looking for a M at the earliest at aa_end-aa_len+1,
+                # since we don't want an ORF that's actually bigger than the
+                # original sequence
+                if aa_start < aa_end-aa_len+1:
+                    aa_start = aa_end-aa_len+1
                 start_codon = trans.find('M', aa_start, aa_end)
+                #print 'found start at '+str(start_codon)
 
-                # is there a start codon? and is it before end of
-                # sequence
+                # is there a start codon? and is it before end of sequence
+                # (remember we doubled up the sequence earlier to detect orfs
+                # crossing boundaries)
                 if start_codon == -1 or start_codon >= aa_len:
+                    #print 'aborting'
                     assert(aa_end != -1)
                     aa_start = aa_end+1
                     continue
