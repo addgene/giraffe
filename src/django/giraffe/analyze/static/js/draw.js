@@ -1120,6 +1120,15 @@ window.GiraffeDraw = function () {
                 return normalize(ed);
             };
 
+            thi$.bp_size = function() {
+                if (thi$.crosses_boundary()) {
+                    return thi$.end()+seq_length-thi$.start()+1;
+                }
+                else {
+                    return thi$.end()-thi$.start()+1;
+                }
+            }
+
             thi$.real_size = function() {
                 var szd; // size in degrees
                 // Normal definition of size
@@ -1531,7 +1540,12 @@ window.GiraffeDraw = function () {
                 this.features[fx].radius = plasmid_radius;
             }
 
+            // Don't try to resolve conflicts too many times
+            var max_tries = 11;
+
             do {
+                max_tries--;
+
                 // Keep alternating between inside and outside the plasmid.
                 delta = rx *radius_spacing;
 
@@ -1549,46 +1563,46 @@ window.GiraffeDraw = function () {
                 }
 
                 biggest_size = 0;
-                furthest_point = plasmid_start; // Start at a complete lower bound
+                biggest_feature = undefined;
+                furthest_point = 0; // Start at a complete lower bound
 
                 // Go through the feature list twice, to make sure that features
                 // that cross the boundary are resolved
-                for (fx = 0; fx < 2 * this.features.length; fx++) {
+                for (fx = 0; fx < this.features.length; fx++) {
                     f = this.features[fx % this.features.length];
 
+                    // Stop when we are no longer working with overlapped features
+                    if (fx > this.features.length &&
+                        biggest_feature.start() < biggest_feature.end()) { break; }
 
                     if (f.visible && f.type() != ft.enzyme && f.radius == rad) {
 
-                        // When you cross the plasmid start boundary every time
-                        // but the first, update the furthest_point so that its
-                        // now expressed in numbers that will make sense to
-                        // features on the other side of the boundary
-                        if (fx >= this.features.length && furthest_point <= 0) {
-                            furthest_point += 360;
+                        // first one at this radius, so this is the biggest
+                        // feature at the moment
+                        if (biggest_feature === undefined) {
+                            biggest_feature = f;
+                            biggest_size = f.bp_size();
+                            furthest_point = f.end();
+                            if (f.end() < f.start()) { furthest_point+=seq_length; }
+                            continue;
                         }
 
-                        // Calculate the effective furthest point: first, convert from
-                        // a true angle to a number taht starts at 0 (not plasmid_start)
-                        // and goes up to 360 (or over). Then limit that number to 360, so
-                        // that we're always dealing with numbers in the same period,
-                        // and then convert back.
-                        eff_furthest_point = plasmid_start -
-                            ((plasmid_start - furthest_point) % 360);
-
-                        new_size = f.real_size();
-                        overlap = -(eff_furthest_point - f.real_start());
+                        new_size = f.bp_size();
+                        overlap = furthest_point-f.start();
 
                         if (overlap <= min_overlap_cutoff) {
                             // We've cleared all potential conflicts: reset
                             // the indicators
                             biggest_size = new_size;
                             biggest_feature = f;
-                            furthest_point = f.real_end();
+                            furthest_point = f.end();
+                            if (f.end() < f.start()) { furthest_point+=seq_length; }
 
                         // since we go around twice, it is now possible
                         // for a feature to "conflict with itself," so we
                         // explicitly prevent this
-                        } else if (biggest_feature != f &&
+                        } else if (biggest_feature &&
+                                   biggest_feature != f &&
                                    biggest_size > min_overlap_feature_size &&
                                    new_size > min_overlap_feature_size &&
                                   (overlap <= 0 ||
@@ -1606,11 +1620,11 @@ window.GiraffeDraw = function () {
                                 // Update the new top dog
                                 biggest_size = new_size;
                                 biggest_feature = f;
-                                furthest_point = f.real_end();
+                                furthest_point = f.end();
+                                if (f.end() < f.start()) { furthest_point+=seq_length; }
 
                             } else { // The original feature is top dog. move the new
                                      // feature to the new radius
-
                                 push(biggest_feature, f);
                             }
 
@@ -1627,7 +1641,7 @@ window.GiraffeDraw = function () {
                 rad = new_rad;
                 rx++;
 
-            } while (conflicts > 0); // Keep adding levels of resolution
+            } while (conflicts > 0 && max_tries > 0); // Keep adding levels of resolution
 
             return max_rad;
 
@@ -2168,8 +2182,11 @@ window.GiraffeDraw = function () {
                 this.features[fx].y = 0;
             }
 
+            var max_tries = 11;
 
             do {
+                max_tries--;
+
                 // Keep alternating between inside and outside the plasmid.
                 new_y = y + Math.pow(-1, yx) * yx * y_spacing;
 
@@ -2181,12 +2198,21 @@ window.GiraffeDraw = function () {
                 }
 
                 biggest_size = 0;
+                biggest_feature = undefined;
                 furthest_point = plasmid_left; // Start at a complete lower bound
 
                 for (fx = 0; fx < this.features.length; fx++) {
                     f = this.features[fx];
                     if (f.y == y && f.type() != ft.enzyme && f.visible) {
                         new_size = f.real_size();
+                        // first feature in this level, so this is the biggest
+                        // one at this level at the moment
+                        if (biggest_feature === undefined) {
+                            biggest_size = new_size;
+                            biggest_feature = f;
+                            furthest_point = f.real_end();
+                            continue;
+                        }
                         overlap = furthest_point - f.real_start();
                         if (overlap <= min_overlap_cutoff) {
                             // We've cleared all potential conflicts: reset
@@ -2195,7 +2221,8 @@ window.GiraffeDraw = function () {
                             biggest_feature = f;
                             furthest_point = f.real_end();
                         // explicitly prevent conflicts with self
-                        } else if (biggest_feature != f &&
+                        } else if (biggest_feature &&
+                                   biggest_feature != f &&
                                    biggest_size > min_overlap_feature_size &&
                                    new_size > min_overlap_feature_size &&
                                   (overlap <= 0 ||
@@ -2214,7 +2241,6 @@ window.GiraffeDraw = function () {
 
                             } else { // The original feature is top dog. move the new
                                      // feature to the new height
-
                                 push(biggest_feature, f);
                             }
 
@@ -2233,7 +2259,7 @@ window.GiraffeDraw = function () {
                 y = new_y;
                 yx++;
 
-            } while (conflicts > 0); // Keep adding levels of resolution
+            } while (conflicts > 0 && max_tries > 0); // Keep adding levels of resolution
 
             return max_dist;
 
