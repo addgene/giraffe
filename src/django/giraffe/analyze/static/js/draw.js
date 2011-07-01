@@ -776,12 +776,9 @@ window.GiraffeDraw = function () {
             if (arguments.length > 0 &&
                 typeof(new_cutters_to_show) != 'undefined') {
                 _cutters_to_show = new_cutters_to_show;
-                this.show_all_features = false;
             } else {
                 // Undefined cutter list: hide all cutters
                 _cutters_to_show = [];
-                // even the non-default ones
-                this.show_all_features = false;
             }
             this.redraw(false);
         };

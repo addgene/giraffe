@@ -346,7 +346,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
                 dom_map_l,
                 dom_map_id_l = random_dom_id(),
                 dom_control_l,
-                circular_digest_map_shrink_factor = 0.7;
+                circular_digest_map_shrink_factor = 1;
 
             // Cutter map above
             cpanes = Switch_Panes(['Linear Digest', 'Circular Digest']);
@@ -370,6 +370,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
                 'map_height' : map_height,
                 'feature_click_callback' : map_feature_click_callback
             });
+            gd_l.show_extra_features();
             gc_l = GiraffeControl($, gd_l, dom_control_l);
             map_objects[0] = gd_l;
 
@@ -389,6 +390,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
                 'map_height' : map_height * circular_digest_map_shrink_factor,
                 'feature_click_callback' : map_feature_click_callback
             });
+            gd_c.show_extra_features();
             gc_c = GiraffeControl($, gd_c, dom_control_c);
             map_objects[1] = gd_c;
 
@@ -613,17 +615,17 @@ window.GiraffeAnalyze = function ($,gd,options) {
         });
 
         // Change the name of the "hide all" label to non-cutters
-        $(map_panes.panes).find('input[name="no-cutters"]')
+        $(map_panes.panes).find('input[name="non-cutters"]')
                           .siblings('.cutter-label')
-                          .text('non-cutters');
+                          .text('Non-cutters');
 
         // Add an "all cutters" checkbox
         $(map_panes.panes)
-            .find('input[name="no-cutters"]')
+            .find('input[name="non-cutters"]')
             .closest('td')
             .before('<td><label><input type="checkbox" ' + 
                                       'name="all-cutters" value="show" />' +
-                    '<span class="cutter-label">all cutters</span></label></td>');
+                    '<span class="cutter-label">All</span></label></td>');
                           
 
         // Force rewriting the digest data when the cutter controls are changed
@@ -673,16 +675,16 @@ window.GiraffeAnalyze = function ($,gd,options) {
 
             if ($(this).attr('checked')) {
 
-                // Make sure 1- and 2- cutter checkboxes are set
+                // Make sure 1- and 2- cutter checkboxes are no longer checked
                 $(this)
                     .closest('tbody')
                     .find('input[name|="cutters"]')
-                    .attr('checked', 'checked');
+                    .removeAttr('checked');
 
                 // Make sure no-cutter checkbox is unset
                 $(this)
                     .closest('tbody')
-                    .find('input[name="no-cutters"]')
+                    .find('input[name="non-cutters"]')
                     .removeAttr('checked');
 
                 // Show all cutters below
@@ -1561,12 +1563,12 @@ window.GiraffeControl = function ($,gd_map,dom) {
                 '<tr><th>Restriction Enzymes</th>' +
                 '<td><label><input type="checkbox" checked="checked"' +
                              'name="cutters-1" value="show" />' +
-                '<span class="cutter-label">unique cutters</span></label></td>' +
+                '<span class="cutter-label">Unique</span></label></td>' +
                 '<td><label><input type="checkbox" ' +
                               'name="cutters-2" value="show" />' +
                 '<span class="cutter-label">2-cutters</span></label></td>' +
                 '<td><label><input type="checkbox" ' +
-                              'name="no-cutters" value="show" />' +
+                              'name="non-cutters" value="show" />' +
                 '<span class="cutter-label">hide all</span></label></td></tr>' +
             '</tbody>' +
             '</table></td></tr>');
@@ -1585,12 +1587,12 @@ window.GiraffeControl = function ($,gd_map,dom) {
                     opts.push(parseInt($(this).attr('name').match(/\d+/), 10));
                 });
 
-            // Automatically check and uncheck the no-cutters checkbox,
+            // Automatically check and uncheck the non-cutters checkbox,
             // depending on whether or not there are actually cutters shown
             if (opts.length > 0) {
-                controls.find('input[name="no-cutters"]').removeAttr("checked");
+                controls.find('input[name="non-cutters"]').removeAttr("checked");
             } else {
-                controls.find('input[name="no-cutters"]').attr("checked", "checked");
+                controls.find('input[name="non-cutters"]').attr("checked", "checked");
             }
 
             if (draw_table) {
@@ -1614,7 +1616,7 @@ window.GiraffeControl = function ($,gd_map,dom) {
         });
 
         // No-cutter checkbox
-        controls.find('input[name="no-cutters"]').click(function (event) {
+        controls.find('input[name="non-cutters"]').click(function (event) {
             if ($(this).attr("checked")) {
                 controls.find('input[name|="cutters"]').removeAttr("checked");
                 gd_map.redraw_cutters([]);
