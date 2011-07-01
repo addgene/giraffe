@@ -1,6 +1,11 @@
+Use the following steps to generate new feature database. For each feature
+database, we create two files, a .data file for the frags program, stored in
+../frags/data, and the corresponding features database records, in Django
+initial_data.json fixture. These two things go hand in hand; should they go out
+of sync with each other, all hell will break loose.
 
-How to generate fixtures?
--------------------------
+How to generate feature database
+--------------------------------
 
 List of features to be detected are stored in ./features/.
 
@@ -13,17 +18,23 @@ so, on a test machine, DO ALL OF THE FOLLOWING
 0. Remove initial_data.json
 
 1. Blow away data in all the models in the "blat" application
-	python manage.py reset blat
+
+		python manage.py reset blat
 
 2. Load feature_types.json
-	python manage.py loaddata blat/fixtures/feature_types.json
 
-3. Run mk_db.sh - all commands in here must RUN TOGETHER, ONCE. If that's a
-failure, you will have to restart from 1, and re-run mk_db.sh all together
-again.
+		python manage.py loaddata blat/fixtures/feature_types.json
+
+3. Run mk_db.sh. mk_db.sh creates the .data files and create database instances
+   in MySQL.
+
+		All commands in mk_db.sh must RUN TOGETHER, ONCE. If that's a failure,
+		you will have to restart from 1, and re-run mk_db.sh all together
+		again.
 
 4. Create new fixture
 	python manage.py dumpdata blat > blat/fixtures/initial_data.json
 
-After that, anytime you run syncdb, the new fixture will be loaded.
+After that, anytime you run syncdb, the new fixture will be loaded. The .data
+files are already in the right place, put in there by mk_db.sh.
 
