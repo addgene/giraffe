@@ -43,7 +43,7 @@ def post(request):
             return redirect(u)
         return redirect(reverse(get,args=[hash,db_name]))
     except Exception as e:
-        print 'Blat error on sequence: '+str(sequence)
+        # print 'Blat error on sequence: '+str(sequence)
         if 'next' in request.POST:
             print str(e)
             u = request.POST['next']
