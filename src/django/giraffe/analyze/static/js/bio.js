@@ -102,7 +102,6 @@ window.BioJS = function(){
             c == 'D' ||
             c == 'H' ||
             c == 'M' ||
-            c == 'N' ||
             c == 'R' ||
             c == 'V' ||
             c == 'W') { return 'A'; }
@@ -114,7 +113,6 @@ window.BioJS = function(){
         if (c == 'd' ||
             c == 'h' ||
             c == 'm' ||
-            c == 'n' ||
             c == 'r' ||
             c == 'v' ||
             c == 'w') { return 'a'; }
@@ -162,6 +160,8 @@ window.BioJS = function(){
             if (c == 'T') { return 'A'; }
             if (c == 'c') { return 'g'; }
             if (c == 'C') { return 'G'; }
+            if (c == 'n') { return 'n'; }
+            if (c == 'N') { return 'N'; }
             return c;
         });
         rc = rc.join("");
