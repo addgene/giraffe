@@ -505,14 +505,14 @@ window.BioJS = function(){
     function NCBI_blastn_form(seq_object) {
         var form =
             '<form action="http://www.ncbi.nlm.nih.gov/BLAST/Blast.cgi"'+
-            ' method="post" target="_blank">'+
+            ' method="POST" target="_blank">'+
             '<input type="hidden" name="DATABASE" value="nr" />'+
             '<input type="hidden" name="PAGE" value="Nucleotides" />'+
             '<input type="hidden" name="PROGRAM" value="blastn" />'+
             '<input type="hidden" name="SERVICE" value="plain" />'+
             '<input type="hidden" name="GET_SEQUENCE" value="yes" />'+
-            '<input type="hidden" name="QUERY" value="'+seq_object.sequence()+'">'+
-            '<input type="submit" value="BLASTN">'+
+            '<input type="hidden" name="QUERY" value="'+seq_object.sequence()+'" />'+
+            '<input type="submit" value="BLASTN" />'+
             '</form>';
         return form;
     }
@@ -520,7 +520,7 @@ window.BioJS = function(){
     function NCBI_blastx_form(seq_object) {
         var form =
             '<form action="http://www.ncbi.nlm.nih.gov/BLAST/Blast.cgi"'+
-            ' method="post" target="_blank">'+
+            ' method="POST" target="_blank">'+
             '<input type="hidden" name="DATABASE" value="nr" />'+
             '<input type="hidden" name="PAGE" value="Nucleotides" />'+
             '<input type="hidden" name="PROGRAM" value="blastx" />'+
