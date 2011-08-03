@@ -1422,7 +1422,7 @@ window.GiraffeTable = function ($,gd,dom) {
     if (gd.std_features.length > 0) {
         
         // Initialize table
-        feature_table = $('<table class="giraffe-features-table"></table>')
+        feature_table = $('<table></table>')
             .append('<colgroup>' +
                         '<col class="giraffe-table-feature-name" />' +
                         '<col class="giraffe-table-feature-data" span="2"/>' +
@@ -1458,7 +1458,7 @@ window.GiraffeTable = function ($,gd,dom) {
     if (gd.orf_features.length > 0) {
 
         // Initialize table
-        orf_table = $('<table class="giraffe-orfs-table"></table>')
+        orf_table = $('<table></table>')
             .append('<colgroup>' +
                         '<col class="giraffe-table-feature-name" />' +
                         '<col class="giraffe-table-feature-data" span="2"/>' +
@@ -1492,7 +1492,7 @@ window.GiraffeTable = function ($,gd,dom) {
 
     // Enzymes
     if (gd.enzyme_features.length > 0) {
-        enzyme_table = $('<table class="giraffe-enzymes-table"></table>')
+        enzyme_table = $('<table></table>')
             .append('<colgroup>' +
                         '<col class="giraffe-table-feature-name" />' +
                         '<col class="giraffe-table-feature-data" />' +
