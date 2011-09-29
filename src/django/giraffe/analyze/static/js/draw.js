@@ -1903,6 +1903,7 @@ window.GiraffeDraw = function () {
                 // "push the end forward."
                 if (this.draw_head && !this.clockwise()) { // Take the minimum head size into account
                     re = convert.pos_to_x(this.start()) + this.real_size();
+                    if (re > plasmid_width+plasmid_left) { re = plasmid_left+plasmid_width; }
                 } else { // Headless feature, or head is pointing the wrong way.
                          // Just give its typical end position
                     re = convert.pos_to_x(this.end());
