@@ -1425,12 +1425,10 @@ window.GiraffeTable = function ($,gd,dom) {
         feature_table = $('<table></table>')
             .append('<colgroup>' +
                         '<col class="giraffe-table-feature-name" />' +
-                        '<col class="giraffe-table-feature-type" />' +
                         '<col class="giraffe-table-feature-data" span="2"/>' +
                     '</colgroup>')
             .append('<thead><tr>' +
                         '<th>Feature Name</th>' +
-                        '<th>Type</th>' +
                         '<th>Start</th>' +
                         '<th>End<th>' +
                     '</tr></thead>')
@@ -1443,7 +1441,6 @@ window.GiraffeTable = function ($,gd,dom) {
                                     .attr('id', 'feature-' + f.id());
 
             row.append('<td class="giraffe-table-feature-name">' + f.name() + '</td>');
-            row.append('<td>' + type_code_to_name(f.type(), gd) + '</td>');
 
             if (f.clockwise()) {
                 row.append('<td>' + f.start() + '</td>');
@@ -1495,7 +1492,6 @@ window.GiraffeTable = function ($,gd,dom) {
 
     // Enzymes
     if (gd.enzyme_features.length > 0) {
-
         enzyme_table = $('<table></table>')
             .append('<colgroup>' +
                         '<col class="giraffe-table-feature-name" />' +
