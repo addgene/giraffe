@@ -2085,7 +2085,7 @@ window.GiraffeDraw = function () {
             var tic_mark_y = plasmid_y + 2* y_spacing;
             var tic_label_y = tic_mark_y + 1.5*tic_mark_length;
 
-            function draw_tic_mark(p) {
+            function draw_tic_mark(p,t) {
                 var x = convert.pos_to_x(p);
                 var y0 = tic_mark_y - tic_mark_length/2;
                 var y1 = tic_mark_y + tic_mark_length/2;
@@ -2093,7 +2093,7 @@ window.GiraffeDraw = function () {
                                      svg.line(x, y1));
                 tic.attr({"stroke": colors.bg_text});
 
-                var label = thi$.paper.text(x, tic_label_y, String(p));
+                var label = thi$.paper.text(x, tic_label_y, String(t));
                 label.attr({"fill": colors.bg_text});
             }
 
