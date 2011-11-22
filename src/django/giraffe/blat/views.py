@@ -45,7 +45,7 @@ def post(request):
     except Exception as e:
         # print 'Blat error on sequence: '+str(sequence)
         if 'next' in request.POST:
-            print str(e)
+            # print str(e)
             u = request.POST['next']
             if u.endswith('/'):
                 u = u+'error/'
