@@ -952,7 +952,8 @@ window.GiraffeAnalyze = function ($,gd,options) {
     function align_tab(dom) {
         $(dom).append('<p><b>Align Sequence with BLAST2</b></p>'+
             "<p>NCBI's BLAST2 program aligns two sequences. Enter a new sequence to align against your sequence. Results will appear in a new window.</p>");
-        var blast2 = $(BioJS.NCBI_blast2_form(sequence)).addClass('giraffe-blast2');
+        var blast2 = $(BioJS.NCBI_blast2_form(sequence)).addClass('giraffe-blast2')
+                .append('<input type="reset" name="reset" value="Clear"/>');
         $(dom).append(blast2);
         var recent = $(BioJS.NCBI_recent_results_link());
         $(recent).append('See recent BLAST results on NCBI website.');
