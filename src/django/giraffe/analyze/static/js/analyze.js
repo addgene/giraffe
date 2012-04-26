@@ -32,7 +32,6 @@
 // 
 
 (function(){
-
 function random_dom_id() {
     return 'giraffe-'+Math.floor(Math.random()*100000000);
 }
@@ -985,7 +984,7 @@ window.GiraffeAnalyze = function ($,gd,options) {
         // Main tab bar
         var dom_tabs = $('<div></div>').append(
             '<ul>'+
-            '<li><a href="#'+dom_id_map+'">Map and Features</a></li>'+
+            '<li><a href="#'+dom_id_map+'">Map2 and Features</a></li>'+
             '<li><a href="#'+dom_id_sequence+'">Sequence</a></li>'+
             '<li><a href="#'+dom_id_blast+'">Blast</a></li>'+
             '<li><a href="#'+dom_id_align+'">Align</a></li>'+
