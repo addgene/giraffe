@@ -2306,6 +2306,7 @@ window.GiraffeDraw = function () {
                 // Which nth of the plasmid is the feature in?
                 section = Math.floor(nlists*(feature_center - plasmid_left)/
                                                  plasmid_width);
+                section = section<0 ? 0 : section;
                 // Is it in the top or bottom?
                 bottom = section % 2;
 
