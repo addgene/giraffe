@@ -17,9 +17,14 @@ so, on a test machine, DO ALL OF THE FOLLOWING
 
 0. Remove initial_data.json
 
-1. Blow away data in all the models in the "blat" application
+1. Blow away data in all the models in the "blat" application:
 
 		python manage.py reset blat
+
+   If the above command fails with "error 1025", then it's posible that is trying to drop a constraint that doesn't exist. To workaround the issue, please run the next 3 commands:
+                1. python manage.py dbshell
+                2. ALTER TABLE `blat_sequence_feature_annotated` ADD CONSTRAINT `orf_annotated_id_refs_id_a4466f87` FOREIGN KEY (`orf_annotated_id`) REFERENCES `blat_sequence_feature_annotated` (`id`);
+                3. python manage.py reset blat
 
 2. Load feature_types.json
 
