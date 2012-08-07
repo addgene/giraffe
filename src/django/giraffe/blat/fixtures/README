@@ -15,31 +15,35 @@ If you make changes to files in ./features/ or to mk_db.sh, you should
 re-create the fixtures for this app to make the changes visible. To do
 so, on a test machine, DO ALL OF THE FOLLOWING
 
-0. Remove initial_data.json
+1. Remove initial_data.json:
 
-1. Blow away data in all the models in the "blat" application:
+            $ rm giraffe/blat/fixtures/initial_data.json
 
-		python manage.py reset blat
+2. Blow away data in all the models in the "blat" application:
 
-   If the above command fails with "error 1025", then it's posible that is trying to drop a constraint that doesn't exist. To workaround the issue, please run the next 3 commands:
-                1. python manage.py dbshell
-                2. ALTER TABLE `blat_sequence_feature_annotated` ADD CONSTRAINT `orf_annotated_id_refs_id_a4466f87` FOREIGN KEY (`orf_annotated_id`) REFERENCES `blat_sequence_feature_annotated` (`id`);
-                3. python manage.py reset blat
+            $ cd giraffe
+            $ python manage.py reset blat
 
-2. Load feature_types.json
+   If the above command fails with "error 1025", then it's posible that is trying to drop a constraint that doesn't exist. To workaround the issue, please run this command:
 
-		python manage.py loaddata blat/fixtures/feature_types.json
+            $ python manage.py reset_app blat
 
-3. Run mk_db.sh. mk_db.sh creates the .data files and create database instances
+3. Load feature_types.json
+
+            $ python manage.py loaddata blat/fixtures/feature_types.json
+
+4. Run mk_db.sh. This command creates the .data files and create database instances
    in MySQL.
+            $ cd giraffe/blat/fixtures
+            $ ./mk_db.sh
 
-		All commands in mk_db.sh must RUN TOGETHER, ONCE. If that's a failure,
-		you will have to restart from 1, and re-run mk_db.sh all together
-		again.
+	All commands in mk_db.sh must RUN TOGETHER, ONCE. If that's a failure,
+	you will have to restart from 1, and re-run mk_db.sh all together
+	again.
 
-4. Create new fixture
-	python manage.py dumpdata blat > blat/fixtures/initial_data.json
+5. Create new fixture
+            $ cd giraffe
+            $ python manage.py dumpdata blat > blat/fixtures/initial_data.json
 
 After that, anytime you run syncdb, the new fixture will be loaded. The .data
 files are already in the right place, put in there by mk_db.sh.
-
