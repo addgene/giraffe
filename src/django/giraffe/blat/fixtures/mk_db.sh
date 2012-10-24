@@ -1,6 +1,6 @@
 #!/bin/sh
 
-PYTHON='sudo /srv/addgene/bin/python'
+PYTHON='/srv/addgene/bin/python'
 
 $PYTHON import_features.py default < features/generic.features
 $PYTHON import_features.py default < features/generic.primers
