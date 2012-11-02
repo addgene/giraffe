@@ -144,14 +144,6 @@ class Command(BaseCommand):
         except:
             f = Feature.objects.get(name=name,hash=f.hash)
 
-        ## If the feature database was set then we 
-        ## set the feature field of this database to teh new feature
-        #if fdb:
-        #    m = Feature_In_Database()
-        #    m.feature = f
-        #    m.feature_database = fdb
-        #    m.show_feature = show_feature
-        #    m.save() 
     
     def get_feature_type(self, n):
         if n == "F":   return Feature_Type.objects.get(type='Feature')
@@ -202,14 +194,7 @@ class Command(BaseCommand):
             print "Exception: ", str(err)
             f = Feature.objects.get(name=name,hash=f.hash)
 
-        #if fdb:
-        #    m = Feature_In_Database()
-        #    m.feature = f
-        #    m.feature_database = fdb
-        #    m.show_feature = True
-        #    m.save()
- 
- 
+
     def handle(self, *args, **options):
         ##Get or Create a new feature_database
         ## Current options are default, afire, none
