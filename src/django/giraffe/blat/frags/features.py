@@ -53,7 +53,10 @@ def _get_frags(db_name,sequence):
 
     return res
 
+## db.name most likely default
+## sequence.sequence is ATTTGCGTT etc
 def blat(db,sequence_obj):
+
     if _debug: 
         t = timer()
         t.next()
@@ -63,12 +66,14 @@ def blat(db,sequence_obj):
     # Translate frags to features and store them into the database
     seq_length = len(sequence_obj.sequence)
     features = frags_to_features(frags, db, seq_length)
+
     if _debug: print "frags_to_features took %f seconds" % t.next()
 
     # Store features into database
     if _debug: print "Storing %d features" % len(features)
     for feature in features:
         feature.sequence = sequence_obj
+        #print feature.feature_db_index.feature_index Integer indexes
         feature.save()
     if _debug: print "Database adds took %f seconds" % t.next()
 

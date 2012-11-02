@@ -2,16 +2,19 @@
 
 ## Use the -W ignore::UserWarning to hide
 ## "The virtualenv distutils package at %s appears to be in the same location as the system distutils?")
-PYTHON="python -W ignore::UserWarning"
-GIRAFFE="/Users/johnfurr/Git_Tower/giraffe/src/django/giraffe"
+
+PYTHON='/srv/addgene/bin/python -W ignore::UserWarning'
+GIRAFFE="/home/benjie/git/giraffe/src/django/giraffe"
 FIXTURE="$GIRAFFE/blat/fixtures/"
+
 hname=`hostname`
-if [ "$hname" = "carbon" ]
+if [ "$hname" = "John-Furrs-iMac.local" ]
 then
-	PYTHON='/srv/addgene/bin/python -W ignore::UserWarning'
-    GIRAFFE="/home/benjie/git/giraffe/src/django/giraffe"
+    PYTHON="python -W ignore::UserWarning"
+    GIRAFFE="/Users/johnfurr/Git_Tower/giraffe/src/django/giraffe"
     FIXTURE="$GIRAFFE/blat/fixtures/"
 fi
+
 
 ## Save users current working directory
 pwd=$PWD

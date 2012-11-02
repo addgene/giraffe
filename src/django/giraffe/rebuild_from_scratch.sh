@@ -1,4 +1,4 @@
-#!/usr/bin/env/bash
+#!/usr/bin/env bash
 
 echo "You are about to drop all the blat tables adn rebuild them"
 echo "On production this will destroy all plasmid map"
@@ -12,9 +12,21 @@ then
     exit
 fi
 
+
+PYTHON='/srv/addgene/bin/python -W ignore::UserWarning'
+hname=`hostname`
+if [ "$hname" = "John-Furrs-iMac.local" ]
+then
+    PYTHON="python -W ignore::UserWarning"
+fi
+
+
 # This will drop the entire blat table
 ## Calls python manage.py syncdb when it's done
-./drop_blat.sh
+$PYTHON manage.py reset blat
+
+## Now rebuild teh tables and indexes
+$PYTHON manage.py syncdb
 
 ## Now create all the feature files
 ## This also writes the files: 
@@ -31,4 +43,4 @@ cd ../../../../addgene-core/src/django/lims/
 ##      --vdb               # Update vector database only
 ##      --available-items   # Update available catalog items only
 ##      --all               # Update all plasmid maps
-python manage.py refresh_blat_sequence --all
+$PYTHON manage.py refresh_blat_sequence --all
