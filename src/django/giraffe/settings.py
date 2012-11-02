@@ -16,7 +16,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'OPTIONS': { "init_command": "SET storage_engine=INNODB" },
-        'NAME': 'giraffe',
+        'NAME': 'addgene',
         'USER': 'root',
         'PASSWORD': 'password',
         'HOST': '',
