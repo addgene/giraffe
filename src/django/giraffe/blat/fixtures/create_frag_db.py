@@ -73,7 +73,7 @@ def create_data_file(db):
     features = []
 
     # save an index of all the features
-    for f in fdb.features.all():
+    for f in fdb.features.all(): ## fdb.features is a ManyToMany to features
         if len(f.sequence) < MINFRAG:
             # print "Ignore small sequence "+f.name
             continue
