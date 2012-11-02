@@ -40,10 +40,8 @@ $PYTHON create_frag_db.py afire > ../frags/data/afire.data
 cd $GIRAFFE
 
 
-# Import none features (Never used so commented out for new format
-#echo "Importing blat/fixtures/features/all.enzymes to Feature_DataBase(none)"
+# echo"Import none features (Never used so commented out for new format"
 #$PYTHON manage.py import_features --db=none --file=blat/fixtures/features/all.enzymes
-##############################################################################################
 
 ## Now send the user back to were the came from
 cd $pwd
