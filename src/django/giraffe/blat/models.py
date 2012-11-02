@@ -162,6 +162,15 @@ class Sequence_Feature(Sequence_Feature_Base):
 
 
 class Sequence(models.Model):
+    sequence = models.TextField()
+    hash = models.CharField(max_length=64,db_index=True)
+    modified = models.DateTimeField(auto_now=True)
+    db = models.ForeignKey('Feature_Database')
+    db_version = models.CharField(max_length=64)
+
+    class Meta:
+        unique_together = (("db","hash"),)
+
     @staticmethod
     def clean_sequence(sequence):
         # Remove FASTA > and ; comments
@@ -217,15 +226,6 @@ class Sequence(models.Model):
         sequence = Sequence.strip(sequence)
         hash = hashlib.sha1(sequence.lower()).hexdigest()
         return (sequence,hash)
-
-    sequence = models.TextField()
-    hash = models.CharField(max_length=64,db_index=True)
-    modified = models.DateTimeField(auto_now=True)
-    db = models.ForeignKey('Feature_Database')
-    db_version = models.CharField(max_length=64)
-
-    class Meta:
-        unique_together = (("db","hash"),)
 
     def save(self):
         self.db_version = self.db.db_version
