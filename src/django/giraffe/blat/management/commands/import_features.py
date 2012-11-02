@@ -36,6 +36,7 @@
 #    show_feature = models.BooleanField(default=True)
 
 ## Python specific imports
+import os
 import sys
 from optparse import make_option
 import re
@@ -47,6 +48,7 @@ from django.core.management import BaseCommand
 
 ## Addgene/giraffe specific imports
 from giraffe.blat.models import Feature, Feature_Type, Feature_Database
+from giraffe.settings import FEATURES as feature_dir
 
 
 class Command(BaseCommand):
@@ -62,6 +64,13 @@ class Command(BaseCommand):
             dest='db',
             default='',
             help='The Feature Database (default, afire, none)'
+        ),
+        make_option(
+            '--all',
+            action='store_true',
+            dest='all',
+            default=False,
+            help='Run all feature files for the given database. ex. blat/fixtures/features/default/*.feature'
         ),
         make_option(
             '--file',
@@ -226,12 +235,26 @@ class Command(BaseCommand):
         ## E: Enzyme ??
         ## f: exact Feature
         ## S: Primer
-        with open(options['file'], 'r') as f:
-            for line in f.readlines():
-                if line[0] == 'E':
-                    self.create_enzyme_feature(line, fdb)
-                else:
-                    self.create_other_feature(line, fdb)
+        if options['all']:
+            feature_files = os.listdir(feature_dir+"/"+options['db'])
+
+            for file in feature_files:
+                file_name = feature_dir+"/"+options['db'] + "/" + file
+                print "Installing: ", file_name
+                with open(file_name, 'r') as f:
+                    for line in f.readlines():
+                        if line[0] == 'E':
+                            self.create_enzyme_feature(line, fdb)
+                        else:
+                            self.create_other_feature(line, fdb)
+        
+        elif options['file']:
+            with open(options['file'], 'r') as f:
+                for line in f.readlines():
+                    if line[0] == 'E':
+                        self.create_enzyme_feature(line, fdb)
+                    else:
+                        self.create_other_feature(line, fdb)
         
 
 

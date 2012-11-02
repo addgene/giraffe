@@ -46,3 +46,5 @@ echo "drop table blat_sequence" | mysql -u root -ppassword addgene
 echo "drop table blat_sequence_feature" | mysql -u root -ppassword addgene
 echo "drop table blat_sequence_feature_annotated" | mysql -u root -ppassword addgene
 
+
+python manage.py syncdb

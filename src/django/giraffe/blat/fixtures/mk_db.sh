@@ -13,40 +13,16 @@ then
     FIXTURE="$GIRAFFE/blat/fixtures/"
 fi
 
-## This is the older method.  It's left here for refernce sake at this point
-## Once the code has been fully converted these lines can be deleted
-#$PYTHON import_features.py default < features/generic.features
-#$PYTHON import_features.py default < features/generic.primers
-#$PYTHON import_features.py default < features/tb.enzymes
-#$PYTHON import_features.py default < features/fp.features
-#$PYTHON create_frag_db.py default > ../frags/data/default.data
-#
-#$PYTHON import_features.py afire < features/af.unc
-#$PYTHON import_features.py afire < features/af.custom
-#$PYTHON import_features.py afire < features/af.features
-#$PYTHON import_features.py afire < features/af.enzymes
-#$PYTHON create_frag_db.py afire > ../frags/data/afire.data
-#
-#$PYTHON import_features.py none < features/all.enzymes
-
-## Hold Current Directory
+## Save users current working directory
 pwd=$PWD
 
+## Head to the main GIRAFFE directory
 cd $GIRAFFE
 
 #############################################################################################
 ####                   Default Database Creation                                      
-echo "Importing blat/fixtures/features/generic.features to Feature_DataBase(default)"
-$PYTHON manage.py import_features --db=default --file=blat/fixtures/features/generic.features
-
-echo "Importing blat/fixtures/features/generic.primers to Feature_DataBase(default)"
-$PYTHON manage.py import_features --db=default --file=blat/fixtures/features/generic.primers
-
-echo "Importing blat/fixtures/features/tb.enzymes to Feature_DataBase(default)"
-$PYTHON manage.py import_features --db=default --file=blat/fixtures/features/tb.enzymes
-
-echo "Importing blat/fixtures/features/fp.features to Feature_DataBase(default)"
-$PYTHON manage.py import_features --db=default --file=blat/fixtures/features/fp.features
+echo "Importing blat/fixtures/features/default/*.feature"
+$PYTHON manage.py import_features --db=default --all
 
 cd $FIXTURE
 echo "Creating Frag DB default"
@@ -57,22 +33,15 @@ cd $GIRAFFE
 
 ##############################################################################################
 ####               aFire Database Creation **The afire db is never used**               ######   
-echo "Importing blat/fixtures/features/af.unc to Feature_DataBase(afire)"
-$PYTHON manage.py import_features --db=afire --file=blat/fixtures/features/af.unc
-
-echo "Importing blat/fixtures/features/af.custom to Feature_DataBase(afire)"
-$PYTHON manage.py import_features --db=afire --file=blat/fixtures/features/af.custom
-
-echo "Importing blat/fixtures/features/af.features to Feature_DataBase(afire)"
-$PYTHON manage.py import_features --db=afire --file=blat/fixtures/features/af.features
-echo "Importing blat/fixtures/features/af.enzymes to Feature_DataBase(afire)"
-$PYTHON manage.py import_features --db=afire --file=blat/fixtures/features/af.enzymes
+echo "Importing blat/fixtures/features/afire/*.feature"
+$PYTHON manage.py import_features --db=afire --all
 
 cd $FIXTURE
 echo "Creating Frag DB afire"
 $PYTHON create_frag_db.py afire > ../frags/data/afire.data
 cd $GIRAFFE
 ##############################################################################################
+
 
 ##############################################################################################
 ##                    Import all.enayzmes no database

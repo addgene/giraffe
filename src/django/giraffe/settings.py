@@ -8,6 +8,8 @@ PROJECT_DIR = os.path.dirname(__file__)
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
+FEATURES="./blat/fixtures/features/"
+
 ADMINS = (('Addgene Help', 'help@addgene.org'),)
 
 MANAGERS = ADMINS
