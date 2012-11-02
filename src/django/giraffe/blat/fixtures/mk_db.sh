@@ -3,10 +3,14 @@
 ## Use the -W ignore::UserWarning to hide
 ## "The virtualenv distutils package at %s appears to be in the same location as the system distutils?")
 PYTHON="python -W ignore::UserWarning"
+GIRAFFE="/Users/johnfurr/Git_Tower/giraffe/src/django/giraffe"
+FIXTURE="$GIRAFFE/blat/fixtures/"
 hname=`hostname`
 if [ "$hname" = "carbon" ]
 then
 	PYTHON='/srv/addgene/bin/python -W ignore::UserWarning'
+    GIRAFFE="/home/benjie/git/giraffe/src/django/giraffe"
+    FIXTURE="$GIRAFFE/blat/fixtures/"
 fi
 
 ## This is the older method.  It's left here for refernce sake at this point
@@ -28,8 +32,6 @@ fi
 ## Hold Current Directory
 pwd=$PWD
 
-GIRAFFE="/home/benjie/git/giraffe/src/django/giraffe"
-FIXTURE="$GIRAFFE/blat/fixtures/"
 cd $GIRAFFE
 
 #############################################################################################
@@ -54,7 +56,7 @@ cd $GIRAFFE
 
 
 ##############################################################################################
-####                      aFire Database Creation
+####               aFire Database Creation **The afire db is never used**               ######   
 echo "Importing blat/fixtures/features/af.unc to Feature_DataBase(afire)"
 $PYTHON manage.py import_features --db=afire --file=blat/fixtures/features/af.unc
 
@@ -74,8 +76,8 @@ cd $GIRAFFE
 
 ##############################################################################################
 ##                    Import all.enayzmes no database
-echo "Importing blat/fixtures/features/all.enzymes to Feature_DataBase(none)"
-$PYTHON manage.py import_features --db=none --file=blat/fixtures/features/all.enzymes
+#echo "Importing blat/fixtures/features/all.enzymes to Feature_DataBase(none)"
+#$PYTHON manage.py import_features --db=none --file=blat/fixtures/features/all.enzymes
 ##############################################################################################
 
 ## Now send the user back to were the came from

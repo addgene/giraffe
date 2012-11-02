@@ -15,22 +15,17 @@
 # class Feature(models.Model):
 #    type = models.ForeignKey(Feature_Type)
 #    name = models.CharField(max_length=32,db_index=True)
+#    db   = models.ForeignKey('Feature_Database')
 #    sequence = models.TextField()
 #    hash = models.CharField(max_length=64)
 #    cut_after = models.PositiveIntegerField(null=True,blank=True)
 #    last_modified = models.DateTimeField(auto_now=True,db_index=True)
+#    last_built = models.DateTimeField(null=True,blank=True)
 #
 # class Feature_Database(models.Model):
 #    features = models.ManyToManyField(Feature, through='Feature_In_Database')
 #    name = models.CharField(max_length=64,unique=True)
 #    db_version = models.CharField(max_length=64)
-#    last_built = models.DateTimeField(null=True,blank=True)
-#
-#
-# class Feature_In_Database(models.Model):
-#    feature = models.ForeignKey(Feature)
-#    feature_database = models.ForeignKey(Feature_Database)
-#    show_feature = models.BooleanField(default=True)
 #
 #
 # class Feature_DB_Index(models.Model):
@@ -51,9 +46,7 @@ import datetime
 from django.core.management import BaseCommand
 
 ## Addgene/giraffe specific imports
-from giraffe.blat.models import Feature, Feature_Type
-from giraffe.blat.models import Feature_Database
-from giraffe.blat.models import Feature_In_Database
+from giraffe.blat.models import Feature, Feature_Type, Feature_Database
 
 
 class Command(BaseCommand):
@@ -129,10 +122,14 @@ class Command(BaseCommand):
 
         ## Create a new feature or get the current feature from the database
         f = Feature()
+        if fdb:
+            f.db = fdb
         f.type = Feature_Type.objects.get(type='Enzyme')
         f.name = name
         f.sequence = sequence
         f.cut_after = cut_after
+        f.show_feature = show_feature
+
         try:
             f.save()
         except:
@@ -140,12 +137,12 @@ class Command(BaseCommand):
 
         ## If the feature database was set then we 
         ## set the feature field of this database to teh new feature
-        if fdb:
-            m = Feature_In_Database()
-            m.feature = f
-            m.feature_database = fdb
-            m.show_feature = show_feature
-            m.save() 
+        #if fdb:
+        #    m = Feature_In_Database()
+        #    m.feature = f
+        #    m.feature_database = fdb
+        #    m.show_feature = show_feature
+        #    m.save() 
     
     def get_feature_type(self, n):
         if n == "F":   return Feature_Type.objects.get(type='Feature')
@@ -183,20 +180,25 @@ class Command(BaseCommand):
 
         f = Feature()
         f.type = self.get_feature_type(n)
+        if fdb:
+            f.db = fdb
         f.name = name
         f.sequence = sequence
-
+        if fdb: f.show_feature = True
+        else: f.show_feature = False
+        
         try:
             f.save()
-        except:
+        except Exception as err:
+            print "Exception: ", str(err)
             f = Feature.objects.get(name=name,hash=f.hash)
 
-        if fdb:
-            m = Feature_In_Database()
-            m.feature = f
-            m.feature_database = fdb
-            m.show_feature = True
-            m.save()
+        #if fdb:
+        #    m = Feature_In_Database()
+        #    m.feature = f
+        #    m.feature_database = fdb
+        #    m.show_feature = True
+        #    m.save()
  
  
     def handle(self, *args, **options):

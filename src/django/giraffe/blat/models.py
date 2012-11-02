@@ -282,37 +282,37 @@ class Feature_Type(models.Model):
 
 
 class Feature(models.Model):
-    type = models.ForeignKey(Feature_Type)
+    type = models.ForeignKey('Feature_Type')
+    db = models.ForeignKey('Feature_Database')
     name = models.CharField(max_length=32,db_index=True)
     sequence = models.TextField()
     hash = models.CharField(max_length=64)
     cut_after = models.PositiveIntegerField(null=True,blank=True)
     last_modified = models.DateTimeField(auto_now=True,db_index=True)
+    show_feature = models.BooleanField(default=True)
 
     def save(self):
+        ## Create a hash of the name and the sequence
         self.sequence = Sequence.strip(self.sequence)
-        self.hash = hashlib.sha1(self.sequence.lower()).hexdigest()
+        string_to_hash = self.name.lower() + self.sequence.lower()
+        self.hash = hashlib.sha1(string_to_hash).hexdigest()
         return super(Feature,self).save()
 
     def __unicode__(self):
         return self.name
 
     class Meta:
-        unique_together = (("name","hash"),)
+        ##db and hash or indexed together
+        ## hash is created from name+sequence in save()
+        unique_together = (("db","hash"),)
+
         ordering = ('type','name')
 
 
 class Feature_Database(models.Model):
     name = models.CharField(max_length=64,unique=True)
-    features = models.ManyToManyField(Feature, through='Feature_In_Database')
     db_version = models.CharField(max_length=64)
     last_built = models.DateTimeField(null=True,blank=True)
-
-
-class Feature_In_Database(models.Model):
-    feature = models.ForeignKey(Feature)
-    feature_database = models.ForeignKey(Feature_Database)
-    show_feature = models.BooleanField(default=True)
 
 
 class Feature_DB_Index(models.Model):
